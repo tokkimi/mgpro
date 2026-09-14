@@ -25,3 +25,11 @@ Les envois externes nécessitent un fournisseur actif. Aucun envoi fictif n’es
 Les contenus sources sont conservés dans `content/original.json`. Le site comprend huit expertises, les six étapes de l’approche sur l’accueil, trente et une photographies de réalisations réparties dans les quatre catégories d’origine, le lien Financeit original et les redirections des anciennes pages PHP. Le contrôle `node scripts/smoke.mjs` vérifie la connexion, une demande, un devis et son PDF, puis supprime uniquement ses données temporaires.
 
 Envoi de courriels et création Resend mis en attente à la demande du propriétaire pendant la phase de maquette. Aucun abonnement supplémentaire créé.
+
+## Public site release: bilingual pages and visit replies
+- French and English public pages have separate URLs with an FR/EN switch, localized HTML language and sitemap alternates. Four original blog articles are available in both languages; English copy is an editorial adaptation.
+- Requests accept up to 10 JPEG/PNG/WebP photos with client compression and private server storage. HEIC files are not supported; the form explains supported formats.
+- Address suggestions use Natural Resources Canada with manual entry fallback.
+- Request replies support saved drafts, proposed Montréal-local appointment times and an optional Calendly URL in Settings. No placeholder Calendly URL is used. A proposal never automatically confirms a visit.
+- Direct email remains inactive until RESEND_API_KEY and MAIL_FROM are configured with an authorized sender. Opening a draft in the user's email client is available. No subscription or DNS change was made.
+- Verification: npm test, npm run build, scripts/smoke-release.mjs, scripts/smoke-request-photos.mjs and scripts/smoke.mjs. Browser checks at 390px cover public form steps, multi-photo selection and blog/financing layout. Actual iOS keyboard/camera hardware remains a device check; mobile font sizes and VisualViewport handling address focus zoom/layout.
