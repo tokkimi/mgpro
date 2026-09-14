@@ -6,6 +6,8 @@ node_modules/
 *.tsbuildinfo
 test-results/
 .sites-runtime/
+.owner-access.txt
+!.env.example
 
 .vercel
 .env*
