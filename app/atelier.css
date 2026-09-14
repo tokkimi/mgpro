@@ -43,3 +43,8 @@
 /* Preserve the complete supplied logo, including its signature. */
 .atelier-site .contact-logo img{width:72px;height:72px;left:-5px;top:-15px}
 @media(max-width:600px){.atelier-site .atelier-brand{width:100px;height:80px}.atelier-site .atelier-brand img{width:120px;height:120px;left:-10px;top:-24px}}
+/* Keep the full logo inside its glass container, without clipping its lettering. */
+.atelier-site .contact-logo{width:66px;height:62px;flex:0 0 66px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:14px}
+.atelier-site .contact-logo img{position:static!important;width:82px!important;height:82px!important;max-width:none;object-fit:contain;flex:none;transform:translateY(-3px)}
+.atelier-site .hero-finance b{align-items:center;gap:10px}.atelier-site .hero-finance-logo{width:155px;height:42px;object-fit:cover}.atelier-site .hero-finance{background:linear-gradient(130deg,#fffffff0,#ffffffe0);color:#262724}.atelier-site .hero-finance p{color:#62695c}.atelier-site .atelier-hero-photo{object-position:60% center}
+@media(max-width:600px){.atelier-site .atelier-hero-photo{object-position:57% center}.atelier-site .contact-logo{width:58px;height:58px;flex-basis:58px}.atelier-site .contact-logo img{width:74px!important;height:74px!important}.atelier-site .hero-finance-logo{width:140px;height:40px}}
