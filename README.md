@@ -6,7 +6,7 @@ Site Next.js, espace dirigeant / équipe / client, Supabase Auth et stockage pri
 
 `npm install`, puis `vercel env pull .env.local --yes` et `node scripts/migrate.mjs`. Démarrer avec `npm run dev`. Validation : `npm test` et `npm run build`.
 
-Le site utilise les informations publiques et trois photos de renovationsmgpro.com, ainsi que le logo fourni par le propriétaire du projet. `/demo` contient exclusivement des exemples fictifs en mémoire. `/admin` exige une identité Supabase et un profil actif.
+Le site utilise les informations publiques et les photographies et les textes des pages de services et des galeries de renovationsmgpro.com, ainsi que le logo fourni par le propriétaire du projet. `/demo` contient exclusivement des exemples fictifs en mémoire. `/admin` exige une identité Supabase et un profil actif.
 
 ## Configuration
 
@@ -19,3 +19,7 @@ Créer le dirigeant dans Supabase Auth puis un profil `admin` avec le même UUID
 ## Limites à connaître
 
 Les envois externes nécessitent un fournisseur actif. Aucun envoi fictif n’est présenté comme réussi. La comptabilité couvre factures, paiements, dépenses, journal, balance et rapports ; paie, déclarations fiscales, rapprochement bancaire automatique et états financiers certifiés ne sont pas implémentés. Les dépenses doivent être comptabilisées dans le journal. Les photos sont ajoutées après le premier enregistrement de la visite. Les PDF intègrent JPEG/PNG, jusqu’à vingt photos. Aucun engagement de parité intégrale avec Buildr.
+
+## Refonte éditoriale
+
+Les contenus sources sont conservés dans `content/original.json`. Le site comprend huit expertises, les six étapes de l’approche sur l’accueil, trente et une photographies de réalisations en trois galeries, le lien Financeit original et les redirections des anciennes pages PHP. Le contrôle `node scripts/smoke.mjs` vérifie la connexion, une demande, un devis et son PDF, puis supprime uniquement ses données temporaires.
