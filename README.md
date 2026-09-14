@@ -18,8 +18,10 @@ Créer le dirigeant dans Supabase Auth puis un profil `admin` avec le même UUID
 
 ## Limites à connaître
 
-Les envois externes nécessitent un fournisseur actif. Aucun envoi fictif n’est présenté comme réussi. La comptabilité couvre factures, paiements, dépenses, journal, balance et rapports ; paie, déclarations fiscales, rapprochement bancaire automatique et états financiers certifiés ne sont pas implémentés. Les dépenses doivent être comptabilisées dans le journal. Les photos sont ajoutées après le premier enregistrement de la visite. Les PDF intègrent JPEG/PNG, jusqu’à vingt photos. Aucun engagement de parité intégrale avec Buildr.
+Les envois externes nécessitent un fournisseur actif. Aucun envoi fictif n’est présenté comme réussi. La comptabilité couvre factures, paiements, dépenses, journal, balance et rapports ; paie, déclarations fiscales, rapprochement bancaire automatique et états financiers certifiés ne sont pas implémentés. Les dépenses et règlements fournisseurs se comptabilisent depuis leur dossier. Les visites peuvent recevoir des photos sans quitter le formulaire ; le brouillon est enregistré avant le téléversement. Les PDF intègrent JPEG/PNG, jusqu’à vingt photos. Aucun engagement de parité intégrale avec Buildr.
 
 ## Refonte éditoriale
 
-Les contenus sources sont conservés dans `content/original.json`. Le site comprend huit expertises, les six étapes de l’approche sur l’accueil, trente et une photographies de réalisations en trois galeries, le lien Financeit original et les redirections des anciennes pages PHP. Le contrôle `node scripts/smoke.mjs` vérifie la connexion, une demande, un devis et son PDF, puis supprime uniquement ses données temporaires.
+Les contenus sources sont conservés dans `content/original.json`. Le site comprend huit expertises, les six étapes de l’approche sur l’accueil, trente et une photographies de réalisations réparties dans les quatre catégories d’origine, le lien Financeit original et les redirections des anciennes pages PHP. Le contrôle `node scripts/smoke.mjs` vérifie la connexion, une demande, un devis et son PDF, puis supprime uniquement ses données temporaires.
+
+Envoi de courriels et création Resend mis en attente à la demande du propriétaire pendant la phase de maquette. Aucun abonnement supplémentaire créé.
