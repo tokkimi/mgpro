@@ -1,0 +1,4 @@
+import {db} from './supabase';
+import {Profile, RecordItem, permitted} from './model';
+export async function visible(profile:Profile,r:RecordItem){if(!permitted(profile.role,r.kind))return false;if(profile.role==='admin')return true;if(profile.role==='client')return !!profile.client_id&&(r.client_id===profile.client_id||(r.kind==='client'&&r.id===profile.client_id))&&(r.kind!=='document'||r.data.visibility==='client')&&(!['quote','invoice'].includes(r.kind)||!['Brouillon','Validé'].includes(r.data.status))&&(r.kind!=='message'||r.data.visibility!=='internal');const project=r.kind==='project'?r.id:r.project_id;if(!project)return false;const {data}=await db().from('memberships').select('project_id').eq('user_id',profile.id).eq('project_id',project).maybeSingle();return !!data;}
+export function sameOrigin(req:Request){const origin=req.headers.get('origin');return !origin||origin===new URL(req.url).origin;}

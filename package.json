@@ -1,0 +1,45 @@
+{
+  "name": "mgpro",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "tsx --test tests/*.test.ts",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tokkimi/mgpro.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/tokkimi/mgpro/issues"
+  },
+  "homepage": "https://github.com/tokkimi/mgpro#readme",
+  "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.116.0",
+    "decimal.js": "^10.6.0",
+    "lucide-react": "^1.45.0",
+    "next": "^16.3.5",
+    "pdf-lib": "^1.17.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "agent-browser": "^0.37.1",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  },
+  "private": "true"
+}
