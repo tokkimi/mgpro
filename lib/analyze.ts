@@ -35,14 +35,14 @@ function segment(transcript:string):string[]{
 
 export function analyzeTranscript(transcript:string,context:AnalyzeContext={}):Analysis{
  const text=clean(transcript||'');
- const segments=segment(text);
+ const segments=segment(transcript||'');
  const lines:DraftLine[]=[];
  for(const seg of segments){
   const q=detectQuantity(seg);const price=detectPrice(seg);
   // Drop pure measurement chatter unless it carries an action.
   const description=cap(seg.replace(/\s*[-•*·]\s*/g,' ').trim()).slice(0,240);
   if(!description)continue;
-  lines.push({description,quantity:q?q.quantity:1,unit:q?q.unit:'forfait',price:price??0});
+  lines.push({description,quantity:q?q.quantity:1,unit:q?q.unit:'forfait',price:price!==null&&(!q||/\bpar\s|\/\s*(?:pi|m|heure|unit)/i.test(seg))?price:0});
  }
  if(!lines.length&&text)lines.push({description:cap(text).slice(0,240),quantity:1,unit:'forfait',price:0});
  const materialsFound=Array.from(new Set(MATERIAL_WORDS.filter(w=>new RegExp(`\\b${w}\\b`,'i').test(text)).map(w=>cap(w))));

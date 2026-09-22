@@ -18,7 +18,7 @@ export default function QuoteStudio({quote,client,settings,busy,onSave,onClose,o
  const room:Data=data.rooms[active]||data.rooms[0];
  const t=useMemo(()=>totals(data),[data]);
  const dirty=useRef(false);
- function update(next:Data){dirty.current=true;setSaved(false);setData(next);}
+ function update(next:Data){if(readOnly)return;dirty.current=true;setSaved(false);setData(next);}
  // Recompute the priced line for one surface of a room from its selected material.
  function syncLine(next:Data,r:Data,surface:Surface){
   const mid=r.materials?.[surface];
@@ -34,7 +34,7 @@ export default function QuoteStudio({quote,client,settings,busy,onSave,onClose,o
   update(next);
  }
  function editRoom(key:string,value:any){
-  const next=structuredClone(data);const r=next.rooms[active];r[key]=key==='name'||key==='unit'?value:Number(value);
+  const next=structuredClone(data);const r=next.rooms[active];if(key==='name')next.lines=next.lines.map((l:Data)=>l.room===r.name?{...l,room:value}:l);r[key]=key==='name'||key==='unit'?value:Number(value);
   for(const s of SURFACES)if(r.materials?.[s])syncLine(next,r,s);// re-price on dimension change
   update(next);
  }
@@ -52,11 +52,11 @@ export default function QuoteStudio({quote,client,settings,busy,onSave,onClose,o
     <Room3D room={room} floor={floor} walls={walls} counter={counter}/>
     <div className="studio-rooms">
      {data.rooms.map((r:Data,i:number)=><button key={i} type="button" className={i===active?'active':''} onClick={()=>setActive(i)}><Box size={14}/>{r.name||`Pièce ${i+1}`}</button>)}
-     <button type="button" className="studio-addroom" onClick={addRoom}><Plus size={14}/>Pièce</button>
+     <button type="button" className="studio-addroom" disabled={readOnly} onClick={addRoom}><Plus size={14}/>Pièce</button>
     </div>
     <div className="studio-dims">
-     {[['name','Nom','text'],['length','Long.','number'],['width','Larg.','number'],['height','Haut.','number']].map(([k,label,type])=><label key={k}>{label}<input type={type} value={room?.[k]??''} onChange={e=>editRoom(k,e.target.value)}/></label>)}
-     <label>Unité<select value={room?.unit||'pi'} onChange={e=>editRoom('unit',e.target.value)}><option value="pi">pi</option><option value="m">m</option></select></label>
+     {[['name','Nom','text'],['length','Long.','number'],['width','Larg.','number'],['height','Haut.','number']].map(([k,label,type])=><label key={k}>{label}<input disabled={readOnly} type={type} value={room?.[k]??''} onChange={e=>editRoom(k,e.target.value)}/></label>)}
+     <label>Unité<select disabled={readOnly} value={room?.unit||'pi'} onChange={e=>editRoom('unit',e.target.value)}><option value="pi">pi</option><option value="m">m</option></select></label>
     </div>
     <p className="studio-hint"><Info size={13}/>Aperçu visuel indicatif basé sur les mesures relevées.</p>
    </section>
@@ -65,26 +65,26 @@ export default function QuoteStudio({quote,client,settings,busy,onSave,onClose,o
      {SURFACES.map(surface=><div className="material-group" key={surface}>
       <h4><Layers size={14}/>{surfaceLabels[surface]}</h4>
       <div className="material-swatches">
-       {materialsBySurface(surface).map(m=>{const line=materialLine(room,surface,m);const total=round(line.quantity*line.price);const selected=room?.materials?.[surface]===m.id;return <button key={m.id} type="button" className={`material-swatch ${selected?'selected':''}`} onClick={()=>chooseMaterial(surface,m.id)} title={m.description}>
+       {materialsBySurface(surface).map(m=>{const line=materialLine(room,surface,m);const total=round(line.quantity*line.price);const selected=room?.materials?.[surface]===m.id;return <button key={m.id} type="button" className={`material-swatch ${selected?'selected':''}`} disabled={readOnly} onClick={()=>chooseMaterial(surface,m.id)} title={m.description}>
         <span className="swatch-chip" style={{backgroundColor:m.color,backgroundImage:m.texture||'none'}}/>
         <span className="swatch-name">{m.name}</span>
-        <span className="swatch-price">{money(m.price)}/{line.unit} · <b>{money(total)}</b></span>
+        <span className="swatch-price">{money(line.price)}/{line.unit} · <b>{money(total)}</b></span>
        </button>;})}
       </div>
      </div>)}
      <div className="material-group">
       <h4>Lignes de la soumission</h4>
       {(data.lines||[]).map((l:Data,i:number)=><div className="studio-line" key={i}>
-       <input className="studio-line-desc" value={l.description||''} placeholder="Description" onChange={e=>editLine(i,'description',e.target.value)}/>
+       <input disabled={readOnly} className="studio-line-desc" value={l.description||''} placeholder="Description" onChange={e=>editLine(i,'description',e.target.value)}/>
        <div className="studio-line-nums">
-        <input type="number" aria-label="Quantité" value={l.quantity??0} onChange={e=>editLine(i,'quantity',e.target.value)}/>
-        <input aria-label="Unité" value={l.unit||''} onChange={e=>editLine(i,'unit',e.target.value)}/>
-        <input type="number" aria-label="Prix unitaire" value={l.price??0} onChange={e=>editLine(i,'price',e.target.value)}/>
+        <input disabled={readOnly} type="number" aria-label="Quantité" value={l.quantity??0} onChange={e=>editLine(i,'quantity',e.target.value)}/>
+        <input disabled={readOnly} aria-label="Unité" value={l.unit||''} onChange={e=>editLine(i,'unit',e.target.value)}/>
+        <input disabled={readOnly} type="number" aria-label="Prix unitaire" value={l.price??0} onChange={e=>editLine(i,'price',e.target.value)}/>
         <b>{money(Number(l.quantity||0)*Number(l.price||0))}</b>
-        <button type="button" className="icon-button" aria-label="Supprimer" onClick={()=>removeLine(i)}><Trash2 size={15}/></button>
+        <button type="button" className="icon-button" aria-label="Supprimer" disabled={readOnly} onClick={()=>removeLine(i)}><Trash2 size={15}/></button>
        </div>
       </div>)}
-      <button type="button" className="btn secondary small" onClick={addLine}><Plus size={15}/>Ajouter une ligne</button>
+      <button type="button" className="btn secondary small" disabled={readOnly} onClick={addLine}><Plus size={15}/>Ajouter une ligne</button>
      </div>
     </div>
     <div className="studio-footer">

@@ -22,7 +22,7 @@ export default function VoiceRecorder({onSave,busy=false}:{onSave:(note:VoiceNot
  const mime=useRef('');
  const speechSupported=typeof window!=='undefined'&&!!((window as any).SpeechRecognition||(window as any).webkitSpeechRecognition);
  useEffect(()=>()=>cleanup(),[]);
- function cleanup(){try{rec.current?.state!=='inactive'&&rec.current?.stop();}catch{}try{recognition.current?.stop();}catch{}stream.current?.getTracks().forEach(t=>t.stop());clearInterval(timer.current);}
+ function cleanup(){stopping.current=true;try{rec.current?.state!=='inactive'&&rec.current?.stop();}catch{}try{recognition.current?.stop();}catch{}stream.current?.getTracks().forEach(t=>t.stop());clearInterval(timer.current);}
  async function start(){
   setError('');setTranscript('');setInterim('');setElapsed(0);chunks.current=[];stopping.current=false;
   let gotStream=false;
@@ -30,7 +30,7 @@ export default function VoiceRecorder({onSave,busy=false}:{onSave:(note:VoiceNot
    if(navigator.mediaDevices?.getUserMedia){
     const s=await navigator.mediaDevices.getUserMedia({audio:true});stream.current=s;gotStream=true;
     mime.current=pickMime();
-    const mr=new MediaRecorder(s,mime.current?{mimeType:mime.current}:undefined);rec.current=mr;
+    const mr=new MediaRecorder(s,mime.current?{mimeType:mime.current,audioBitsPerSecond:64000}:{audioBitsPerSecond:64000});rec.current=mr;
     mr.ondataavailable=e=>{if(e.data.size>0)chunks.current.push(e.data);};
     mr.start();
    }
@@ -46,7 +46,7 @@ export default function VoiceRecorder({onSave,busy=false}:{onSave:(note:VoiceNot
     r.start();recognition.current=r;setSpeechOn(true);
    }catch{setSpeechOn(false);}
   }
-  timer.current=setInterval(()=>setElapsed(e=>e+1),1000);
+  timer.current=setInterval(()=>setElapsed(e=>{if(e>=179){stop();return 180;}return e+1;}),1000);
   setMode('recording');
   if(!gotStream&&!speechSupported)setError('Enregistrement audio non pris en charge sur cet appareil. Saisissez la note ci-dessous.');
  }
