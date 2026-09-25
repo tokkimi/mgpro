@@ -1,12 +1,13 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
+import {mediaStore} from '@/lib/local-media';
 import {Mic,Square,Trash2,Check,Loader2} from 'lucide-react';
 // Records an audio note during a visit and transcribes it live with the browser
 // Web Speech API (fr-CA). When speech recognition or the microphone is not
 // available it falls back to a typed note, so a transcript is always produced.
 export type VoiceNote={transcript:string;blob:Blob|null;mime:string;duration:number};
 const pickMime=()=>{if(typeof MediaRecorder==='undefined')return '';for(const m of ['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg'])if(MediaRecorder.isTypeSupported?.(m))return m;return '';};
-export default function VoiceRecorder({onSave,busy=false}:{onSave:(note:VoiceNote)=>void|Promise<void>;busy?:boolean}){
+export default function VoiceRecorder({onSave,busy=false,storageKey}:{storageKey:string;onSave:(note:VoiceNote)=>void|Promise<void>;busy?:boolean}){
  const [mode,setMode]=useState<'idle'|'recording'|'review'>('idle');
  const [transcript,setTranscript]=useState('');
  const [interim,setInterim]=useState('');
@@ -20,6 +21,12 @@ export default function VoiceRecorder({onSave,busy=false}:{onSave:(note:VoiceNot
  const timer=useRef<any>(null);
  const stopping=useRef(false);
  const mime=useRef('');
+ const latest=useRef({transcript:'',elapsed:0});latest.current={transcript,elapsed};
+ const restored=useRef(false);
+ const writeChain=useRef(Promise.resolve());
+ function persist(){const snapshot={...latest.current,mime:mime.current,blob:new Blob(chunks.current,{type:mime.current||'audio/webm'})};writeChain.current=writeChain.current.then(()=>mediaStore(storageKey,snapshot)).then(()=>{}).catch(()=>setError('Sauvegarde locale indisponible. Gardez cette page ouverte jusqu’à l’enregistrement.'));}
+ useEffect(()=>{let live=true;mediaStore<{transcript:string;elapsed:number;mime:string;blob:Blob}>(storageKey).then(saved=>{if(live&&saved){setTranscript(saved.transcript);setElapsed(saved.elapsed);mime.current=saved.mime;chunks.current=saved.blob.size?[saved.blob]:[];setMode('review');setError('Note récupérée sur cet appareil. Vérifiez puis enregistrez-la.')}}).catch(()=>{}).finally(()=>{restored.current=true});return()=>{live=false}},[storageKey]);
+ useEffect(()=>{if(restored.current&&mode!=='idle')persist()},[transcript,mode]);
  const speechSupported=typeof window!=='undefined'&&!!((window as any).SpeechRecognition||(window as any).webkitSpeechRecognition);
  useEffect(()=>()=>cleanup(),[]);
  function cleanup(){stopping.current=true;try{rec.current?.state!=='inactive'&&rec.current?.stop();}catch{}try{recognition.current?.stop();}catch{}stream.current?.getTracks().forEach(t=>t.stop());clearInterval(timer.current);}
@@ -31,8 +38,8 @@ export default function VoiceRecorder({onSave,busy=false}:{onSave:(note:VoiceNot
     const s=await navigator.mediaDevices.getUserMedia({audio:true});stream.current=s;gotStream=true;
     mime.current=pickMime();
     const mr=new MediaRecorder(s,mime.current?{mimeType:mime.current,audioBitsPerSecond:64000}:{audioBitsPerSecond:64000});rec.current=mr;
-    mr.ondataavailable=e=>{if(e.data.size>0)chunks.current.push(e.data);};
-    mr.start();
+    mr.ondataavailable=e=>{if(e.data.size>0){chunks.current.push(e.data);persist();}};
+    mr.start(1000);
    }
   }catch{setError('Micro indisponible — dictez ou saisissez la note ci-dessous.');}
   // Live transcription (independent of the recorder so a typed fallback still works).
@@ -59,10 +66,9 @@ export default function VoiceRecorder({onSave,busy=false}:{onSave:(note:VoiceNot
  }
  async function save(){
   const blob=chunks.current.length?new Blob(chunks.current,{type:mime.current||'audio/webm'}):null;
-  await onSave({transcript:transcript.trim(),blob,mime:mime.current||'audio/webm',duration:elapsed});
-  reset();
+  try{await onSave({transcript:transcript.trim(),blob,mime:mime.current||'audio/webm',duration:elapsed});reset();}catch(e){setError((e as Error).message||'Enregistrement impossible. La note reste sur cet appareil.');}
  }
- function reset(){setMode('idle');setTranscript('');setInterim('');setElapsed(0);setError('');chunks.current=[];}
+ function reset(){writeChain.current=writeChain.current.then(()=>mediaStore(storageKey,undefined,true)).then(()=>{});setMode('idle');setTranscript('');setInterim('');setElapsed(0);setError('');chunks.current=[];}
  const mmss=(s:number)=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
  return <div className="voice-recorder">
   <div className="voice-head">
