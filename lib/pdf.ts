@@ -28,7 +28,7 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
  page.drawRectangle({x:0,y:H-6,width:W,height:6,color:GOLD});
  draw(settings.name||defaults.name,L,20,{f:bold});
  const num=data.number||'';
- const isInvoice=/facture/i.test(title),isQuote=/soumission|devis/i.test(title),isContract=/contrat/i.test(title);
+ const isInvoice=/facture/i.test(title),isQuote=/soumission|devis/i.test(title),isContract=/contrat|cahier des charges/i.test(title);
  right(title,R,17,{f:bold,color:FOREST});y-=15;
  draw(settings.address||'',L,9,{color:MUTED});right(isInvoice?`Facture ${num?'# '+num:''}`:num,R,10,{color:INK});y-=13;
  draw(`${settings.phone||''}  •  ${settings.email||''}`,L,9,{color:MUTED});right(`${isInvoice?'Date de facturation':'Date'} : ${clean(data.date||new Date().toISOString().slice(0,10))}`,R,9,{color:MUTED});y-=13;
@@ -97,7 +97,7 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
  if(Array.isArray(data.material_selection)&&data.material_selection.length){ensure(24);draw('Matériaux sélectionnés',L,11,{f:bold,color:FOREST});y-=17;for(const m of data.material_selection)para(`• ${m.surface||''} : ${m.name||''}${m.room?` (${m.room})`:''}`,L+6,9.5,R-L-6,{color:MUTED,gap:4});y-=6;}
 
  // ---- Free-text sections ----
- for(const [key,label] of [['scope','Travaux prévus'],['constraints','Contraintes et accès'],['materials','Matériaux et finitions'],['notes','Notes'],['conditions','Conditions']] as [string,string][]) if(data[key]){ensure(26);draw(label,L,10.5,{f:bold,color:FOREST});y-=16;para(data[key],L,9.5,R-L,{color:MUTED,gap:5});y-=6;}
+ for(const [key,label] of [['context','Contexte et besoins'],['objectives','Objectifs et résultats attendus'],['scope','Travaux prévus'],['constraints','Contraintes et accès'],['deliverables','Livrables et critères de réception'],['materials','Matériaux et finitions'],['acceptance','Critères d’acceptation'],['notes','Notes'],['conditions','Conditions']] as [string,string][]) if(data[key]){ensure(26);draw(label,L,10.5,{f:bold,color:FOREST});y-=16;para(data[key],L,9.5,R-L,{color:MUTED,gap:5});y-=6;}
  const terms=data.terms||settings.terms;
  if(terms){ensure(26);draw('Termes et conditions',L,10.5,{f:bold,color:FOREST});y-=16;para(terms,L,8.5,R-L,{color:MUTED,gap:4});}
 
