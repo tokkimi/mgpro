@@ -88,6 +88,16 @@ export default function Workspace({demo,initialUser}:{demo:boolean;initialUser:P
   button.addEventListener('click',()=>{void run(async()=>{if(!edit.client_id)throw new Error('Sélectionnez le client avant d’enregistrer le brouillon.');const saved=await save(edit.kind,{...edit.data,status:'Brouillon'},edit.record,edit.client_id,edit.project_id);clearDraft();setEdit(null);setSelected(saved.id);notify('Brouillon enregistré. Vous pourrez le reprendre à tout moment.');})});
   actions.prepend(button);return()=>button.remove();
  },[edit,records]);
+ useEffect(()=>{
+  if(!edit||!['quote','partner_quote'].includes(edit.kind))return;
+  const anchor=document.querySelector<HTMLElement>('.app-dialog .quote-lines');
+  if(!anchor||anchor.parentElement?.querySelector('.quote-category-manager'))return;
+  const manager=document.createElement('section');manager.className='quote-category-manager';
+  const title=document.createElement('b');title.textContent='Catégories de la soumission';const hint=document.createElement('small');hint.textContent='Classez vos postes par lot de travaux.';
+  const list=document.createElement('div');const render=()=>{list.replaceChildren();const categories=Array.isArray(edit.data.categories)?edit.data.categories:[];categories.forEach((category:string)=>{const chip=document.createElement('button');chip.type='button';chip.textContent=category;chip.title='Retirer cette catégorie';chip.addEventListener('click',()=>setEdit(current=>current?{...current,data:{...current.data,categories:(current.data.categories||[]).filter((value:string)=>value!==category)}}:null));list.append(chip)})};render();
+  const form=document.createElement('form');const input=document.createElement('input');input.placeholder='Ex. Démolition, plomberie…';const add=document.createElement('button');add.type='submit';add.textContent='＋ Ajouter une catégorie';form.append(input,add);form.addEventListener('submit',event=>{event.preventDefault();const category=input.value.trim();if(!category)return;setEdit(current=>current?{...current,data:{...current.data,categories:Array.from(new Set([...(current.data.categories||[]),category]))}}:null);input.value='';window.setTimeout(render,0)});
+  manager.append(title,hint,list,form);anchor.after(manager);return()=>manager.remove();
+ },[edit]);
  async function run(fn:()=>Promise<any>){setBusy(true);setError('');try{await fn()}catch(e){setError((e as Error).message);notify((e as Error).message)}finally{setBusy(false)}}
  async function status(r:RecordItem,s:string){await run(async()=>{await save(r.kind,{...r.data,status:s},r)})}
  async function pdf(r:RecordItem){if(demo){const {makePdf}=await import('@/lib/pdf');const bytes=await makePdf('DÉMONSTRATION — '+(r.kind==='quote'?'Soumission':r.kind==='visit'?'Visite':'Facture'),r.data,records.find(x=>x.id===r.client_id)?.data,settings);download(new Blob([new Uint8Array(bytes)],{type:'application/pdf'}),`${r.data.number||'visite'}-demo.pdf`);return;}window.open(`/api/pdf?id=${r.id}`,'_blank','noopener')}
