@@ -1,3 +1,16 @@
 import {NextResponse,NextRequest} from 'next/server';
-export function proxy(request:NextRequest){const headers=new Headers(request.headers);headers.set('x-site-locale',request.nextUrl.pathname==='/en'||request.nextUrl.pathname.startsWith('/en/')?'en-CA':'fr-CA');return NextResponse.next({request:{headers}})}
-export const config={matcher:['/((?!api|_next|.*\\..*).*)']};
+import {createServerClient} from '@supabase/ssr';
+export async function proxy(request:NextRequest){
+ const locale=request.nextUrl.pathname==='/en'||request.nextUrl.pathname.startsWith('/en/')?'en-CA':'fr-CA';
+ const respond=()=>{const headers=new Headers(request.headers);headers.set('x-site-locale',locale);return NextResponse.next({request:{headers}})};
+ let response=respond();
+ if(process.env.NEXT_PUBLIC_SUPABASE_URL&&process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY&&request.cookies.getAll().some(c=>c.name.startsWith('sb-'))){
+ const auth=createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL,process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,{cookies:{getAll:()=>request.cookies.getAll(),setAll(items){items.forEach(({name,value})=>request.cookies.set(name,value));response=respond();items.forEach(({name,value,options})=>response.cookies.set(name,value,options));}}});
+ // Refresh expiring session cookies while verifying signed claims. Route handlers
+ // still make every authorisation decision on the server.
+ await auth.auth.getClaims();
+ response.headers.set('Cache-Control','private, no-store');
+ }
+ return response;
+}
+export const config={matcher:['/((?!_next|.*\\..*).*)']};
