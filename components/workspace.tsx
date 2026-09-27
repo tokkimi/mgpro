@@ -44,6 +44,50 @@ export default function Workspace({demo,initialUser}:{demo:boolean;initialUser:P
  function go(v:View){setView(v);setSelected(null);setReturnTo(null);setQuery('');setFilter('Tous');setArchiveMode('active');setMobile(false);history.replaceState(null,'',`#${v}`)}
  async function save(kind:Kind,data:Data,old?:RecordItem,client_id?:string|null,project_id?:string|null,silent=false){if(demo){const now=new Date().toISOString();const record:RecordItem={id:old?.id||crypto.randomUUID(),kind,data,client_id:client_id??old?.client_id??null,project_id:project_id??old?.project_id??null,version:(old?.version||0)+1,created_at:old?.created_at||now,updated_at:now};setRecords(rows=>[record,...rows.filter(r=>r.id!==record.id)]);if(!silent)notify('Démonstration : modification temporaire, non enregistrée sur un serveur.');return record;}const res=await fetch('/api/records',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:old?.id,kind,data,version:old?.version,client_id:client_id??old?.client_id??null,project_id:project_id??old?.project_id??null})});const result=await res.json();if(!res.ok)throw new Error(result.error);setRecords(rows=>[result.record,...rows.filter(r=>r.id!==result.record.id)]);if(!silent)notify('Enregistré.');return result.record as RecordItem;}
  function start(kind:Kind,old?:RecordItem,client_id?:string|null,project_id?:string|null,prefill:Data={}){const date=new Date().toISOString().slice(0,10);const linkedClient=client_id?records.find(record=>record.id===client_id):undefined;const linkedProject=project_id?records.find(record=>record.id===project_id):undefined;const inherited={client_name:linkedClient?.data.name||'',client_email:linkedClient?.data.email||'',client_phone:linkedClient?.data.phone||'',address:linkedClient?.data.address||linkedProject?.data.address||''};const base:Data=kind==='visit'?{date,status:'En cours',calendar_color:'#6e9278',rooms:[{name:'Pièce 1',length:0,width:0,height:0,unit:'pi',notes:'',materials:{}}],voice_notes:[],draft_lines:[]}:kind==='quote'||kind==='partner_quote'||kind==='invoice'?{date,status:'Brouillon',number:`${kind==='quote'?'DEV':kind==='partner_quote'?'PRIX':'FAC'}-${new Date().getFullYear()}-${crypto.randomUUID().slice(0,8).toUpperCase()}`,lines:[{description:'',quantity:1,unit:'forfait',price:0}],tps:settings.tps,tvq:settings.tvq,discount:0,terms:settings.terms,rooms:[],material_selection:[],payment_schedule:settings.payment_schedule||defaultPaymentSchedule,validity:settings.validity||'30 jours',...(kind==='partner_quote'?{status:'À chiffrer',partner_id:''}:{})}:kind==='project'?{status:'Planifié',budget:0,start:date,...inherited}:kind==='phase'?{status:'À planifier',progress:0,start:date,...inherited}:kind==='contract'?{status:'Brouillon',date,start:date,number:`CTR-${new Date().getFullYear()}-${crypto.randomUUID().slice(0,8).toUpperCase()}`,terms:settings.terms}:kind==='specification'?{status:'Brouillon',date,number:`CDC-${new Date().getFullYear()}-${crypto.randomUUID().slice(0,8).toUpperCase()}`,context:'',objectives:'',scope:'',constraints:'',deliverables:'',materials:'',acceptance:'',terms:''}:kind==='task'?{status:'À faire',due:date,priority:'Normale',budget:0,description:'',notes:'',completion_note:''}:kind==='expense'?{date,net:0,tps:0,tvq:0,total:0,status:'À payer',category:'Matériaux'}:kind==='journal'?{date,entries:[{account:'1000 Banque',debit:0,credit:0},{account:'4000 Revenus',debit:0,credit:0}]}:{status:'Actif'};setEdit({kind,record:old,data:old?structuredClone(old.data):{...base,...prefill},client_id:old?.client_id||client_id,project_id:old?.project_id||project_id});setVisitStep(0);setError('')}
+ useEffect(()=>{
+  const create=(event:Event)=>{
+   const detail=(event as CustomEvent<{kind?:Kind;clientId?:string|null;projectId?:string|null;prefill?:Data}>).detail;
+   if(!detail?.kind)return;
+   start(detail.kind,undefined,detail.clientId||null,detail.projectId||null,detail.prefill||{});
+  };
+  window.addEventListener('mgpro:create-project-record',create as EventListener);
+  return()=>window.removeEventListener('mgpro:create-project-record',create as EventListener);
+ },[records]);
+ useEffect(()=>{
+  const open=(event:Event)=>{const detail=(event as CustomEvent<{projectId?:string;clientId?:string|null;scope?:string}>).detail;if(!detail)return;if(detail.scope==='team'){setMessageScope('internal');setThread(detail.projectId||null)}else{setMessageScope('client');setThread(detail.clientId||null)}go('messages')};
+  window.addEventListener('mgpro:open-project-communications',open as EventListener);
+  return()=>window.removeEventListener('mgpro:open-project-communications',open as EventListener);
+ },[]);
+ useEffect(()=>{
+  if(current?.kind!=='client')return;
+  const heading=document.querySelector<HTMLElement>('.page-heading .button-row');if(!heading||heading.querySelector('.client-create-menu'))return;
+  const menu=document.createElement('details');menu.className='project-create-menu client-create-menu';menu.innerHTML='<summary>Créer <span>⌄</span></summary><div></div>';
+  const body=menu.querySelector('div');const name=String(current.data.name||'Client');
+  [{icon:'🏗️',label:'Nouveau projet',kind:'project' as Kind},{icon:'📍',label:'Nouveau rendez-vous',kind:'visit' as Kind},{icon:'📄',label:'Nouvelle soumission',kind:'quote' as Kind},{icon:'🧾',label:'Nouvelle facture',kind:'invoice' as Kind},{icon:'✅',label:'Nouvelle tâche',kind:'task' as Kind},{icon:'📋',label:'Cahier des charges',kind:'specification' as Kind}].forEach(item=>{const button=document.createElement('button');button.type='button';button.textContent=`${item.icon} ${item.label}`;button.addEventListener('click',()=>{menu.removeAttribute('open');window.dispatchEvent(new CustomEvent('mgpro:create-project-record',{detail:{kind:item.kind,clientId:current.id,prefill:{title:item.label.replace('Nouveau ','').replace('Nouvelle ','')+' — '+name}}}))});body?.append(button)});
+  heading.append(menu);return()=>menu.remove();
+ },[current?.id,current?.kind,records]);
+ useEffect(()=>{
+  if(edit?.kind!=='invoice')return;
+  const anchor=document.querySelector<HTMLElement>('.app-dialog .quote-lines');
+  if(!anchor||anchor.parentElement?.querySelector('.invoice-add-source'))return;
+  const billed=new Set(records.filter(row=>row.kind==='invoice'&&row.project_id===edit.project_id).flatMap(row=>Array.isArray(row.data.source_ids)?row.data.source_ids:[]));
+  const sources=records.filter(row=>row.client_id===edit.client_id&&row.project_id===edit.project_id&&!billed.has(row.id)&&['quote','contract','expense'].includes(row.kind));
+  const details=document.createElement('details');details.className='invoice-add-source';
+  const summary=document.createElement('summary');summary.textContent='＋ Ajouter depuis';details.append(summary);
+  const panel=document.createElement('div');const intro=document.createElement('p');intro.textContent='Importez les éléments non facturés. Le statut de paiement reste visible.';panel.append(intro);
+  const labels:Record<string,string>={quote:'Soumission',contract:'Contrat',expense:'Dépense'};
+  if(!sources.length){const empty=document.createElement('small');empty.textContent='Aucun contrat, ordre de changement ou dépense facturable pour ce projet.';panel.append(empty)}
+  sources.forEach(source=>{const button=document.createElement('button');button.type='button';const status=String(source.data.status||'Brouillon');const amount=source.kind==='expense'?Number(source.data.net||0)+Number(source.data.tps||0)+Number(source.data.tvq||0):totals(source.data).total;button.innerHTML=`<span><b>${labels[source.kind]} · ${String(source.data.title||source.data.number||'Sans titre')}</b><small>${status==='Brouillon'?'Brouillon — à vérifier':status==='Payée'||status==='Facturée'?'Facturée / payée':status}</small></span><strong>${money(amount)}</strong>`;button.addEventListener('click',()=>{const imported=Array.isArray(source.data.lines)&&source.data.lines.length?source.data.lines.map((line:Data)=>({...line,source_id:source.id})):[{description:source.data.title||source.data.number||'Élément importé',quantity:1,unit:'forfait',price:amount,source_id:source.id}];setEdit(current=>current?{...current,data:{...current.data,lines:[...(current.data.lines||[]),...imported],source_ids:[...(current.data.source_ids||[]),source.id]}}:null);details.removeAttribute('open')});panel.append(button)});
+  details.append(panel);anchor.after(details);return()=>details.remove();
+ },[edit,records]);
+ useEffect(()=>{
+  if(!edit||!['quote','partner_quote','invoice','contract','specification'].includes(edit.kind))return;
+  const actions=document.querySelector<HTMLElement>('.app-dialog .form-actions .button-row');
+  if(!actions||actions.querySelector('.save-document-draft'))return;
+  const button=document.createElement('button');button.type='button';button.className='btn secondary save-document-draft';button.textContent='Enregistrer le brouillon';
+  button.addEventListener('click',()=>{void run(async()=>{if(!edit.client_id)throw new Error('Sélectionnez le client avant d’enregistrer le brouillon.');const saved=await save(edit.kind,{...edit.data,status:'Brouillon'},edit.record,edit.client_id,edit.project_id);clearDraft();setEdit(null);setSelected(saved.id);notify('Brouillon enregistré. Vous pourrez le reprendre à tout moment.');})});
+  actions.prepend(button);return()=>button.remove();
+ },[edit,records]);
  async function run(fn:()=>Promise<any>){setBusy(true);setError('');try{await fn()}catch(e){setError((e as Error).message);notify((e as Error).message)}finally{setBusy(false)}}
  async function status(r:RecordItem,s:string){await run(async()=>{await save(r.kind,{...r.data,status:s},r)})}
  async function pdf(r:RecordItem){if(demo){const {makePdf}=await import('@/lib/pdf');const bytes=await makePdf('DÉMONSTRATION — '+(r.kind==='quote'?'Soumission':r.kind==='visit'?'Visite':'Facture'),r.data,records.find(x=>x.id===r.client_id)?.data,settings);download(new Blob([new Uint8Array(bytes)],{type:'application/pdf'}),`${r.data.number||'visite'}-demo.pdf`);return;}window.open(`/api/pdf?id=${r.id}`,'_blank','noopener')}
