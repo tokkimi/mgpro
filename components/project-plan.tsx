@@ -45,6 +45,19 @@ export default function ProjectPlan({record,visits,documents,email,demo,userId,o
  useEffect(()=>{let cancelled=false;if(demo){setFinance(emptyFinance);setProjectRows([]);return}void fetch('/api/records').then(response=>response.ok?response.json():null).then(result=>{if(!cancelled&&Array.isArray(result?.records)){setFinance(financeFor(record.id,result.records));setProjectRows(result.records.filter((row:RecordItem)=>row.project_id===record.id))}}).catch(()=>{});return()=>{cancelled=true}},[demo,record.id,record.updated_at]);
 
  useEffect(()=>{
+  const anchor=document.getElementById('project-plans');if(!anchor)return;
+  const tabs=[['overview','Sommaire'],['files','Communications & fichiers'],['changes','Soumissions & changements'],['contracts','Contrat'],['pilotage','Budget · dépenses · POs'],['agenda','Échéancier'],['tasks','Tâches'],['phases','Phases'],['journal','Feuille de temps & journal']] as const;
+  const areas:Record<string,string[]>={overview:['.project-finance-summary','.project-entry-grid','.project-top-actions'],pilotage:['.project-plan-panel'],journal:['.project-plan-panel'],phases:['.project-phases'],tasks:['.project-workboard'],agenda:['.project-workboard'],contracts:['.project-workboard'],changes:['.project-workboard'],files:['.project-plan-panel','.detail-grid']};
+  const nodes=Array.from(new Set(Object.values(areas).flatMap(selectors=>selectors.flatMap(selector=>Array.from(document.querySelectorAll<HTMLElement>(selector))))));
+  const nav=document.createElement('nav');nav.className='project-mini-tabs';nav.setAttribute('aria-label','Sections du projet');
+  const buttons=tabs.map(([key,label])=>{const button=document.createElement('button');button.type='button';button.textContent=label;button.dataset.tab=key;button.setAttribute('role','tab');nav.append(button);return button});
+  const select=(key:string)=>{nodes.forEach(node=>node.classList.add('project-tab-hidden'));const workboard=document.querySelector<HTMLElement>('.project-workboard');const workSections=Array.from(document.querySelectorAll<HTMLElement>('.project-workboard-grid>section'));const workRows=Array.from(document.querySelectorAll<HTMLElement>('.project-workboard-grid>section:nth-child(3) .client-action-row'));workSections.forEach(section=>section.classList.remove('project-subtab-hidden'));workRows.forEach(row=>row.classList.remove('project-subtab-hidden'));(areas[key]||[]).forEach(selector=>document.querySelectorAll<HTMLElement>(selector).forEach(node=>node.classList.remove('project-tab-hidden')));if(workboard&&['tasks','agenda','contracts','changes'].includes(key)){const index=key==='tasks'?0:key==='agenda'?1:2;workSections.forEach((section,i)=>section.classList.toggle('project-subtab-hidden',i!==index));if(key==='contracts')workRows.forEach(row=>row.classList.toggle('project-subtab-hidden',row.textContent?.includes('Ordre de changement')||false));if(key==='changes')workRows.forEach(row=>row.classList.toggle('project-subtab-hidden',!row.textContent?.includes('Ordre de changement')));}buttons.forEach(button=>{const active=button.dataset.tab===key;button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));});};
+  buttons.forEach(button=>button.addEventListener('click',()=>select(button.dataset.tab||'overview')));
+  anchor.prepend(nav);select('overview');
+  return()=>{nav.remove();nodes.forEach(node=>node.classList.remove('project-tab-hidden'));};
+ },[record.id]);
+
+ useEffect(()=>{
   if(!changed||!plan||demo)return;
   const timer=window.setTimeout(async()=>{
    setBusy(true);
