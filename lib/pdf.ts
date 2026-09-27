@@ -28,7 +28,7 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
  page.drawRectangle({x:0,y:H-6,width:W,height:6,color:GOLD});
  draw(settings.name||defaults.name,L,20,{f:bold});
  const num=data.number||'';
- const isInvoice=/facture/i.test(title),isQuote=/soumission|devis/i.test(title);
+ const isInvoice=/facture/i.test(title),isQuote=/soumission|devis/i.test(title),isContract=/contrat/i.test(title);
  right(title,R,17,{f:bold,color:FOREST});y-=15;
  draw(settings.address||'',L,9,{color:MUTED});right(isInvoice?`Facture ${num?'# '+num:''}`:num,R,10,{color:INK});y-=13;
  draw(`${settings.phone||''}  •  ${settings.email||''}`,L,9,{color:MUTED});right(`${isInvoice?'Date de facturation':'Date'} : ${clean(data.date||new Date().toISOString().slice(0,10))}`,R,9,{color:MUTED});y-=13;
@@ -45,8 +45,11 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
  if(client.billing_address){draw('ADRESSE DE FACTURATION',colR,8,{f:bold,color:GOLD});y-=15;para(String(client.billing_address),colR,9.5,R-colR,{color:MUTED,gap:4});}
  y=Math.min(leftEnd,y)-16;
 
+
+
+ const t=totals(data);const qtyX=405,puX=478,amtX=R;
+ if(!isContract){
  // ---- Cost summary box (quotes/invoices) ----
- const t=totals(data);
  const summary:[string,string][]=[['Sous-total',money(t.subtotal)]];
  if(t.discount>0)summary.push(['Remise',`- ${money(t.discount)}`]);
  summary.push([`TPS (${data.tps??5} %)`,money(t.tps)],[`TVQ (${data.tvq??9.975} %)`,money(t.tvq)]);
@@ -58,7 +61,6 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
  draw('Total',L+16,13,{f:bold,color:FOREST});right(money(t.total),R-16,14,{f:bold,color:FOREST});y-=30;
 
  // ---- Line items table ----
- const qtyX=405,puX=478,amtX=R;
  const header=()=>{ensure(30);page.drawRectangle({x:L,y:y-8,width:R-L,height:22,color:FOREST});const ty=y;const wl=(s:string,x:number,r=false)=>page.drawText(s,{x:r?x-width(s,8.5,bold):x,y:ty,size:8.5,font:bold,color:rgb(1,1,1)});wl('Description',L+10);wl('Qté',qtyX,true);wl('Coût unit.',puX,true);wl('Montant',amtX-10,true);y-=24;};
  header();
  let lastSection='';
@@ -78,6 +80,7 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
  }
  y-=6;right(`Total : ${money(t.total)}`,R,13,{f:bold,color:FOREST});y-=26;
 
+ }
  // ---- Payment schedule + validity (quotes) ----
  if(isQuote){
   const schedule=Array.isArray(data.payment_schedule)&&data.payment_schedule.length?data.payment_schedule:defaultPaymentSchedule;
