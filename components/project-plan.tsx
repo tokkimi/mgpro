@@ -1,10 +1,11 @@
 'use client';
 
 import {useEffect,useRef,useState} from 'react';
-import {fromRooms,planSchema,type Plan} from '@/lib/plan';
+import {extensionTemplate,fromRooms,planSchema,type Plan} from '@/lib/plan';
 import type {RecordItem,Data} from '@/lib/model';
 import PlanEditor from './plan-editor';
 import PlanInvitations from './plan-invitations';
+import ProjectOperations from './project-operations';
 
 type Props={
  record:RecordItem;visits:RecordItem[];documents:RecordItem[];email:string;
@@ -123,10 +124,11 @@ export default function ProjectPlan({record,visits,documents,email,demo,userId,o
    {pdfs.length>0&&<div className="plan-document-list">{pdfs.map(document=><div className="plan-document" key={document.id}><a href={`/api/documents?id=${document.id}`} target="_blank" rel="noreferrer">PDF · {document.data.name}</a><button type="button" className="plan-document-delete" disabled={busy} onClick={()=>removePdf(document)} aria-label={`Supprimer ${document.data.name}`}>Supprimer</button></div>)}</div>}
    <p className="muted">Le PDF sert de référence : il n’est pas converti automatiquement en géométrie. Le plan 2D reste modifiable pièce par pièce avant la prévisualisation 3D.</p>
    {recovery&&<button className="btn secondary" onClick={()=>{setPlan(recovery);setSaved(false);setChanged(true);setRecovery(null);setOpen(true)}}>Reprendre les modifications non enregistrées</button>}
-   {!plan&&<div className="button-row"><button className="btn primary" onClick={()=>{change(starterPlan());setOpen(true)}}>Créer le plan 2D</button>{visitPlans.map(visit=><button className="btn secondary" key={visit.id} onClick={()=>{change(structuredClone(visit.data.plan));setOpen(true)}}>Reprendre le plan : {visit.data.title}</button>)}</div>}
-   {plan&&!usablePlan&&<div className="notice"><b>Ce plan n’a pas de mesures utilisables.</b><p>Il faut au moins une pièce avec longueur, largeur et hauteur. Créez une base propre puis adaptez les cotes à partir du PDF.</p><button className="btn primary" disabled={busy} onClick={()=>{change(starterPlan());setOpen(true)}}>Réinitialiser avec une pièce mesurée</button><button className="btn danger-outline" disabled={busy} onClick={resetPlan}>Supprimer ce plan</button></div>}
-   {plan&&usablePlan&&<><div className="button-row"><button className="btn primary" onClick={()=>setOpen(value=>!value)}>{open?'Fermer la visualisation':plan.validated?'Visualiser en 3D':'Ouvrir le plan 2D'}</button><button className="btn secondary" disabled={busy} onClick={persist}>Enregistrer maintenant</button><button className="btn danger-outline" disabled={busy} onClick={resetPlan}>Supprimer le plan 2D/3D</button></div>{open&&<PlanEditor value={plan} onChange={change} initialView="design"/>}{saved&&plan.validated&&<PlanInvitations id={record.id} email={email} demo={demo}/>}</>}
+   {!plan&&<div className="button-row"><button className="btn primary" onClick={()=>{change(starterPlan());setOpen(true)}}>Créer le plan 2D</button>{pdfs.length>0&&<button className="btn secondary" onClick={()=>{change(extensionTemplate());setOpen(true)}}>Créer un relevé maison / agrandissement</button>}{visitPlans.map(visit=><button className="btn secondary" key={visit.id} onClick={()=>{change(structuredClone(visit.data.plan));setOpen(true)}}>Reprendre le plan : {visit.data.title}</button>)}</div>}
+   {plan&&!usablePlan&&<div className="notice"><b>Ce plan n’a pas de mesures utilisables.</b><p>Il faut au moins une pièce avec longueur, largeur et hauteur. Créez une base propre puis adaptez les cotes à partir du PDF.</p><button className="btn primary" disabled={busy} onClick={()=>{change(starterPlan());setOpen(true)}}>Réinitialiser avec une pièce mesurée</button><button className="btn secondary" disabled={busy} onClick={()=>{change(extensionTemplate());setOpen(true)}}>Créer le relevé maison / agrandissement</button><button className="btn danger-outline" disabled={busy} onClick={resetPlan}>Supprimer ce plan</button></div>}
+   {plan&&usablePlan&&<><div className="button-row"><button className="btn primary" onClick={()=>setOpen(value=>!value)}>{open?'Fermer la visualisation':plan.validated?'Visualiser en 3D':'Ouvrir le plan 2D'}</button><button className="btn secondary" disabled={busy} onClick={persist}>Enregistrer maintenant</button><button className="btn danger-outline" disabled={busy} onClick={resetPlan}>Supprimer le plan 2D/3D</button></div>{open&&<PlanEditor value={plan} onChange={change} initialView="design" references={pdfs.map(document=>({id:document.id,name:document.data.name,href:`/api/documents?id=${document.id}`}))}/>} {saved&&plan.validated&&<PlanInvitations id={record.id} email={email} demo={demo}/>}</>}
    {message&&<p role="status">{message}</p>}
   </div>
+  <ProjectOperations record={record} demo={demo} onSave={onSave}/>
  </section>;
 }
