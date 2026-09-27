@@ -4,7 +4,7 @@ export type BudgetLine={id:string;name:string;budget:number;actual:number};
 export type PurchaseOrder={id:string;supplier:string;title:string;amount:number;neededBy:string;status:'Brouillon'|'Envoyé'|'Reçu'|'Annulé'};
 export type ChangeOrder={id:string;title:string;amount:number;days:number;status:'Brouillon'|'À approuver'|'Approuvée'|'Refusée'};
 export type DailyLog={id:string;date:string;summary:string;blockers:string};
-export type Timesheet={id:string;date:string;person:string;hours:number};
+export type Timesheet={id:string;date:string;person:string;hours:number;hourlyRate:number;status:'Brouillon'|'Soumise'|'Approuvée'};
 export type ProjectOperations={budget:BudgetLine[];purchaseOrders:PurchaseOrder[];changeOrders:ChangeOrder[];dailyLogs:DailyLog[];timesheets:Timesheet[]};
 
 export const emptyOperations=():ProjectOperations=>({budget:[],purchaseOrders:[],changeOrders:[],dailyLogs:[],timesheets:[]});
@@ -16,7 +16,7 @@ export function operationsFrom(value:unknown):ProjectOperations{
   purchaseOrders:Array.isArray(source.purchaseOrders)?source.purchaseOrders.map(order=>({id:String(order.id),supplier:String(order.supplier||''),title:String(order.title||''),amount:num(order.amount),neededBy:String(order.neededBy||''),status:['Brouillon','Envoyé','Reçu','Annulé'].includes(String(order.status))?order.status as PurchaseOrder['status']:'Brouillon'})):[],
   changeOrders:Array.isArray(source.changeOrders)?source.changeOrders.map(change=>({id:String(change.id),title:String(change.title||''),amount:num(change.amount),days:num(change.days),status:['Brouillon','À approuver','Approuvée','Refusée'].includes(String(change.status))?change.status as ChangeOrder['status']:'Brouillon'})):[],
   dailyLogs:Array.isArray(source.dailyLogs)?source.dailyLogs.map(log=>({id:String(log.id),date:String(log.date||''),summary:String(log.summary||''),blockers:String(log.blockers||'')})):[],
-  timesheets:Array.isArray(source.timesheets)?source.timesheets.map(sheet=>({id:String(sheet.id),date:String(sheet.date||''),person:String(sheet.person||''),hours:num(sheet.hours)})):[]
+  timesheets:Array.isArray(source.timesheets)?source.timesheets.map(sheet=>({id:String(sheet.id),date:String(sheet.date||''),person:String(sheet.person||''),hours:num(sheet.hours),hourlyRate:num(sheet.hourlyRate),status:['Brouillon','Soumise','Approuvée'].includes(String(sheet.status))?sheet.status as Timesheet['status']:'Brouillon'})):[]
  };
 }
 export function operationTotals(value:ProjectOperations){

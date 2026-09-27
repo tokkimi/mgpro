@@ -2,7 +2,7 @@
 
 import {useEffect,useRef,useState} from 'react';
 import {extensionTemplate,fromRooms,planSchema,type Plan} from '@/lib/plan';
-import type {RecordItem,Data} from '@/lib/model';
+import {money,totals,type RecordItem,type Data} from '@/lib/model';
 import PlanEditor from './plan-editor';
 import PlanInvitations from './plan-invitations';
 import ProjectOperations from './project-operations';
@@ -11,6 +11,9 @@ type Props={
  record:RecordItem;visits:RecordItem[];documents:RecordItem[];email:string;
  demo:boolean;userId:string;onSave:(data:Data)=>Promise<RecordItem>;onUpload:(file:File)=>Promise<void>
 };
+type Finance={contractValue:number;invoiced:number;paid:number;debit:number;balance:number};
+const emptyFinance:Finance={contractValue:0,invoiced:0,paid:0,debit:0,balance:0};
+function financeFor(projectId:string,rows:RecordItem[]):Finance{const related=rows.filter(row=>row.project_id===projectId),contracts=related.filter(row=>row.kind==='contract'&&row.data.status==='Signé'),quotes=related.filter(row=>row.kind==='quote'&&row.data.status==='Accepté'),linkedQuoteIds=new Set(contracts.map(contract=>String(contract.data.quote_id||'')).filter(Boolean));const contractValue=contracts.reduce((sum,contract)=>sum+(Number(contract.data.amount)||totals(contract.data).total),0)+quotes.filter(quote=>!linkedQuoteIds.has(quote.id)).reduce((sum,quote)=>sum+totals(quote.data).total,0);const invoices=related.filter(row=>row.kind==='invoice'&&!['Brouillon','Annulée'].includes(String(row.data.status)));const invoiced=invoices.reduce((sum,invoice)=>sum+totals(invoice.data).total,0),paid=invoices.reduce((sum,invoice)=>sum+Number(invoice.data.paid||0),0);return {contractValue,invoiced,paid,debit:Math.max(0,invoiced-paid),balance:Math.max(0,contractValue-invoiced)}}
 
 export default function ProjectPlan({record,visits,documents,email,demo,userId,onSave,onUpload}:Props){
  const [plan,setPlan]=useState<Plan|null>(record.data.plan||null);
@@ -21,6 +24,7 @@ export default function ProjectPlan({record,visits,documents,email,demo,userId,o
  const [recovery,setRecovery]=useState<Plan|null>(null);
  const [saved,setSaved]=useState(!!record.data.plan);
  const [changed,setChanged]=useState(false);
+ const [finance,setFinance]=useState<Finance>(emptyFinance);
  const key=`mgpro-project-plan-${userId}-${record.id}`;
  const saveRef=useRef(onSave);
  const recordDataRef=useRef(record.data);
@@ -36,6 +40,8 @@ export default function ProjectPlan({record,visits,documents,email,demo,userId,o
    if(planSchema.safeParse(candidate).success)setRecovery(candidate);
   }catch{}
  },[key]);
+
+ useEffect(()=>{let cancelled=false;if(demo){setFinance(emptyFinance);return}void fetch('/api/records').then(response=>response.ok?response.json():null).then(result=>{if(!cancelled&&Array.isArray(result?.records))setFinance(financeFor(record.id,result.records))}).catch(()=>{});return()=>{cancelled=true}},[demo,record.id,record.updated_at]);
 
  useEffect(()=>{
   if(!changed||!plan||demo)return;
@@ -116,7 +122,7 @@ export default function ProjectPlan({record,visits,documents,email,demo,userId,o
  const pdfs=documents.filter(document=>document.data.mime==='application/pdf'&&!removedDocuments.includes(document.id));
  const visitPlans=visits.filter(visit=>visit.data.plan);
  const usablePlan=!!plan&&planSchema.safeParse(plan).success;
- return <section className="panel project-plan-panel">
+ return <><section className="project-finance-summary" aria-label="Suivi financier du projet"><article className="finance-value"><span>Valeur du contrat</span><strong>{money(finance.contractValue)}</strong><small>Signé et accepté</small></article><article className="finance-invoiced"><span>Facturé à ce jour</span><strong>{money(finance.invoiced)}</strong><small>Factures émises</small></article><article className="finance-paid"><span>Payé à ce jour</span><strong>{money(finance.paid)}</strong><small>Paiements reçus</small></article><article className="finance-debit"><span>Compte débiteur</span><strong>{money(finance.debit)}</strong><small>À encaisser</small></article><article className="finance-balance"><span>Solde du contrat</span><strong>{money(finance.balance)}</strong><small>Reste à facturer</small></article></section><section className="panel project-plan-panel">
   <div className="panel-title"><div><p className="eyebrow">PLANS DU DOSSIER</p><h2>Plans 2D & 3D</h2></div>{saved&&<span className="saved-indicator">Enregistré</span>}</div>
   <div className="detail-body">
    <p>Le plan reste relié au projet, même après la visite. Ajoutez le PDF de référence, reprenez les pièces et ouvrez la visualisation 3D quand vous le souhaitez.</p>
@@ -130,5 +136,5 @@ export default function ProjectPlan({record,visits,documents,email,demo,userId,o
    {message&&<p role="status">{message}</p>}
   </div>
   <ProjectOperations record={record} demo={demo} onSave={onSave}/>
- </section>;
+ </section></>;
 }
