@@ -47,18 +47,24 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
 
 
 
- const t=totals(data);const qtyX=405,puX=478,amtX=R;
+ const t=totals(data);
+ const showPrice=view.unitPrices===true||isInvoice;
+ const amountWidth=Math.max(92,...(data.lines||[]).map((line:Data)=>width(clean(money(Number(line.quantity)*Number(line.price)*(1+Number(line.margin||0)/100))),10,bold)+24),width(clean(money(t.total)),10)+24);
+ const priceWidth=showPrice?Math.max(86,...(data.lines||[]).map((line:Data)=>width(clean(money(Number(line.price))),9.5)+22)):0;
+ const qtyX=R-amountWidth-priceWidth-12,puX=R-amountWidth-12,amtX=R;
+ const descriptionWidth=Math.max(100,qtyX-L-90);
+ const fitRight=(value:string,x:number,maxWidth:number,size:number,options:{f?:PDFFont;color?:any}={})=>right(value,x,Math.min(size,maxWidth/Math.max(1,width(clean(value),size,options.f||font))*size),options);
  if(!isContract||(isAgreement&&Array.isArray(data.lines)&&data.lines.length>0)){
  // ---- Cost summary box (quotes/invoices) ----
  const summary:[string,string][]=[['Sous-total',money(t.subtotal+Number('markup' in t?t.markup:0))]];
  if(t.discount>0)summary.push(['Remise',`- ${money(t.discount)}`]);
  summary.push([`TPS (${data.tps??5} %)`,money(t.tps)],[`TVQ (${data.tvq??9.975} %)`,money(t.tvq)]);
- const boxH=26+summary.length*15+30;ensure(boxH+10);
+ const boxH=40+summary.length*18+48;ensure(boxH+20);const boxBottom=y-boxH;
  page.drawRectangle({x:L,y:y-boxH,width:R-L,height:boxH,color:SOFT,borderColor:LINE,borderWidth:1});
  y-=20;draw('Résumé des coûts',L+16,11,{f:bold,color:FOREST});y-=18;
- for(const [k,v] of summary){draw(k,L+16,10,{color:MUTED});right(v,R-16,10);y-=15;}
- page.drawLine({start:{x:L+16,y:y+4},end:{x:R-16,y:y+4},thickness:1,color:LINE});y-=4;
- draw('Total',L+16,13,{f:bold,color:FOREST});right(money(t.total),R-16,14,{f:bold,color:FOREST});y-=30;
+ for(const [k,v] of summary){draw(k,L+16,10,{color:MUTED});right(v,R-16,10);y-=18;}
+ page.drawLine({start:{x:L+16,y:y+2},end:{x:R-16,y:y+2},thickness:1,color:LINE});y-=22;
+ draw('Total',L+16,13,{f:bold,color:FOREST});right(money(t.total),R-16,14,{f:bold,color:FOREST});y=boxBottom-26;
 
  // ---- Line items table ----
  const header=()=>{ensure(30);page.drawRectangle({x:L,y:y-8,width:R-L,height:22,color:FOREST});const ty=y;const wl=(s:string,x:number,r=false)=>page.drawText(s,{x:r?x-width(s,8.5,bold):x,y:ty,size:8.5,font:bold,color:rgb(1,1,1)});wl('Description',L+10);if(view.quantities!==false)wl('Qté',qtyX,true);if(view.unitPrices===true||isInvoice)wl('Prix unit.',puX,true);wl('Montant',amtX-10,true);y-=24;};
@@ -66,16 +72,16 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
  let lastSection='';
  for(const l of (data.lines||[])){
   if(l.section&&l.section!==lastSection){lastSection=l.section;ensure(24);draw(String(l.section),L+2,10.5,{f:bold,color:GOLD});y-=18;}
-  const descLines=wrap(l.description||'',10,qtyX-L-70,bold);
+  const descLines=wrap(l.description||'',10,descriptionWidth,bold);
   ensure(descLines.length*14+18);
   // description (first line bold, rest normal muted)
   draw(descLines[0]||'',L+10,10,{f:bold});
-  if(view.quantities!==false)right(`${clean(String(l.quantity))} ${clean(l.unit||'')}`,qtyX,9.5,{color:MUTED});
+  if(view.quantities!==false)fitRight(`${clean(String(l.quantity))} ${clean(l.unit||'')}`,qtyX,75,9.5,{color:MUTED});
   if(view.unitPrices===true||isInvoice)right(money(Number(l.price)),puX,9.5,{color:MUTED});
   right(money(Number(l.quantity)*Number(l.price)*(1+Number(l.margin||0)/100)),amtX-10,10,{f:bold});
   y-=14;
   for(const dl of descLines.slice(1)){ensure(14);draw(dl,L+10,9.5,{color:MUTED});y-=13;}
-  if(l.notes){for(const nl of wrap(l.notes,9,qtyX-L-70)){ensure(13);draw(nl,L+14,9,{color:MUTED});y-=12;}}
+  if(l.notes){for(const nl of wrap(l.notes,9,descriptionWidth)){ensure(13);draw(nl,L+14,9,{color:MUTED});y-=12;}}
   page.drawLine({start:{x:L,y:y-2},end:{x:R,y:y-2},thickness:.5,color:LINE});y-=12;
  }
  y-=6;right(`Total : ${money(t.total)}`,R,13,{f:bold,color:FOREST});y-=26;
@@ -86,7 +92,7 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
   const schedule=Array.isArray(data.payment_schedule)&&data.payment_schedule.length?data.payment_schedule:defaultPaymentSchedule;
   const rows=paymentRows(t.total,schedule);
   if(rows.length){ensure(30+rows.length*15);draw('Échéancier de paiement',L,11,{f:bold,color:FOREST});y-=18;
-   for(const r of rows){draw(r.label,L+10,10,{color:MUTED});right(`${r.percent} %`,puX,10,{color:MUTED});right(money(r.amount),amtX-10,10);y-=15;}y-=8;}
+   for(const r of rows){const labels=wrap(r.label,10,puX-L-70);ensure(Math.max(20,labels.length*14+8));labels.forEach((label,index)=>page.drawText(label,{x:L+10,y:y-index*14,size:10,font,color:MUTED}));right(`${r.percent} %`,puX,10,{color:MUTED});right(money(r.amount),amtX-10,10);y-=Math.max(20,labels.length*14+8);}y-=12;}
   const validity=isQuote?(data.validity||settings.validity||defaults.validity):null;
   if(validity){ensure(20);draw(`Validité : ${validity}`,L,10,{f:bold,color:MUTED});y-=20;}
  }

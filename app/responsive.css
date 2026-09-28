@@ -166,3 +166,90 @@
 .project-sharing .sharing-access{margin-top:14px}
 .financial-overview>header .financial-filters{display:grid;grid-template-columns:90px minmax(120px,1fr) minmax(120px,1fr)}
 @media(max-width:640px){.financial-overview>header .financial-filters{grid-template-columns:1fr}.project-sharing{padding:12px}}
+
+/* Let every filter stay inside its own grid column. */
+.financial-overview>header .financial-filters{gap:14px;min-width:0;flex:1}
+.financial-overview>header .financial-filters label{min-width:0}
+.financial-overview>header .financial-filters select{box-sizing:border-box;width:100%;min-width:0;max-width:none}
+.client-projects-overview{margin:18px 20px 24px}
+.client-projects-overview>.hub-title{padding:0 0 16px;border-bottom:0;gap:12px;flex-wrap:wrap}
+.client-project-list{display:grid;gap:18px}
+.client-project-list .client-project-stack+.client-project-stack{margin-top:0}
+.client-profile-assets{grid-template-columns:1fr;padding:0 20px 24px;background:transparent}
+.client-profile-assets .asset-notes{grid-column:auto}
+.client-hub-nav{margin:0 20px 18px;border:1px solid #dfe6d9;border-radius:12px;overflow:hidden;grid-template-columns:repeat(3,minmax(0,1fr))}
+.agenda-day-count,.agenda-mobile-day,.agenda-mobile-planning{display:none}
+.dashboard4-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;--chart-1:oklch(.32 0 0);--chart-2:oklch(.88 0 0);--chart-3:oklch(.55 0 0);--chart-4:oklch(.15 0 0);--chart-5:oklch(.72 0 0)}
+.dashboard4-card{min-width:0;box-sizing:border-box;padding:18px;border:1px solid rgba(214,223,208,.85);border-radius:16px;background:rgba(255,255,255,.63);box-shadow:0 5px 18px #35452c08;backdrop-filter:blur(16px)}
+.dashboard4-card>header{display:flex;justify-content:space-between;gap:12px;margin-bottom:18px}
+.dashboard4-card h3{margin:0;font-size:14px;font-weight:600;color:#2e372d}
+.dashboard4-card p{margin:5px 0 0;font-size:11px;color:#7c8778}
+.dashboard4-stat header{align-items:center;color:#7c8578;font-size:12px}
+.dashboard4-stat>strong{display:block;font-size:clamp(17px,1.65vw,24px);font-weight:650;letter-spacing:-.6px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.dashboard4-stat>small{display:block;margin-top:6px;color:#879081;font-size:10px}
+.dashboard4-revenue{grid-column:span 2}
+.dashboard4-chart{height:220px;width:100%;min-width:0}
+.dashboard4-legend{display:flex;gap:10px;font-size:10px;color:#747d70;align-items:flex-start}
+.dashboard4-legend span{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.dashboard4-legend span:before{content:'';width:13px;border-top:2px solid #303530}
+.dashboard4-legend span+span:before{border-top:2px dashed #8b9388}
+.dashboard4-ring{position:relative;height:185px}
+.dashboard4-ring>strong{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;font-size:27px;font-weight:600}
+.dashboard4-ring small{display:block;margin-top:4px;font-size:11px;font-weight:400;color:#7e8979}
+.dashboard4-collection>footer{display:flex;justify-content:space-between;gap:10px;border-top:1px solid #e2e8df;padding-top:12px;font-size:10px;color:#7a8475}
+.dashboard4-collection>footer b{font-size:12px;color:#354132;overflow-wrap:anywhere}
+.dashboard4-empty{min-height:190px;display:grid;place-items:center;text-align:center;line-height:1.7}
+.dashboard4-actions{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.dashboard4-actions>div{display:flex;align-items:center;gap:12px}
+.dashboard4-actions strong{display:block;font-size:13px;font-weight:600}
+.dashboard4-actions small{display:block;margin-top:4px;color:#7d8776;font-size:11px}
+.financial-export .financial-filters label{min-width:0;flex:1 1 150px}
+.financial-export .financial-filters input,.financial-export .financial-filters select{width:100%;max-width:none;box-sizing:border-box;min-width:0}
+@media(max-width:1100px){.dashboard4-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard4-revenue{grid-column:1/-1}.dashboard4-stat>strong{font-size:23px}}
+@media(max-width:680px){.dashboard4-grid{gap:12px}.dashboard4-card{padding:14px}.dashboard4-stat>strong{font-size:19px}.dashboard4-stat>small{font-size:10px}.dashboard4-revenue,.dashboard4-collection,.dashboard4-categories{grid-column:1/-1}.dashboard4-revenue>header{flex-direction:column;gap:10px}.dashboard4-chart{height:210px}.dashboard4-actions{align-items:flex-start;flex-direction:column}.dashboard4-actions .btn{width:100%;justify-content:center}.financial-export .financial-filters{display:grid;grid-template-columns:1fr}.financial-export form{display:grid;grid-template-columns:1fr}.financial-export form input{width:100%;box-sizing:border-box}.financial-export .btn{white-space:normal}}
+@media(max-width:680px){
+ .agenda-board-layout,.agenda-board-content,.agenda-board-toolbar,.agenda-calendar{min-width:0;max-width:100%;box-sizing:border-box}
+ .agenda-board-toolbar{display:grid;gap:12px}
+ .agenda-view-switch{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;min-width:0}
+ .agenda-view-switch button{justify-content:center;padding:10px 4px;font-size:12px;min-width:0}
+ .agenda-options{margin:0;min-width:0}
+ .agenda-options label{min-width:0;white-space:normal;font-size:10px}
+ .agenda-navigation{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+ .agenda-navigation .btn{padding:9px 10px;font-size:11px;min-height:40px}
+ .agenda-navigation .icon-button{min-width:34px;width:34px;min-height:40px}
+ .mode-month{display:flex;flex-direction:column}
+ .agenda-weekdays{order:0;grid-template-columns:repeat(7,minmax(0,1fr))}
+ .agenda-grid{order:1;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;min-width:0}
+ .agenda-day{min-width:0;min-height:58px;padding:5px 2px;display:flex;flex-direction:column;align-items:center;gap:3px}
+ .agenda-day time{width:27px;height:27px;min-height:27px;font-size:12px}
+ .agenda-day.selected{background:rgba(229,235,249,.8);outline:1px solid #b9c3e3;outline-offset:-1px}
+ .agenda-day .agenda-event,.agenda-day .agenda-more{display:none}
+ .agenda-day-count{display:block;padding:1px 6px;border-radius:999px;background:#e3ebdf;color:#4a654c;font-size:10px;line-height:16px}
+ .agenda-mobile-day{display:block;order:2;margin-top:16px;border-top:1px solid #dfe7dc;padding-top:14px}
+ .agenda-mobile-day>header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+ .agenda-mobile-day h3{font-size:13px;margin:0;text-transform:capitalize}
+ .agenda-mobile-day .btn{padding:8px;font-size:11px;min-height:40px}
+ .agenda-mobile-day>p,.agenda-mobile-planning>p{font-size:12px;color:#778675;padding:8px}
+ .agenda-mobile-event{display:grid;gap:5px;width:100%;box-sizing:border-box;margin:8px 0;padding:13px;border:1px solid #dfe7db;border-left:3px solid var(--event-color);border-radius:12px;background:rgba(255,255,255,.65);text-align:left;overflow-wrap:anywhere}
+ .agenda-mobile-event time,.agenda-mobile-event small{font-size:11px;color:#73806f}
+ .agenda-mobile-event strong{font-size:13px;color:#314332}
+ .agenda-mobile-event span{font-size:11px;color:#73806f}
+ .agenda-week-view{grid-template-columns:minmax(0,1fr);gap:12px;overflow:visible;min-width:0}
+ .agenda-week-view>section{min-width:0;min-height:0;border:1px solid #dfe7dc;border-radius:12px;overflow:hidden}
+ .agenda-week-event b,.agenda-week-event span{white-space:normal;overflow-wrap:anywhere}
+ .agenda-mobile-planning{display:block}
+ .agenda-planning-scroll{display:none}
+ .agenda-contact-rail{min-width:0}
+ .agenda-contact{width:100%;box-sizing:border-box}
+ .client-resource-popover{box-sizing:border-box;max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);overflow-y:auto}
+ .client-calendar-grid,.client-calendar-week{grid-template-columns:repeat(7,minmax(0,1fr));min-width:0;gap:2px}
+ .client-calendar-day{min-width:0;min-height:66px;padding:4px 2px}
+ .client-calendar-day .calendar-visit{width:100%;padding:3px 1px;font-size:9px;white-space:normal;overflow-wrap:anywhere}
+ .client-projects-overview{margin:16px 12px 22px}
+ .client-profile-assets{padding:0 12px 22px}
+ .client-hub-nav{margin:0 12px 16px;grid-template-columns:1fr}
+ .client-hub-nav button{border-right:0;border-bottom:1px solid #e5eadf;min-height:48px}
+ .client-hub-nav button:last-child{border-bottom:0}
+ .financial-overview>header{align-items:stretch;flex-direction:column}
+ .financial-overview>header .financial-filters{width:100%;grid-template-columns:1fr;gap:12px}
+}
