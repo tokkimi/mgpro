@@ -28,7 +28,7 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
  page.drawRectangle({x:0,y:H-6,width:W,height:6,color:GOLD});
  draw(settings.name||defaults.name,L,20,{f:bold});
  const num=data.number||'';
- const isInvoice=/facture/i.test(title),isQuote=/soumission|devis/i.test(title),isContract=/contrat|cahier des charges/i.test(title);
+ const isInvoice=/facture/i.test(title),isQuote=/soumission|devis|ordre de changement/i.test(title),isAgreement=/contrat/i.test(title),isContract=/contrat|cahier des charges/i.test(title),view=data.client_view||{};
  right(title,R,17,{f:bold,color:FOREST});y-=15;
  draw(settings.address||'',L,9,{color:MUTED});right(isInvoice?`Facture ${num?'# '+num:''}`:num,R,10,{color:INK});y-=13;
  draw(`${settings.phone||''}  •  ${settings.email||''}`,L,9,{color:MUTED});right(`${isInvoice?'Date de facturation':'Date'} : ${clean(data.date||new Date().toISOString().slice(0,10))}`,R,9,{color:MUTED});y-=13;
@@ -38,9 +38,9 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
 
  // ---- Client / billing ----
  const colR=310;const startY=y;
- draw('CLIENT',L,8,{f:bold,color:GOLD});y-=15;
+ if(view.client!==false){draw(isAgreement?'DESTINATAIRE':'CLIENT',L,8,{f:bold,color:GOLD});y-=15;
  if(client.name)draw(client.name,L,12,{f:bold});y-=15;
- for(const v of [client.email,client.phone,data.project_number?`Projet ${data.project_number}`:'',client.address].filter(Boolean)){para(String(v),L,9.5,colR-L-15,{color:MUTED,gap:4});}
+ for(const v of [client.email,client.phone,data.project_number?`Projet ${data.project_number}`:'',client.address].filter(Boolean)){para(String(v),L,9.5,colR-L-15,{color:MUTED,gap:4});}}
  const leftEnd=y;y=startY;
  if(client.billing_address){draw('ADRESSE DE FACTURATION',colR,8,{f:bold,color:GOLD});y-=15;para(String(client.billing_address),colR,9.5,R-colR,{color:MUTED,gap:4});}
  y=Math.min(leftEnd,y)-16;
@@ -48,9 +48,9 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
 
 
  const t=totals(data);const qtyX=405,puX=478,amtX=R;
- if(!isContract){
+ if(!isContract||(isAgreement&&Array.isArray(data.lines)&&data.lines.length>0)){
  // ---- Cost summary box (quotes/invoices) ----
- const summary:[string,string][]=[['Sous-total',money(t.subtotal)]];
+ const summary:[string,string][]=[['Sous-total',money(t.subtotal+Number('markup' in t?t.markup:0))]];
  if(t.discount>0)summary.push(['Remise',`- ${money(t.discount)}`]);
  summary.push([`TPS (${data.tps??5} %)`,money(t.tps)],[`TVQ (${data.tvq??9.975} %)`,money(t.tvq)]);
  const boxH=26+summary.length*15+30;ensure(boxH+10);
@@ -61,7 +61,7 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
  draw('Total',L+16,13,{f:bold,color:FOREST});right(money(t.total),R-16,14,{f:bold,color:FOREST});y-=30;
 
  // ---- Line items table ----
- const header=()=>{ensure(30);page.drawRectangle({x:L,y:y-8,width:R-L,height:22,color:FOREST});const ty=y;const wl=(s:string,x:number,r=false)=>page.drawText(s,{x:r?x-width(s,8.5,bold):x,y:ty,size:8.5,font:bold,color:rgb(1,1,1)});wl('Description',L+10);wl('Qté',qtyX,true);wl('Coût unit.',puX,true);wl('Montant',amtX-10,true);y-=24;};
+ const header=()=>{ensure(30);page.drawRectangle({x:L,y:y-8,width:R-L,height:22,color:FOREST});const ty=y;const wl=(s:string,x:number,r=false)=>page.drawText(s,{x:r?x-width(s,8.5,bold):x,y:ty,size:8.5,font:bold,color:rgb(1,1,1)});wl('Description',L+10);if(view.quantities!==false)wl('Qté',qtyX,true);if(view.unitPrices===true||isInvoice)wl('Prix unit.',puX,true);wl('Montant',amtX-10,true);y-=24;};
  header();
  let lastSection='';
  for(const l of (data.lines||[])){
@@ -70,9 +70,9 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
   ensure(descLines.length*14+18);
   // description (first line bold, rest normal muted)
   draw(descLines[0]||'',L+10,10,{f:bold});
-  right(`${clean(String(l.quantity))} ${clean(l.unit||'')}`,qtyX,9.5,{color:MUTED});
-  right(money(Number(l.price)),puX,9.5,{color:MUTED});
-  right(money(Number(l.quantity)*Number(l.price)),amtX-10,10,{f:bold});
+  if(view.quantities!==false)right(`${clean(String(l.quantity))} ${clean(l.unit||'')}`,qtyX,9.5,{color:MUTED});
+  if(view.unitPrices===true||isInvoice)right(money(Number(l.price)),puX,9.5,{color:MUTED});
+  right(money(Number(l.quantity)*Number(l.price)*(1+Number(l.margin||0)/100)),amtX-10,10,{f:bold});
   y-=14;
   for(const dl of descLines.slice(1)){ensure(14);draw(dl,L+10,9.5,{color:MUTED});y-=13;}
   if(l.notes){for(const nl of wrap(l.notes,9,qtyX-L-70)){ensure(13);draw(nl,L+14,9,{color:MUTED});y-=12;}}
@@ -82,12 +82,12 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
 
  }
  // ---- Payment schedule + validity (quotes) ----
- if(isQuote){
+ if((isQuote||isAgreement)&&view.payment!==false){
   const schedule=Array.isArray(data.payment_schedule)&&data.payment_schedule.length?data.payment_schedule:defaultPaymentSchedule;
   const rows=paymentRows(t.total,schedule);
   if(rows.length){ensure(30+rows.length*15);draw('Échéancier de paiement',L,11,{f:bold,color:FOREST});y-=18;
    for(const r of rows){draw(r.label,L+10,10,{color:MUTED});right(`${r.percent} %`,puX,10,{color:MUTED});right(money(r.amount),amtX-10,10);y-=15;}y-=8;}
-  const validity=data.validity||settings.validity||defaults.validity;
+  const validity=isQuote?(data.validity||settings.validity||defaults.validity):null;
   if(validity){ensure(20);draw(`Validité : ${validity}`,L,10,{f:bold,color:MUTED});y-=20;}
  }
 
@@ -97,9 +97,9 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
  if(Array.isArray(data.material_selection)&&data.material_selection.length){ensure(24);draw('Matériaux sélectionnés',L,11,{f:bold,color:FOREST});y-=17;for(const m of data.material_selection)para(`• ${m.surface||''} : ${m.name||''}${m.room?` (${m.room})`:''}`,L+6,9.5,R-L-6,{color:MUTED,gap:4});y-=6;}
 
  // ---- Free-text sections ----
- for(const [key,label] of [['context','Contexte et besoins'],['objectives','Objectifs et résultats attendus'],['scope','Travaux prévus'],['constraints','Contraintes et accès'],['deliverables','Livrables et critères de réception'],['materials','Matériaux et finitions'],['acceptance','Critères d’acceptation'],['notes','Notes'],['conditions','Conditions']] as [string,string][]) if(data[key]){ensure(26);draw(label,L,10.5,{f:bold,color:FOREST});y-=16;para(data[key],L,9.5,R-L,{color:MUTED,gap:5});y-=6;}
- const terms=data.terms||settings.terms;
- if(terms){ensure(26);draw('Termes et conditions',L,10.5,{f:bold,color:FOREST});y-=16;para(terms,L,8.5,R-L,{color:MUTED,gap:4});}
+ for(const [key,label] of [['context','Contexte et besoins'],['objectives','Objectifs et résultats attendus'],['scope','Travaux prévus'],['constraints','Contraintes et accès'],['deliverables','Livrables et critères de réception'],['materials','Matériaux et finitions'],['acceptance','Critères d’acceptation'],['exclusions','Exclusions'],['timeline','Déroulement et délais'],['warranty','Garanties et réception'],['start','Début prévu'],['end','Fin prévue'],['notes','Notes'],['conditions','Conditions']] as [string,string][]) if(data[key]&&!(isAgreement&&key==='notes')&&!(['timeline','start','end'].includes(key)&&view.timeline===false)){ensure(26);draw(label,L,10.5,{f:bold,color:FOREST});y-=16;para(data[key],L,9.5,R-L,{color:MUTED,gap:5});y-=6;}
+ const terms=isAgreement?data.terms:data.terms||settings.terms;
+ if(terms&&view.terms!==false){ensure(26);draw('Termes et conditions',L,10.5,{f:bold,color:FOREST});y-=16;para(terms,L,8.5,R-L,{color:MUTED,gap:4});}
 
  // Drawn signatures remain visible on the exported document.
  const signatures=isContract?(Array.isArray(data.signatures)?data.signatures:[]):data.signature_image?[{name:data.signature_name,image:data.signature_image,signed_at:data.signed_at,role:'client'}]:[];
@@ -111,7 +111,7 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
  }
 
  // ---- Photos ----
- for(const p of photos){try{const img=p.mime==='image/png'?await pdf.embedPng(p.bytes):p.mime==='image/jpeg'?await pdf.embedJpg(p.bytes):null;if(!img)continue;const dims=img.scaleToFit(R-L,300);ensure(dims.height+24);page.drawImage(img,{x:L,y:y-dims.height,width:dims.width,height:dims.height});y-=dims.height+6;para(p.caption||'',L,9,R-L,{color:MUTED});y-=10;}catch{para('Photo non intégrable au PDF. Consultez le dossier en ligne.',L,9,R-L,{color:MUTED});}}
+ if(view.attachments!==false)for(const p of photos){try{const img=p.mime==='image/png'?await pdf.embedPng(p.bytes):p.mime==='image/jpeg'?await pdf.embedJpg(p.bytes):null;if(!img)continue;const dims=img.scaleToFit(R-L,300);ensure(dims.height+24);page.drawImage(img,{x:L,y:y-dims.height,width:dims.width,height:dims.height});y-=dims.height+6;para(p.caption||'',L,9,R-L,{color:MUTED});y-=10;}catch{para('Photo non intégrable au PDF. Consultez le dossier en ligne.',L,9,R-L,{color:MUTED});}}
 
  return finish();
 

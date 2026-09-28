@@ -57,26 +57,8 @@ export default function ProjectPlan({record,visits,documents,projectRecords,emai
   const onOpenTab=(event:Event)=>{const key=(event as CustomEvent<string>).detail;if(areas[key])select(key)};
   window.addEventListener('mgpro:open-project-tab',onOpenTab);
   buttons.forEach(button=>button.addEventListener('click',()=>select(button.dataset.tab||'overview')));
-  const heading=document.querySelector<HTMLElement>('.page-heading .button-row');
-  const createMenu=document.createElement('details');createMenu.className='project-create-menu';createMenu.innerHTML='<summary>Créer <span>⌄</span></summary><div></div>';
-  const menuBody=createMenu.querySelector('div');
-  const projectTitle=String(record.data.title||'Projet');
-  const creations:{icon:string;label:string;kind?:Kind;prefill?:Data;upload?:boolean}[]=[
-   {icon:'➕',label:'Nouvelle phase',kind:'phase',prefill:{title:'Nouvelle phase'}},
-   {icon:'✅',label:'Nouvelle tâche',kind:'task',prefill:{title:'Nouvelle tâche'}},
-   {icon:'📍',label:'Nouveau relevé',kind:'visit',prefill:{title:'Relevé — '+projectTitle}},
-   {icon:'📄',label:'Nouvelle soumission',kind:'quote',prefill:{title:'Soumission — '+projectTitle}},
-   {icon:'🔄',label:'Ordre de changement',kind:'quote',prefill:{title:'Ordre de changement — '+projectTitle,document_type:'change_order',change_order:true}},
-   {icon:'✍️',label:'Nouveau contrat',kind:'contract',prefill:{title:'Contrat — '+projectTitle}},
-   {icon:'🧾',label:'Nouvelle facture',kind:'invoice',prefill:{title:'Facture — '+projectTitle}},
-   {icon:'💳',label:'Nouvelle dépense',kind:'expense',prefill:{title:'Dépense — '+projectTitle}},
-   {icon:'📋',label:'Cahier des charges',kind:'specification',prefill:{title:'Cahier des charges — '+projectTitle}},
-   {icon:'📷',label:'Photos / PDF',upload:true}
-  ];
-  creations.forEach(item=>{const button=document.createElement('button');button.type='button';button.textContent=`${item.icon} ${item.label}`;button.addEventListener('click',()=>{createMenu.removeAttribute('open');if(item.upload){document.querySelector<HTMLInputElement>('.detail-actions .upload-button input')?.click();return}window.dispatchEvent(new CustomEvent('mgpro:create-project-record',{detail:{kind:item.kind,clientId:record.client_id||null,projectId:record.id,prefill:item.prefill}}));});menuBody?.append(button);});
-  if(heading)heading.append(createMenu);
   anchor.prepend(nav);anchor.dataset.projectTab='overview';select('overview');
-  return()=>{window.removeEventListener('mgpro:open-project-tab',onOpenTab);nav.remove();createMenu.remove();nodes.forEach(node=>node.classList.remove('project-tab-hidden'));};
+  return()=>{window.removeEventListener('mgpro:open-project-tab',onOpenTab);nav.remove();nodes.forEach(node=>node.classList.remove('project-tab-hidden'));};
  },[record.id]);
 
  useEffect(()=>{
