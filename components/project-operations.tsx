@@ -7,12 +7,12 @@ import {money} from '@/lib/model';
 import {emptyOperations,operationsFrom,operationTotals,type ProjectOperations} from '@/lib/project-operations';
 
 type Tab='budget'|'orders'|'field';
-type Props={record:RecordItem;demo:boolean;onSave:(data:Data)=>Promise<RecordItem>};
+type Props={record:RecordItem;demo:boolean;onSave:(data:Data)=>Promise<RecordItem>;section?:Tab};
 const today=()=>new Date().toISOString().slice(0,10);
 const id=()=>crypto.randomUUID();
 
-export default function ProjectOperations({record,demo,onSave}:Props){
- const [tab,setTab]=useState<Tab>('budget');
+export default function ProjectOperations({record,demo,onSave,section='budget'}:Props){
+ const tab=section;
  const [operations,setOperations]=useState(()=>operationsFrom(record.data.operations));
  const [busy,setBusy]=useState(false);
  const [message,setMessage]=useState('');
@@ -33,25 +33,19 @@ export default function ProjectOperations({record,demo,onSave}:Props){
  }
  function replace<K extends keyof ProjectOperations>(key:K,rows:ProjectOperations[K]){void commit({...operations,[key]:rows});}
  return <section className="panel project-operations">
-  <div className="panel-title"><div><p className="eyebrow">COCKPIT DE CHANTIER</p><h2>Pilotage du projet</h2></div><span>{busy?'Enregistrement…':'Synchronisé'}</span></div>
+  <div className="panel-title"><div><p className="eyebrow">COCKPIT DE CHANTIER</p><h2>{tab==='budget'?'Budget du projet':tab==='orders'?'Achats et bons de commande':'Journal et feuilles de temps'}</h2></div><span>{busy?'Enregistrement…':'Synchronisé'}</span></div>
   <div className="operations-layout">
    <div className="operations-main">
-    <div className="operations-tabs" role="tablist" aria-label="Pilotage du projet">
-     <button className={tab==='budget'?'active':''} role="tab" aria-selected={tab==='budget'} onClick={()=>setTab('budget')}><TrendingUp size={16}/>Budget</button>
-     <button className={tab==='orders'?'active':''} role="tab" aria-selected={tab==='orders'} onClick={()=>setTab('orders')}><Package size={16}/>Achats & modifications</button>
-     <button className={tab==='field'?'active':''} role="tab" aria-selected={tab==='field'} onClick={()=>setTab('field')}><ClipboardList size={16}/>Terrain & heures</button>
-    </div>
     {tab==='budget'&&<Budget operations={operations} replace={replace}/>} 
     {tab==='orders'&&<Orders operations={operations} replace={replace}/>} 
     {tab==='field'&&<Field operations={operations} replace={replace}/>} 
    </div>
-   <aside className="operations-rail">
-    <p className="eyebrow">À DROITE, COMME SUR LE CHANTIER</p>
+   {tab==='budget'&&<aside className="operations-rail">
+    <p className="eyebrow">SUIVI FINANCIER</p>
     <h3>État financier</h3>
     <dl><div><dt>Budget prévu</dt><dd>{money(totals.planned)}</dd></div><div><dt>Engagé fournisseur</dt><dd>{money(totals.committed)}</dd></div><div><dt>Main-d’œuvre</dt><dd>{money(labourCost)}</dd></div><div><dt>Réel saisi</dt><dd>{money(totals.actual)}</dd></div><div><dt>Reste indicatif</dt><dd className={totals.remaining<0?'negative':''}>{money(totals.remaining-labourCost)}</dd></div></dl>
-    <div className="operations-quick"><button onClick={()=>setTab('budget')}><Plus size={16}/>Ajouter un poste budgétaire</button><button onClick={()=>setTab('orders')}><ReceiptText size={16}/>Bon de commande ou extra</button><button onClick={()=>setTab('field')}><Clock3 size={16}/>Rapport ou heures du jour</button></div>
     <p className="muted">Les données sont enregistrées dans le projet. Elles restent en brouillon local si le réseau coupe.</p>
-   </aside>
+   </aside>}
   </div>
   {message&&<p className="operations-message" role="status">{message}</p>}
  </section>;

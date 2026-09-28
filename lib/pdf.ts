@@ -101,6 +101,15 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
  const terms=data.terms||settings.terms;
  if(terms){ensure(26);draw('Termes et conditions',L,10.5,{f:bold,color:FOREST});y-=16;para(terms,L,8.5,R-L,{color:MUTED,gap:4});}
 
+ // Drawn signatures remain visible on the exported document.
+ const signatures=isContract?(Array.isArray(data.signatures)?data.signatures:[]):data.signature_image?[{name:data.signature_name,image:data.signature_image,signed_at:data.signed_at,role:'client'}]:[];
+ if(signatures.length){ensure(34);y-=12;draw('Signatures',L,11,{f:bold,color:FOREST});y-=20;
+  for(const signature of signatures){ensure(96);draw(`${signature.name||'Signataire'} · ${signature.role||''}`,L,9.5,{f:bold});y-=12;
+   try{const encoded=String(signature.image||'').split(',')[1];if(encoded){const bytes=Uint8Array.from(atob(encoded),letter=>letter.charCodeAt(0));const image=await pdf.embedPng(bytes);const dimensions=image.scaleToFit(190,48);page.drawImage(image,{x:L+8,y:y-dimensions.height,width:dimensions.width,height:dimensions.height});}}catch{}
+   y-=53;draw(`Enregistrée le ${signature.signed_at||'date à préciser'}`,L,8.5,{color:MUTED});y-=18;
+  }
+ }
+
  // ---- Photos ----
  for(const p of photos){try{const img=p.mime==='image/png'?await pdf.embedPng(p.bytes):p.mime==='image/jpeg'?await pdf.embedJpg(p.bytes):null;if(!img)continue;const dims=img.scaleToFit(R-L,300);ensure(dims.height+24);page.drawImage(img,{x:L,y:y-dims.height,width:dims.width,height:dims.height});y-=dims.height+6;para(p.caption||'',L,9,R-L,{color:MUTED});y-=10;}catch{para('Photo non intégrable au PDF. Consultez le dossier en ligne.',L,9,R-L,{color:MUTED});}}
 
