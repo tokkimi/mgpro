@@ -14,6 +14,7 @@ P0 : fiabilité et erreurs bloquantes. P1 : compléments métier. P2 : intégrat
 
 ## Limites encore ouvertes
 
+- Configuration de production absente : RESEND_API_KEY, MAIL_FROM et ANTHROPIC_API_KEY. Les courriels réels et le service IA nécessitent leur activation.
 - La transcription automatique de l’écriture manuscrite et la reconstruction automatique d’un plan 2D coté ne sont pas encore implémentées.
 - La parité de chaque sous-menu et bouton Billdr n’est pas certifiée. Les points ci-dessous restent à compléter ou à vérifier dans un compte authentifié.
 - Les essais du navigateur utilisent la démonstration. Les envois réels de courriels, signatures, caméra et transferts média doivent encore être validés avec les services et appareils concernés.

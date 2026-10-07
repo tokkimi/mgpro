@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-07",
+  "updated": "2026-10-08",
   "title": "MG Pro — suivi des améliorations",
   "notice": "Inventaire consolidé à partir des conversations moh, moh (2), du relevé Billdr du 7 octobre et de l’audit du code. Les modules Billdr ont été observés, mais tous les sous-parcours et chaque bouton ne sont pas encore vérifiés. Les anciens déploiements ne prouvent pas leur validation complète actuelle.",
   "modules": [
@@ -268,6 +268,7 @@
   "limits": [
     "La transcription automatique de l’écriture manuscrite et la reconstruction automatique d’un plan 2D coté ne sont pas encore implémentées.",
     "La parité de chaque sous-menu et bouton Billdr n’est pas certifiée. Les points ci-dessous restent à compléter ou à vérifier dans un compte authentifié.",
-    "Les essais du navigateur utilisent la démonstration. Les envois réels de courriels, signatures, caméra et transferts média doivent encore être validés avec les services et appareils concernés."
+    "Les essais du navigateur utilisent la démonstration. Les envois réels de courriels, signatures, caméra et transferts média doivent encore être validés avec les services et appareils concernés.",
+    "Configuration de production à fournir : RESEND_API_KEY et MAIL_FROM pour les courriels, ANTHROPIC_API_KEY pour le service IA. Aucun envoi réel ni analyse IA ne peuvent être certifiés sans ces services."
   ]
 }
