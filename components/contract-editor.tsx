@@ -1,6 +1,8 @@
 'use client';
 import {Plus,Trash2,FileText} from 'lucide-react';
 import {Data,Profile,RecordItem,money,totals,round,defaultPaymentSchedule} from '@/lib/model';
+import QuoteLineDetails from './quote-line-details';
+import DocumentCostSummary from './document-cost-summary';
 import {contractFromQuote} from '@/lib/contracts';
 
 type Props={data:Data;clientId?:string|null;projectId?:string|null;records:RecordItem[];users:(Profile&{active?:boolean})[];onChange:(data:Data)=>void};
@@ -9,7 +11,7 @@ export default function ContractEditor({data:d,clientId,projectId,records,users,
  const field=(key:string,label:string,type='text')=><label>{label}{type==='textarea'?<textarea value={d[key]||''} onChange={e=>set(key,e.target.value)} rows={3}/>:<input type={type} value={d[key]??''} onChange={e=>set(key,type==='number'?Number(e.target.value):e.target.value)} min={type==='number'?0:undefined}/>}</label>;
  const lines:Data[]=d.lines||[],schedule:Data[]=d.payment_schedule||[],summary=totals(d);
  const sources=records.filter(r=>(d.partner_id?r.kind==='partner_quote'&&r.data.partner_id===d.partner_id:r.kind==='quote')&&r.client_id===clientId&&r.project_id===projectId);
- const changeLine=(index:number,key:string,value:any)=>set('lines',lines.map((line,i)=>i===index?{...line,[key]:value}:line));
+ const changeLine=(index:number,key:string,value:any)=>set('lines',lines.map((line,i)=>i===index?{...line,[key]:value,...(key==='price'?{pricing_mode:'unit'}:{})}:line));
  const percent=schedule.reduce((sum,row)=>sum+Number(row.percent||0),0);
  return <div className="contract-editor">
   <section><header><FileText size={18}/><div><h3>Document et parties</h3><p>Contrat client ou contrat de sous-traitance, lié au projet.</p></div></header>
@@ -25,9 +27,9 @@ export default function ContractEditor({data:d,clientId,projectId,records,users,
   </section>
   <section><header><div><h3>Prestations et prix</h3><p>Montants avant taxes. Les totaux sont recalculés automatiquement.</p></div><button type="button" className="btn secondary" onClick={()=>set('lines',[...lines,{description:'',quantity:1,unit:'forfait',price:0}])}><Plus size={15}/>Ajouter une prestation</button></header>
    {!lines.length&&<p className="muted">Importez une soumission ou ajoutez les prestations du contrat.</p>}
-   {lines.map((line,index)=><div className="contract-line" key={index}><label>Prestation<input value={line.description||''} onChange={e=>changeLine(index,'description',e.target.value)}/></label><label>Quantité<input type="number" min="0" step="any" value={line.quantity??1} onChange={e=>changeLine(index,'quantity',Number(e.target.value))}/></label><label>Unité<input value={line.unit||'forfait'} onChange={e=>changeLine(index,'unit',e.target.value)}/></label><label>Prix unitaire<input type="number" min="0" step=".01" value={line.price??0} onChange={e=>changeLine(index,'price',Number(e.target.value))}/></label><button type="button" className="icon-button" aria-label={'Supprimer la prestation '+(index+1)} onClick={()=>set('lines',lines.filter((_,i)=>i!==index))}><Trash2 size={16}/></button></div>)}
+   {lines.map((line,index)=><div key={index}><div className="contract-line"><label>Prestation<input value={line.description||''} onChange={e=>changeLine(index,'description',e.target.value)}/></label><label>Quantité<input type="number" min="0" step="any" value={line.quantity??1} onChange={e=>changeLine(index,'quantity',Number(e.target.value))}/></label><label>Unité<input value={line.unit||'forfait'} onChange={e=>changeLine(index,'unit',e.target.value)}/></label><label>Prix unitaire<input type="number" min="0" step=".01" value={line.price??0} onChange={e=>changeLine(index,'price',Number(e.target.value))}/></label><button type="button" className="icon-button" aria-label={'Supprimer la prestation '+(index+1)} onClick={()=>set('lines',lines.filter((_,i)=>i!==index))}><Trash2 size={16}/></button></div><QuoteLineDetails line={line} onChange={next=>set('lines',lines.map((item,i)=>i===index?next:item))}/></div>)}
    <div className="form-grid three">{field('tps','TPS (%)','number')}{field('tvq','TVQ (%)','number')}{field('discount','Rabais (%)','number')}</div>
-   <div className="contract-costs"><span>Sous-total <b>{money(summary.net)}</b></span><span>TPS <b>{money(summary.tps)}</b></span><span>TVQ <b>{money(summary.tvq)}</b></span><strong>Total du contrat <b>{money(summary.total)}</b></strong></div>
+   <DocumentCostSummary data={d} onChange={onChange}/><div className="contract-costs"><span>Sous-total <b>{money(summary.net)}</b></span><span>TPS <b>{money(summary.tps)}</b></span><span>TVQ <b>{money(summary.tvq)}</b></span><strong>Total du contrat <b>{money(summary.total)}</b></strong></div>
   </section>
   <section><header><div><h3>Échéancier de paiement</h3><p>{percent} % répartis · {money(summary.total)} taxes incluses</p></div><button type="button" className="btn secondary" onClick={()=>set('payment_schedule',[...schedule,{label:'',percent:0}])}><Plus size={15}/>Ajouter un paiement</button></header>
    {schedule.map((row,index)=><div className="contract-payment" key={index}><label>Étape<input value={row.label||''} onChange={e=>set('payment_schedule',schedule.map((s,i)=>i===index?{...s,label:e.target.value}:s))}/></label><label>Pourcentage<input type="number" min="0" max="100" step="any" value={row.percent??0} onChange={e=>set('payment_schedule',schedule.map((s,i)=>i===index?{...s,percent:Number(e.target.value)}:s))}/></label><strong>{money(round(summary.total*Number(row.percent||0)/100))}</strong><button type="button" className="icon-button" aria-label={'Supprimer le paiement '+(index+1)} onClick={()=>set('payment_schedule',schedule.filter((_,i)=>i!==index))}><Trash2 size={16}/></button></div>)}

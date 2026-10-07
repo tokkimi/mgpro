@@ -81,7 +81,7 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
   right(money(Number(l.quantity)*Number(l.price)*(1+Number(l.margin||0)/100)),amtX-10,10,{f:bold});
   y-=14;
   for(const dl of descLines.slice(1)){ensure(14);draw(dl,L+10,9.5,{color:MUTED});y-=13;}
-  if(l.notes){for(const nl of wrap(l.notes,9,descriptionWidth)){ensure(13);draw(nl,L+14,9,{color:MUTED});y-=12;}}
+  if(l.notes&&l.show_notes!==false){for(const nl of wrap(l.notes,9,descriptionWidth)){ensure(13);draw(nl,L+14,9,{color:MUTED});y-=12;}}
   page.drawLine({start:{x:L,y:y-2},end:{x:R,y:y-2},thickness:.5,color:LINE});y-=12;
  }
  y-=6;right(`Total : ${money(t.total)}`,R,13,{f:bold,color:FOREST});y-=26;
