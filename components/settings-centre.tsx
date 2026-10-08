@@ -5,9 +5,10 @@ import {Plus,RotateCcw,Save,Trash2} from 'lucide-react';
 import type {Data} from '@/lib/model';
 import {aggregate,channels,defaultMatrix,matrixFrom,notificationFamilies,type Channel,type Family,type Matrix} from '@/lib/notifications';
 import {defaultTemplates,renderTemplate,sampleValues,templateErrors,templatesFrom,variablesFor,type EmailTemplate} from '@/lib/email-templates';
+import {reminderSettingsFrom} from '@/lib/billing';
 import {aiPreferencesFrom,employeePortalFrom,projectSettingsFrom,brandingFrom,type JournalQuestion} from '@/lib/settings-model';
 
-const sections=['Image de marque','Paramètres de projets','Préférences IA','Courriels par défaut','Portail employés','Notifications','Intégrations et services','Abonnement','Support et commentaires'] as const;
+const sections=['Image de marque','Paramètres de projets','Facturation et paiements','Préférences IA','Courriels par défaut','Portail employés','Notifications','Intégrations et services','Abonnement','Support et commentaires'] as const;
 type Section=typeof sections[number];
 type Props={settings:Data;demo:boolean;onSave:(data:Data)=>Promise<unknown>;author:string};
 type Status={state:'idle'|'pending'|'saved'|'error';message?:string};
@@ -35,6 +36,7 @@ export default function SettingsCentre(props:Props){
    <h2>{section}</h2>
    {section==='Image de marque'&&<Branding key={section} {...props}/>}
    {section==='Paramètres de projets'&&<ProjectSettings key={section} {...props}/>}
+   {section==='Facturation et paiements'&&<Billing key={section} {...props}/>}
    {section==='Préférences IA'&&<AiPreferences key={section} {...props}/>}
    {section==='Courriels par défaut'&&<Templates key={section} {...props}/>}
    {section==='Portail employés'&&<EmployeePortal key={section} {...props}/>}
@@ -183,5 +185,22 @@ function Support(props:Props){
   <label>Description<textarea rows={4} maxLength={3000} value={text} onChange={e=>setText(e.target.value)}/></label>
   <div className="module-actions"><button type="button" className="btn primary" disabled={!text.trim()||status.state==='pending'} onClick={()=>void save({feedback:[{id:crypto.randomUUID(),kind,text:text.trim(),author:props.author,date:new Date().toISOString(),status:'Nouveau'},...list].slice(0,200)}).then(()=>setText(''))}>Envoyer le retour</button><Feedback status={status}/></div>
   {list.length>0&&<ul className="feedback-list">{list.map(item=><li key={String(item.id)}><small>{String(item.kind)} · {new Date(String(item.date)).toLocaleDateString('fr-CA')} · {String(item.author||'')}</small><p>{String(item.text)}</p><select aria-label="Statut du retour" value={String(item.status)} onChange={e=>void save({feedback:list.map(x=>x.id===item.id?{...x,status:e.target.value}:x)})}>{['Nouveau','En cours','Résolu','Écarté'].map(x=><option key={x}>{x}</option>)}</select></li>)}</ul>}
+ </div>;
+}
+
+function Billing(props:Props){
+ const initial=useMemo(()=>({...reminderSettingsFrom(props.settings.invoice_reminders),instructions:String(props.settings.payment_instructions||'')}),[props.settings.invoice_reminders,props.settings.payment_instructions]);
+ const [draft,setDraft]=useState(initial),[offset,setOffset]=useState('');const {status,save}=useSection(props);
+ const dirty=JSON.stringify(draft)!==JSON.stringify(initial);
+ const label=(o:number)=>o<0?`${-o} j avant l’échéance`:o===0?'le jour de l’échéance':`${o} j après l’échéance`;
+ return <div className="settings-form">
+  <fieldset><legend>Rappels de paiement automatiques</legend>
+   <label className="note-visibility"><input type="checkbox" checked={draft.enabled} onChange={e=>setDraft({...draft,enabled:e.target.checked})}/>Envoyer automatiquement des rappels aux clients pour les factures impayées</label>
+   <div className="settings-days">{draft.offsets.map(o=><span key={o} className="state-pill neutral">{label(o)} <button type="button" className="icon-button" aria-label={`Retirer le rappel ${label(o)}`} onClick={()=>setDraft({...draft,offsets:draft.offsets.filter(x=>x!==o)})}>×</button></span>)}</div>
+   <div className="settings-row"><input type="number" min="-30" max="90" step="1" aria-label="Jours par rapport à l’échéance (négatif = avant)" placeholder="Ex. -3, 0, 7" value={offset} onChange={e=>setOffset(e.target.value)}/><button type="button" className="btn secondary" disabled={offset===''||draft.offsets.length>=6} onClick={()=>{const n=Math.round(Number(offset));if(Number.isFinite(n)&&n>=-30&&n<=90)setDraft({...draft,offsets:[...new Set([...draft.offsets,n])].sort((a,b)=>a-b)});setOffset('')}}>Ajouter</button></div>
+   <p className="muted">Chaque rappel n’est envoyé qu’une fois par facture, au plus tard 2 jours après la date prévue. Ils partent chaque matin grâce à la tâche planifiée Vercel ; elle exige la variable CRON_SECRET et le service de courriel (RESEND_API_KEY, MAIL_FROM). Sans eux, rien n’est envoyé et rien n’est noté comme envoyé.</p>
+  </fieldset>
+  <fieldset><legend>Instructions de paiement affichées au client</legend><label>Virement Interac, dépôt direct, chèque…<textarea rows={4} maxLength={1500} value={draft.instructions} onChange={e=>setDraft({...draft,instructions:e.target.value})} placeholder="Ex. Virement Interac à paiements@exemple.com (réponse : numéro de facture)"/></label><p className="muted">Affichées sur la page publique de chaque facture. Pour le paiement par carte, collez un lien de paiement (Stripe, Square, PayPal) dans le suivi de la facture.</p></fieldset>
+  <SaveBar dirty={dirty} status={status} onSave={()=>void save({invoice_reminders:{enabled:draft.enabled,offsets:draft.offsets},payment_instructions:draft.instructions.trim()})} onReset={()=>setDraft(initial)}/>
  </div>;
 }

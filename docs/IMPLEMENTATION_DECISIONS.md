@@ -45,3 +45,12 @@ L’envoi réel et l’IA nécessitent leur configuration serveur (service de co
 - **Répertoire** : les professionnels sans accès logiciel sont stockés dans les réglages (`directory`) pour éviter une migration de schéma ; aucune fusion automatique des doublons ; la présence en ligne n’est jamais simulée.
 - **Échéancier client** : publication explicite (`schedule_published`) ; la copie client ne contient ni responsables ni données internes.
 - **Abonnement** : aucun abonnement SaaS ni moyen de paiement n’est affiché comme actif.
+
+## Reprise des outils Follow My Future (H)
+
+- Source analysée : dépôt `tokkimi/VIEWMYWORK`, branche `claude/funny-albattani-fyu3nc` (ee5b8d8, production « viewmywork »). Le code est adapté aux enregistrements MG Pro, pas copié : pas de Prisma, pas d’abonnement SaaS.
+- Santé : score 100 moins pénalités (retard ≥ 25 pts → −25, date dépassée → −35, tâches en retard −4/tâche max −20, budget dépassé −25, prévision > 150 % −25, > 105 % −15, attente client ≥ 7 j −15 sinon −6, factures échues −8). Seuils 75/50 comme la source.
+- Facturation : le statut est dérivé des dates et des paiements ; une facture émise reste figée, seuls lien client, lien de paiement et historique des rappels sont modifiables via `/api/billing`. Lien public = jeton aléatoire révocable ; la page n’expose que la projection client.
+- Paiement en ligne : pas de Stripe Connect dans MG Pro ; un lien de paiement externe est affiché, sans jamais marquer la facture payée automatiquement.
+- Rappels : manuel ≤ 1 / 20 h / document ; automatique une fois par (facture, décalage) avec fenêtre de 2 jours ; un échec n’est pas compté comme envoyé ; sans Resend rien n’est noté.
+- Barre mobile : 5 actions (Accueil, Projets, Visite, Devis, Plus) sous 900 px ; variantes prestataire et client.

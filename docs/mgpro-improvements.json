@@ -267,6 +267,12 @@
     }
   ],
   "delivered": [
+    "Mobile : barre fixe en bas avec les 5 actions les plus utiles (Accueil, Projets, Commencer une visite, Créer un devis, Plus) ; « Plus » ouvre facture, dépense, tâche, client, calendrier, santé, décisions, factures et le menu complet. Prestataires et clients ont leur propre barre.",
+    "Repris de Follow My Future et adapté : Santé des projets (score, statut, avancement réel vs attendu, budget, marge, alertes échéancier/budget/client/tâches/encaissement, échéances à 14 jours, regroupement par client ou responsable).",
+    "Décisions des clients : approbations, signatures, choix et paiements en attente, triés par ancienneté, avec relance limitée à une fois par 20 h ; demandes de modification envoyées par les clients depuis leur espace, avec statut et réponse.",
+    "Facturation : statut calculé (Émise, Vue, Partiellement payée, Payée, En retard), lien client public sans compte (consulter, télécharger le PDF, payer), lien de paiement en ligne (Stripe/Square/PayPal fourni par l’entreprise), instructions de paiement, rappels manuels et automatiques (J-3, J0, J+7… configurables) via la tâche quotidienne.",
+    "Portail client : avancement par phases, rubrique Demandes ; rapport hebdomadaire préparé automatiquement à partir de la semaine (réalisé, en cours, prochaines étapes, en attente du client), publié seulement après relecture.",
+    "Style : structure Follow My Future (en-têtes, bandeau de statistiques, puces, cartes, pastilles d’état) en blanc et vert MG Pro.",
     "Fournisseurs & coûts (entreprise) : dépenses, factures, crédits, paiements et bons de tous les projets, filtres projet/fournisseur/statut/période, colonnes au choix, export ; le coût n’additionne jamais un paiement ni un bon.",
     "Fichiers : Tous les fichiers → Mes projets → projet → neuf dossiers système (Bons de commande, Demandes de soumission, Dépenses, Factures, Journal, Ordres de changement, Partagé avec le client, Rapports de construction, Soumissions) ; partager, déplacer, supprimer avec confirmation ; documents générés protégés.",
     "Répertoire : modale « Ajouter un contact » à cinq types, Confirmer désactivé sans choix.",
@@ -304,6 +310,7 @@
     "La transcription automatique de l’écriture manuscrite et la reconstruction automatique d’un plan 2D coté ne sont pas implémentées.",
     "Recette multirôle avec au moins deux clients et deux prestataires réels non réalisée : l’isolation est couverte par des tests unitaires de filtrage serveur, pas par des comptes Supabase de test.",
     "Migration Billdr non commencée (exports autorisés, mapping, simulation, rapprochement à prévoir). Incidents d’audit DL-0043 et tâche vide conservés dans la passation.",
-    "Encore absents : exécution automatique planifiée des routines (aucun planificateur serveur), connexions QuickBooks/Zapier, SMS et push, OCR du carnet et plan 2D automatique, import du relevé bancaire."
+    "Encore absents : exécution automatique planifiée des routines (aucun planificateur serveur), connexions QuickBooks/Zapier, SMS et push, OCR du carnet et plan 2D automatique, import du relevé bancaire.",
+    "Rappels automatiques et routines planifiées : ajouter CRON_SECRET dans Vercel (la tâche quotidienne refuse de tourner sans lui) et configurer Resend. Paiement par carte intégré (Stripe Connect comme Follow My Future) non branché : MG Pro affiche le lien de paiement fourni par l’entreprise et ne marque jamais une facture payée automatiquement."
   ]
 }
