@@ -71,13 +71,13 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
  header();
  let lastSection='';
  for(const l of (data.lines||[])){
-  if(l.section&&l.section!==lastSection){lastSection=l.section;ensure(24);draw(String(l.section),L+2,10.5,{f:bold,color:GOLD});y-=18;}
+  if((l.category||l.section)&&(l.category||l.section)!==lastSection){lastSection=l.category||l.section;ensure(24);draw(String(lastSection),L+2,10.5,{f:bold,color:GOLD});y-=18;}
   const descLines=wrap(l.description||'',10,descriptionWidth,bold);
   ensure(descLines.length*14+18);
   // description (first line bold, rest normal muted)
   draw(descLines[0]||'',L+10,10,{f:bold});
   if(view.quantities!==false)fitRight(`${clean(String(l.quantity))} ${clean(l.unit||'')}`,qtyX,75,9.5,{color:MUTED});
-  if(view.unitPrices===true||isInvoice)right(money(Number(l.price)),puX,9.5,{color:MUTED});
+  if(view.unitPrices===true||isInvoice)right(money(Number(l.price)*(1+Number(l.margin||0)/100)),puX,9.5,{color:MUTED});
   right(money(Number(l.quantity)*Number(l.price)*(1+Number(l.margin||0)/100)),amtX-10,10,{f:bold});
   y-=14;
   for(const dl of descLines.slice(1)){ensure(14);draw(dl,L+10,9.5,{color:MUTED});y-=13;}
