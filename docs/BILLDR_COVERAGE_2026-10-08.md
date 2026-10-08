@@ -44,6 +44,21 @@ Base vérifiée avant modification : `codex/refonte-mgpro` à `32b4a33`, ascenda
 | F16 | Partiel | Neuf rubriques client ; brouillons, coûts, notes, journaux non partagés et échéancier non publié exclus (tests serveur) ; recette multicompte à faire. |
 | F17 | Écart | Bob Chat et routines non construits. |
 
+### Complément livré ensuite (même journée)
+
+| Domaine | Statut | En place | Vérification |
+|---|---|---|---|
+| Dépenses / achats entreprise (Tout, Dépenses, Factures, Crédits, Paiements, BDC) | Livré | Vue Fournisseurs & coûts, filtres, colonnes (préférence locale), export, coûts sans double compte | Test + navigateur (450 $ / 67,39 $ / 517,39 $) |
+| Fichiers et dossiers système | Livré | Racine → Mes projets → projet → 9 dossiers ; actions par fichier ; documents générés non déplaçables | Test + navigateur (10 dossiers dont « Autres fichiers ») |
+| Ajouter un contact (5 types) | Livré | Modale, Confirmer désactivé sans choix, Annuler sans création | Navigateur |
+| Tâches : sources et filtres | Livré | 6 sources, aperçu, sans doublon ; filtres sans mutation | Test + navigateur |
+| Bob Chat / routines | Partiel | Assistant lecture seule (clé IA absente en production → message « non configuré ») ; routines calculées, exécution manuelle et historique | Test + navigateur (envoi vide désactivé, consultation sans exécution) |
+| Gantt | Livré | Zoom, glisser, redimensionner, clavier, dépendances, jours ouvrés, groupes imbriqués, annulation | Test + navigateur |
+| Feuille de temps | Livré | Pointage prestataire via API contrôlée, par catégorie (approuvé seulement), clôture | Tests |
+| Routes | Livré | `#rubrique/identifiant`, retour navigateur | Navigateur |
+
+Recette F01–F17 mise à jour : F01 réussi (adresses et retour), F10 réussi (familles et tiroirs colonnes), F11 réussi (dossiers système protégés), F12 réussi (quatre listes et cinq types), F13 réussi hors nom de route `schedule_gant_tab` (MG Pro utilise ses propres adresses), F14 réussi, F17 partiel (assistant non configuré en production faute de clé).
+
 ## État précédent (début du 8 octobre)
 
 Cette liste analyse les deux documents joints et l’état du code. « Présent / partiel » ne signifie pas certifié complet. Chaque bouton, rôle, cas d’erreur et volume devra être recetté. Aucun domaine inconnu N de Billdr n’est présenté comme reproduit à l’identique.

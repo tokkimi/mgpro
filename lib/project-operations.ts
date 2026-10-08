@@ -11,7 +11,7 @@ export const purchaseOrderStatuses=['Brouillon','Envoyé','Partiellement reçu',
 export type PurchaseOrder=ProcurementDetails&{id:string;supplier:string;title:string;amount:number;neededBy:string;status:typeof purchaseOrderStatuses[number];sourceRequestId?:string;sourceResponseId?:string};
 export type ChangeOrder={id:string;title:string;amount:number;days:number;status:'Brouillon'|'À approuver'|'Approuvée'|'Refusée';cost?:number;costCode?:string};
 export type DailyLog={id:string;date:string;summary:string;blockers:string;sharedWithClient?:boolean};
-export type Timesheet={id:string;date:string;person:string;hours:number;hourlyRate:number;status:'Brouillon'|'Soumise'|'Approuvée';costCode?:string};
+export type Timesheet={id:string;date:string;person:string;hours:number;hourlyRate:number;status:'Brouillon'|'Soumise'|'Approuvée';costCode?:string;closed?:boolean;start?:string;end?:string;personId?:string;note?:string};
 export const vendorBillStatuses=['Brouillon','À payer','Partiellement payée','Payée','Annulée'] as const;
 /** Supplier invoice. Amounts are entered as printed on the supplier document (subtotal + taxes). */
 export type VendorBill={id:string;reference:string;supplier:string;orderId:string;costCode:string;phaseId:string;issuedOn:string;dueOn:string;subtotal:number;tax:number;status:typeof vendorBillStatuses[number];attachment:string;notes:string};
@@ -23,7 +23,28 @@ export function timesheetsForDates(sheets:Timesheet[],dates:string[],person?:str
 }
 export function approveTimesheets(sheets:Timesheet[],dates:string[],person:string):Timesheet[]{
  const selected=new Set(dates);
- return sheets.map(sheet=>selected.has(sheet.date)&&sheet.person===person?{...sheet,status:'Approuvée'}:sheet);
+ return sheets.map(sheet=>selected.has(sheet.date)&&sheet.person===person&&!sheet.closed?{...sheet,status:'Approuvée'}:sheet);
+}
+/** Close a week: only approved entries are locked; anything still pending blocks the closing. */
+export function closeWeek(sheets:Timesheet[],dates:string[]):Timesheet[]{
+ const selected=new Set(dates);
+ const pending=sheets.filter(s=>selected.has(s.date)&&s.status!=='Approuvée');
+ if(pending.length)throw new Error(`${pending.length} saisie(s) de la semaine ne sont pas approuvées.`);
+ return sheets.map(s=>selected.has(s.date)?{...s,closed:true}:s);
+}
+/** Hours between two HH:MM times minus a break, in hours with two decimals; rejects negative or > 24 h. */
+export function shiftHours(start:string,end:string,breakMinutes=0){
+ const m=(v:string)=>{const [h,mi]=v.split(':').map(Number);return h*60+mi};
+ if(!/^\d{2}:\d{2}$/.test(start)||!/^\d{2}:\d{2}$/.test(end))throw new Error('Heures de début et de fin requises.');
+ const minutes=m(end)-m(start)-Math.max(0,breakMinutes);
+ if(minutes<=0)throw new Error('La fin doit être après le début (pause déduite).');
+ return Math.round(minutes/60*100)/100;
+}
+/** Approved hours and cost grouped by cost code (the "by category" view shows approved shifts only). */
+export function hoursByCategory(sheets:Timesheet[],dates:string[]){
+ const selected=new Set(dates);const rows=new Map<string,{hours:number;cost:number}>();
+ for(const s of sheets)if(selected.has(s.date)&&s.status==='Approuvée'){const key=s.costCode||'Non catégorisé';const r=rows.get(key)||{hours:0,cost:0};r.hours=round(r.hours+s.hours);r.cost=round(r.cost+s.hours*s.hourlyRate);rows.set(key,r)}
+ return [...rows.entries()].map(([code,v])=>({code,...v})).sort((a,b)=>Number(a.code==='Non catégorisé')-Number(b.code==='Non catégorisé')||a.code.localeCompare(b.code,'fr'));
 }
 export type ProjectOperations={budget:BudgetLine[];costCodes:CostCode[];priceRequests:PriceRequest[];purchaseOrders:PurchaseOrder[];changeOrders:ChangeOrder[];dailyLogs:DailyLog[];timesheets:Timesheet[];vendorBills:VendorBill[];vendorCredits:VendorCredit[];vendorPayments:VendorPayment[]};
 
@@ -45,7 +66,7 @@ export function operationsFrom(value:unknown):ProjectOperations{
   purchaseOrders:list('purchaseOrders').map(order=>({...details(order),id:String(order.id),supplier:text(order.supplier),title:text(order.title),amount:num(order.amount),neededBy:text(order.neededBy),status:pick(order.status,purchaseOrderStatuses,'Brouillon'),sourceRequestId:text(order.sourceRequestId),sourceResponseId:text(order.sourceResponseId)})),
   changeOrders:list('changeOrders').map(change=>({id:String(change.id),title:text(change.title),amount:num(change.amount),days:num(change.days),status:pick(change.status,['Brouillon','À approuver','Approuvée','Refusée'] as const,'Brouillon'),cost:num(change.cost),costCode:text(change.costCode)})),
   dailyLogs:list('dailyLogs').map(log=>({id:String(log.id),date:text(log.date),summary:text(log.summary),blockers:text(log.blockers),sharedWithClient:log.sharedWithClient===true})),
-  timesheets:list('timesheets').map(sheet=>({id:String(sheet.id),date:text(sheet.date),person:text(sheet.person),hours:num(sheet.hours),hourlyRate:num(sheet.hourlyRate),status:pick(sheet.status,['Brouillon','Soumise','Approuvée'] as const,'Brouillon'),costCode:text(sheet.costCode)})),
+  timesheets:list('timesheets').map(sheet=>({id:String(sheet.id),date:text(sheet.date),person:text(sheet.person),hours:num(sheet.hours),hourlyRate:num(sheet.hourlyRate),status:pick(sheet.status,['Brouillon','Soumise','Approuvée'] as const,'Brouillon'),costCode:text(sheet.costCode),...(sheet.closed===true?{closed:true}:{}),...(/^\d{2}:\d{2}$/.test(String(sheet.start))?{start:String(sheet.start)}:{}),...(/^\d{2}:\d{2}$/.test(String(sheet.end))?{end:String(sheet.end)}:{}),...(sheet.personId?{personId:text(sheet.personId)}:{}),...(sheet.note?{note:text(sheet.note).slice(0,500)}:{})})),
   vendorBills:list('vendorBills').map(bill=>({id:String(bill.id),reference:text(bill.reference).trim(),supplier:text(bill.supplier).trim(),orderId:text(bill.orderId),costCode:text(bill.costCode),phaseId:text(bill.phaseId),issuedOn:day(bill.issuedOn),dueOn:day(bill.dueOn),subtotal:num(bill.subtotal),tax:num(bill.tax),status:pick(bill.status,vendorBillStatuses,'Brouillon'),attachment:text(bill.attachment),notes:text(bill.notes)})),
   vendorCredits:list('vendorCredits').map(credit=>({id:String(credit.id),reference:text(credit.reference).trim(),supplier:text(credit.supplier).trim(),billId:text(credit.billId),costCode:text(credit.costCode),issuedOn:day(credit.issuedOn),subtotal:num(credit.subtotal),tax:num(credit.tax),status:pick(credit.status,['Brouillon','Appliqué','Annulé'] as const,'Brouillon'),notes:text(credit.notes)})),
   vendorPayments:list('vendorPayments').map(payment=>({id:String(payment.id),reference:text(payment.reference).trim(),supplier:text(payment.supplier).trim(),billId:text(payment.billId),paidOn:day(payment.paidOn),method:text(payment.method)||'Virement',amount:num(payment.amount),status:pick(payment.status,['Émis','Annulé'] as const,'Émis'),reconciled:payment.reconciled===true,reconciledOn:day(payment.reconciledOn),notes:text(payment.notes)}))

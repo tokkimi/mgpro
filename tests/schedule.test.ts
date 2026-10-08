@@ -16,3 +16,15 @@ test('client contract projection never exposes cached internal totals',()=>{
  const output=redact({id:'c',role:'client'} as any,record).data;
  assert.equal(output.totals,undefined);assert.equal(output.costs,undefined);assert.equal(output.profit,undefined);assert.equal(output.admin_notes,undefined);assert.equal(output.lines[0].price,125);
 });
+
+test('nested groups, move/resize helpers and group spans',async()=>{
+ const {scheduleFrom,scheduleError,shiftActivity,resizeActivity,groupSpan,depth}=await import('../lib/schedule');
+ const rows=scheduleFrom([{id:'g',title:'Gros œuvre',kind:'group'},{id:'s',title:'Sous-groupe',kind:'group',parent:'g'},{id:'a',title:'A',start:'2026-10-12',days:2,parent:'s'},{id:'m',title:'Jalon',kind:'milestone',start:'2026-10-20',parent:'g'}]);
+ assert.equal(depth(rows,'a'),2);
+ assert.deepEqual(groupSpan(rows,'g',true,[]),{start:'2026-10-12',end:'2026-10-20'});
+ assert.equal(shiftActivity(rows[2],3).start,'2026-10-15');
+ assert.equal(resizeActivity(rows[2],-5).days,1,'never below one day');
+ assert.equal(resizeActivity(rows[3],4).days,0,'a milestone keeps zero duration');
+ assert.match(scheduleError(scheduleFrom([{id:'g',title:'G',kind:'group',parent:'h'},{id:'h',title:'H',kind:'group',parent:'g'}])),/lui-même/);
+ assert.match(scheduleError(scheduleFrom([{id:'a',title:'A',parent:'zz'}])),/groupe absent/);
+});

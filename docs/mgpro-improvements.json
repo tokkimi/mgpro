@@ -1,7 +1,7 @@
 {
   "updated": "2026-10-08",
   "title": "MG Pro — suivi des améliorations",
-  "notice": "Lot du 8 octobre (suite, base 32b4a33 avec 2e72968 et a810e3a) : chaîne fournisseur complète, budget par code de coût, marge/majoration explicites, réglages en neuf sections, notifications métier, portail client en neuf rubriques, carte des projets et répertoire unifié. 68 tests automatisés et compilation de production réussis ; parcours vérifiés dans la démonstration à 320, 390, 768 et 1440 px. La parité exhaustive Billdr n’est pas atteinte : voir les limites et docs/BILLDR_COVERAGE_2026-10-08.md.",
+  "notice": "Lot du 8 octobre (suite) : en plus de la chaîne fournisseur, du budget, des réglages, des notifications, du portail client, de la carte et du répertoire, ajout de la vue entreprise Fournisseurs & coûts, des dossiers de fichiers système, de la modale de contact à cinq types, des sources de tâches, de l’assistant et des routines, du Gantt interactif, du pointage et de la clôture des heures, et des adresses URL par rubrique. 73 tests et compilation réussis ; parcours vérifiés à 320, 390, 768 et 1440 px. Les outils MG Pro de visite, voix, photos, carnet et plans sont conservés tels quels.",
   "modules": [
     {
       "id": 1,
@@ -267,6 +267,14 @@
     }
   ],
   "delivered": [
+    "Fournisseurs & coûts (entreprise) : dépenses, factures, crédits, paiements et bons de tous les projets, filtres projet/fournisseur/statut/période, colonnes au choix, export ; le coût n’additionne jamais un paiement ni un bon.",
+    "Fichiers : Tous les fichiers → Mes projets → projet → neuf dossiers système (Bons de commande, Demandes de soumission, Dépenses, Factures, Journal, Ordres de changement, Partagé avec le client, Rapports de construction, Soumissions) ; partager, déplacer, supprimer avec confirmation ; documents générés protégés.",
+    "Répertoire : modale « Ajouter un contact » à cinq types, Confirmer désactivé sans choix.",
+    "Tâches du projet : filtres statut, source et assigné ; ajout depuis Personnalisée, Soumission, Ordre de changement, Catalogue, Gabarit ou Échéancier avec aperçu et sans doublon. Rien n’est créé à l’ouverture du menu.",
+    "Assistant (lecture seule, données calculées de MG Pro, SDK Anthropic officiel) avec état « non configuré » clair ; routines (comptes clients/fournisseurs, retards, projets actifs, à payer, pipeline) exécutées explicitement avec historique.",
+    "Gantt : zoom, Aujourd’hui, jours non ouvrés grisés, dépendances dessinées, glisser pour déplacer, bord droit pour la durée, flèches et Maj+flèches au clavier, annulation, groupes imbriqués repliables.",
+    "Heures : pointage mobile pour les prestataires (début/fin/pause, quart conservé sur l’appareil jusqu’à l’envoi, chevauchements refusés, taux invisibles), vue par catégorie des heures approuvées, clôture de période verrouillant les saisies.",
+    "Adresses : chaque rubrique et chaque dossier ouvert ont une adresse (#rubrique/identifiant) ; lien direct, rechargement et bouton Retour du navigateur fonctionnent, avec contrôle des droits.",
     "Fournisseurs : plusieurs réponses par demande de prix, comparaison (écart au plus bas, délai, validité), attribution unique vers un bon brouillon, réception partielle par ligne, factures fournisseur liées au bon, crédits appliqués, paiements limités au solde et rapprochement bancaire. Contrôle serveur du grand livre à chaque enregistrement.",
     "Budget par code de coût : original, changements approuvés, révisé, bons engagés, engagé non facturé, factures, crédits, main-d’œuvre approuvée, réalisé, payé, à payer, prévision et reste à engager ; export CSV. Un bon brouillon n’engage rien, une facture remplace la part engagée de son bon, un paiement ne crée pas de coût.",
     "Prix : choix explicite « marge de profit » (coût ÷ (1 − marge)) ou « majoration » (coût × (1 + majoration)) par ligne et globalement, dans un moteur décimal unique utilisé par l’éditeur, les totaux, la projection client et le PDF. Marge ≥ 100 % refusée côté serveur. Les anciennes lignes gardent exactement leur prix.",
@@ -294,10 +302,8 @@
   "limits": [
     "Services non configurés en production (vérifié le 8 octobre, noms de variables seulement) : RESEND_API_KEY et MAIL_FROM (courriels), ANTHROPIC_API_KEY (IA), NEXT_PUBLIC_SITE_URL. Aucun envoi réel ni analyse IA ne sont certifiés.",
     "La transcription automatique de l’écriture manuscrite et la reconstruction automatique d’un plan 2D coté ne sont pas implémentées.",
-    "Non construits dans ce lot : Bob Chat et routines IA, dépenses globales à quatre familles (Tout/Dépenses/Factures/Crédits fournisseur au niveau entreprise), arborescence de fichiers à neuf dossiers système, modale d’ajout de contact à cinq types, routes URL par onglet, connexions QuickBooks/Zapier, SMS et push.",
-    "Gantt : glisser/redimensionner au pointeur et au clavier, zoom et groupes imbriqués restent à compléter ; les vues liste/Gantt/calendrier, dépendances sans cycle et jours ouvrés configurables existent.",
-    "Feuilles de temps : pointage mobile réel, divisions/catégories et clôture de paie restent à faire.",
     "Recette multirôle avec au moins deux clients et deux prestataires réels non réalisée : l’isolation est couverte par des tests unitaires de filtrage serveur, pas par des comptes Supabase de test.",
-    "Migration Billdr non commencée (exports autorisés, mapping, simulation, rapprochement à prévoir). Incidents d’audit DL-0043 et tâche vide conservés dans la passation."
+    "Migration Billdr non commencée (exports autorisés, mapping, simulation, rapprochement à prévoir). Incidents d’audit DL-0043 et tâche vide conservés dans la passation.",
+    "Encore absents : exécution automatique planifiée des routines (aucun planificateur serveur), connexions QuickBooks/Zapier, SMS et push, OCR du carnet et plan 2D automatique, import du relevé bancaire."
   ]
 }
