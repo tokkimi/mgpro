@@ -1,5 +1,51 @@
 # Couverture Billdr → MG Pro — 8 octobre 2026
 
+## Mise à jour du lot suivant (base 32b4a33, contenant 2e72968 et a810e3a)
+
+Base vérifiée avant modification : `codex/refonte-mgpro` à `32b4a33`, ascendance contenant `2e72968` et `a810e3a`. Les 43 tests de référence passaient avant tout changement. Statuts : **Livré** = code, persistance et validation serveur présents avec tests ; **Partiel** = une partie vérifiée, le reste nommé ; **Écart** = non construit.
+
+| Domaine | Statut | Ce qui est réellement en place | Vérification | Reste |
+|---|---|---|---|---|
+| Demandes de prix | Livré | Plusieurs réponses comparables (avant taxes, total, écart au plus bas en $ et %, délai, validité), écarter/rétablir, attribution unique | Tests `vendor-finance` + navigateur (950 $ vs 1 200 $ → +250 $, 26,32 %) | Envoi réel (service courriel absent) |
+| Bons de commande | Livré | Bon brouillon créé atomiquement à l’attribution, statuts Brouillon/Envoyé/Partiellement reçu/Reçu/Annulé, réception par ligne, code de coût et phase | Tests + navigateur (brouillon « Non engagé », envoyé 950 $) | PDF du bon |
+| Factures fournisseur | Livré | Liées ou non au bon, numéro unique par fournisseur, échéance, justificatif, statut calculé selon paiements/crédits | Tests + navigateur (F-100 600 $ + 89,85 $) | Transfert par courriel |
+| Crédits fournisseur | Livré | Brouillon/Appliqué/Annulé, plafonné au solde de la facture liée | Tests | — |
+| Paiements fournisseur | Livré | Plafonnés au solde, facture émise obligatoire, consignation manuelle annoncée comme telle | Tests + navigateur (900 $ refusé, 689,85 $ accepté) | Aucun paiement réel (voulu) |
+| Rapprochement | Livré | Pointage des paiements, factures sans justificatif/sans bon, dépassements, réceptions non facturées, échues | Tests + navigateur | Import de relevé bancaire |
+| Budget | Livré | Par code de coût : original, changements approuvés (coût), révisé, engagé, engagé non facturé, factures, crédits, main-d’œuvre approuvée, saisi, réalisé, payé, à payer, prévision, reste ; « Non catégorisé » ; export CSV | Tests (aucun double compte bon + facture + paiement) | Dépenses globales par code |
+| Marge / majoration | Livré | Mode explicite par ligne et global, moteur décimal unique (totaux, projection client, PDF, éditeurs), marge ≥ 100 % refusée côté serveur | Tests : 7 500 @ 15 % marge = 8 823,53 ; 450 @ 25 % majoration = 562,50 ; 20 % marge = 25 % majoration ; 450 $ → 517,39 $ TTC | — |
+| Réglages | Partiel | Neuf sections + formulaire entreprise : marque documents/courriels, paramètres projets, IA, 13 courriels, portail employés, notifications, services, abonnement (aucun), support | Tests + navigateur (13 modèles, variable inconnue signalée, total 105 % bloqué) | Logo téléversé, signature riche, test d’envoi (service absent) |
+| Notifications | Livré | Événements métier, libellés sans faux « envoyé par courriel », matrice 12 familles × rôles, in-app seul actif | Tests | Courriel/SMS/push |
+| Portail client | Partiel | Neuf rubriques sur données filtrées serveur, échéancier publié explicitement sans responsables | Tests de filtrage (client et prestataire) | Recette avec deux clients et deux prestataires réels |
+| Projets | Partiel | Carte géographique OSM, géolocalisation explicite, filtres de dates (8 préréglages, annuler/appliquer/réinitialiser), sélection, export, statut groupé confirmé, « 0 résultat », contexte restauré | Tests + navigateur 320/390/768/1440 | Tags, colonnes, routes URL |
+| Répertoire | Partiel | Clients, professionnels, employés, administrateurs ; doublons ; import CSV prévisualisé ; export ; archivage | Tests + navigateur (doublon détecté) | Modale cinq types, documents des professionnels |
+| Échéancier | Partiel | Semaine de travail et fériés des réglages, publication client explicite | Tests | Glisser/redimensionner, zoom, groupes imbriqués |
+| Bob Chat / routines, fichiers système, dépenses globales à quatre familles, QuickBooks/Zapier, SMS | Écart | — | — | Non construits dans ce lot |
+
+### Recette F01–F17 (sandbox de démonstration, 8 octobre)
+
+| ID | Résultat | Détail |
+|---|---|---|
+| F01 | Partiel | Rubriques et onglets accessibles ; onglet projet mémorisé. MG Pro n’expose pas de route URL par onglet : écart assumé, à construire. |
+| F02 | Réussi | Recherche « zz_audit_aucun_resultat » → « 0 résultat » et message vide ; effacement rétablit la liste ; aucune écriture. |
+| F03 | Réussi | Préréglage choisi puis Annuler : 3 projets conservés, filtres appliqués inchangés. |
+| F04 | Non recetté | Création de projet existante non modifiée dans ce lot. |
+| F05 | Réussi | Liste et carte distinctes ; marqueur → référence, statut, adresse, client, Voir le projet (coordonnées de démonstration). |
+| F06 | Partiel | 18 rubriques projet (15 Billdr + Phases, Plans, Changements) ; menu Créer non recetté dans ce lot. |
+| F07 | Partiel | Soumission signée figée côté serveur (409) ; aperçu sans coûts internes couvert par tests ; menus désactivés non recettés. |
+| F08 | Non recetté | Facture payée lecture seule non revérifiée. |
+| F09 | Partiel | Cohérence finance fournisseur projet ↔ budget vérifiée ; vue globale fournisseur absente. |
+| F10 | Écart | Dépenses globales à quatre familles et tiroirs colonnes non construits. |
+| F11 | Écart | Dossiers système protégés non construits. |
+| F12 | Partiel | Quatre listes de contacts ; ajout par onglet, sans modale à cinq types. |
+| F13 | Partiel | Liste/Gantt/Calendrier présents ; pas de route `schedule_gant_tab`. |
+| F14 | Partiel | Seules les heures approuvées entrent au budget ; vue par catégorie absente. |
+| F15 | Réussi | Dix sections (entreprise + neuf), deux blocs de marque, treize messages, matrice avec état mixte. |
+| F16 | Partiel | Neuf rubriques client ; brouillons, coûts, notes, journaux non partagés et échéancier non publié exclus (tests serveur) ; recette multicompte à faire. |
+| F17 | Écart | Bob Chat et routines non construits. |
+
+## État précédent (début du 8 octobre)
+
 Cette liste analyse les deux documents joints et l’état du code. « Présent / partiel » ne signifie pas certifié complet. Chaque bouton, rôle, cas d’erreur et volume devra être recetté. Aucun domaine inconnu N de Billdr n’est présenté comme reproduit à l’identique.
 
 | Domaine de référence | Mise en place MG Pro | À compléter ou à vérifier |

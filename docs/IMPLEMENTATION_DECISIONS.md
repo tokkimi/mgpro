@@ -32,3 +32,16 @@ Contrôles navigateur sur données fictives : création d’un produit à 150 $ 
 La parité exhaustive n’est pas terminée. Voir BILLDR_COVERAGE_2026-10-08.md pour chaque domaine. Les crédits et paiements fournisseur, la carte géographique des projets, le répertoire professionnel unifié, les dix écrans de réglages et leurs sous-options, les routines IA, les integrations et les volumes réels restent à compléter ou à recetter.
 
 L’envoi réel et l’IA nécessitent leur configuration serveur (service de courriel, expéditeur et clé IA). Le carnet manuscrit permet dessin et PDF, mais ne réalise pas une reconnaissance manuscrite ni une conversion automatique en plan 2D. Les données de démonstration sont temporaires. Aucun courriel réel n’a été envoyé pendant cette recette.
+
+## Décisions du lot suivant (H, base 32b4a33)
+
+- **Base** : travail repris exactement sur `32b4a33` (descendant de `2e72968` et `a810e3a`), en avance rapide, sauvegarde locale `backup/base-32b4a33`. Aucun reset, rebase ni force-push.
+- **Fournisseurs** : les réponses sont stockées dans la demande de prix ; une seule attribution active ; l’attribution crée un bon *brouillon* (jamais engagé). Les montants de bons sont comparés avant taxes. Engagé = bons Envoyé/Partiellement reçu/Reçu. Réalisé = factures reconnues − crédits appliqués + heures approuvées + réel saisi. Prévision = réalisé + part non facturée des bons actifs. Un paiement ne crée jamais de coût. Ces règles sont des choix H, pas des règles Billdr observées.
+- **Validation serveur** : chaque enregistrement de projet recontrôle le grand livre fournisseur (doublons de facture, paiements/crédits au-delà du total, paiement sur brouillon).
+- **Prix** : `margin` historique reste la majoration en pourcentage (aucun prix existant ne change). Le mode marge enregistre `price_basis='margin'` et `profit_margin`, avec la majoration équivalente pour compatibilité. Arrondi au cent par ligne puis sur le total, comme auparavant.
+- **Notifications** : douze familles MG Pro (regroupement H) ; seul le canal in-app est actif. Les libellés de statut manuel disent « marqué manuellement ».
+- **Courriels** : variables entre crochets ; un jeton inconnu bloque l’enregistrement du modèle et reste visible au rendu ; aucune substitution silencieuse.
+- **Carte** : tuiles OpenStreetMap avec attribution ; coordonnées obtenues par le service fédéral de géolocalisation à la demande d’un administrateur, mémorisées dans le projet et effacées si l’adresse change. Aucune clé requise.
+- **Répertoire** : les professionnels sans accès logiciel sont stockés dans les réglages (`directory`) pour éviter une migration de schéma ; aucune fusion automatique des doublons ; la présence en ligne n’est jamais simulée.
+- **Échéancier client** : publication explicite (`schedule_published`) ; la copie client ne contient ni responsables ni données internes.
+- **Abonnement** : aucun abonnement SaaS ni moyen de paiement n’est affiché comme actif.

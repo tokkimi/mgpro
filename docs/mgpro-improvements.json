@@ -1,7 +1,7 @@
 {
   "updated": "2026-10-08",
   "title": "MG Pro — suivi des améliorations",
-  "notice": "Analyse complétée avec BILLDR_FUNCTIONAL_UX_MAP.md et MASTER_DEVELOPMENT_PROMPT.md. Les quinze domaines projet sont représentés, avec les outils MG Pro conservés. La parité exhaustive de chaque bouton et sous-parcours reste à compléter et à recetter ; les niveaux observés et proposés ne sont pas une validation fonctionnelle.",
+  "notice": "Lot du 8 octobre (suite, base 32b4a33 avec 2e72968 et a810e3a) : chaîne fournisseur complète, budget par code de coût, marge/majoration explicites, réglages en neuf sections, notifications métier, portail client en neuf rubriques, carte des projets et répertoire unifié. 68 tests automatisés et compilation de production réussis ; parcours vérifiés dans la démonstration à 320, 390, 768 et 1440 px. La parité exhaustive Billdr n’est pas atteinte : voir les limites et docs/BILLDR_COVERAGE_2026-10-08.md.",
   "modules": [
     {
       "id": 1,
@@ -20,8 +20,9 @@
       "id": 2,
       "title": "Clients et contacts",
       "priority": "P1",
-      "status": "À compléter",
+      "status": "Lot en validation",
       "items": [
+        "8 oct. : Répertoire unifié livré (quatre familles, doublons, import/export CSV, archivage). Restent : modale à cinq types de contact, fiches professionnels avec documents.",
         "Conserver les fiches client, projets associés, notes, courriels et suppression/restauration déjà implémentés ; revalider leurs permissions.",
         "Unifier le répertoire clients, prestataires, employés et administrateurs : filtres, recherche, import/export, doublons et archivage.",
         "Afficher les photos disponibles et une présence réelle ; garder un état inconnu quand aucune information de présence ne remonte.",
@@ -34,6 +35,7 @@
       "priority": "P1",
       "status": "Lot en validation",
       "items": [
+        "8 oct. : Carte géographique, filtres de dates, actions groupées et restauration des filtres livrés. Restent : tags, colonnes configurables, routes URL partageables.",
         "Livrer vues liste/cartes, recherche titre/client/adresse/référence, filtres client/responsable/étape, tri et menus Ouvrir/Modifier.",
         "Livrer pagination de 24 projets, création visible et fermeture des menus au clic extérieur ou à Échap.",
         "Compléter tags, colonnes configurables, affectations par membres, dates du cycle, montants, sélection multiple et export du périmètre filtré.",
@@ -92,8 +94,9 @@
       "id": 8,
       "title": "Dépenses et fournisseurs",
       "priority": "P1",
-      "status": "À construire",
+      "status": "Lot en validation",
       "items": [
+        "8 oct. : Factures, crédits et paiements fournisseur par projet livrés avec contrôles serveur. Reste : vue entreprise des dépenses à quatre familles et transfert par courriel.",
         "Séparer dépenses, factures fournisseur et crédits fournisseur, avec numéros, dates, fournisseur, projet, catégories et justificatifs.",
         "Ajouter imputation des crédits et paiements, soldes fournisseurs, rapprochement et références aux commandes.",
         "Construire collecte des justificatifs par courriel avec contrôle des pièces jointes et dédoublonnage ; vérifier intégration comptable."
@@ -103,8 +106,9 @@
       "id": 9,
       "title": "Demandes de prix",
       "priority": "P1",
-      "status": "À compléter",
+      "status": "Lot en validation",
       "items": [
+        "8 oct. : Réponses multiples comparables et attribution unique livrées. Reste : envoi réel aux fournisseurs (service courriel).",
         "Relier projet, soumission et catégories ; choisir prestataires concernés, pièces jointes, date limite et message.",
         "Construire envoi réel, suivi livraison/ouverture, réponses, comparaison et attribution ; un statut choisi manuellement ne prouve pas un envoi.",
         "Ajouter recherche, filtres, colonnes, actions multiples et conversion en commande."
@@ -114,8 +118,9 @@
       "id": 10,
       "title": "Bons de commande",
       "priority": "P1",
-      "status": "À compléter",
+      "status": "Lot en validation",
       "items": [
+        "8 oct. : Réception partielle, facturation liée, alerte de dépassement livrées. Reste : PDF de bon de commande et envoi.",
         "Compléter lignes, quantités, taxes, fournisseur, adresse de livraison, dates, numéro, conditions et PDF.",
         "Relier demande de prix, approbation, envoi, réception partielle/complète, facture fournisseur, crédit et paiement.",
         "Distinguer montant demandé, brouillon, engagé, facturé et payé dans les totaux et le budget."
@@ -125,8 +130,9 @@
       "id": 11,
       "title": "Budget et comptabilité",
       "priority": "P0",
-      "status": "À revalider",
+      "status": "Lot en validation",
       "items": [
+        "8 oct. : Budget par code de coût original/révisé/engagé/réalisé/reste livré et exportable. Reste : intégration des dépenses globales par code.",
         "Confronter budget, coûts réels, commandes, changements, temps et factures sans compter deux fois la même dépense.",
         "Verifier vues entreprise/année/client/projet et périodes personnalisées ; cohérence graphique, totals et export.",
         "Verifier ZIP comptable avec justificatifs, dossiers incomplets, téléchargement et envoi réel à plusieurs destinataires/copies.",
@@ -171,8 +177,9 @@
       "id": 15,
       "title": "Notifications",
       "priority": "P1",
-      "status": "À compléter",
+      "status": "Lot en validation",
       "items": [
+        "8 oct. : Événements métier, matrice par rôle et famille livrés. Restent : courriel/SMS/push (services absents).",
         "Conserver la cloche et le panneau translucide ; ajouter historique, lu/non lu, lien vers l’objet et préférences.",
         "Déclencher les notifications depuis les événements réels : message, affectation, validation, signature, paiement et échéance.",
         "Verifier synchronisation entre appareils et dédoublonnage."
@@ -228,8 +235,9 @@
       "id": 20,
       "title": "Réglages et assistance",
       "priority": "P2",
-      "status": "À compléter",
+      "status": "Lot en validation",
       "items": [
+        "8 oct. : Neuf sections de réglages avec sauvegarde explicite et brouillon conservé en cas d’erreur. Restent : logo téléversé, signature riche, connexions d’intégration.",
         "Organiser entreprise, marque/PDF, profil, langue, defaults projet, modèles courriels, portail équipe et intégrations.",
         "Compléter coordonnées, licence, taxes, assurance/expiration, jours ouvrés/congés et préférences.",
         "Adapter support, aide contextuelle, retours utilisateurs et historique des mises à jour au fonctionnement MG Pro."
@@ -259,6 +267,16 @@
     }
   ],
   "delivered": [
+    "Fournisseurs : plusieurs réponses par demande de prix, comparaison (écart au plus bas, délai, validité), attribution unique vers un bon brouillon, réception partielle par ligne, factures fournisseur liées au bon, crédits appliqués, paiements limités au solde et rapprochement bancaire. Contrôle serveur du grand livre à chaque enregistrement.",
+    "Budget par code de coût : original, changements approuvés, révisé, bons engagés, engagé non facturé, factures, crédits, main-d’œuvre approuvée, réalisé, payé, à payer, prévision et reste à engager ; export CSV. Un bon brouillon n’engage rien, une facture remplace la part engagée de son bon, un paiement ne crée pas de coût.",
+    "Prix : choix explicite « marge de profit » (coût ÷ (1 − marge)) ou « majoration » (coût × (1 + majoration)) par ligne et globalement, dans un moteur décimal unique utilisé par l’éditeur, les totaux, la projection client et le PDF. Marge ≥ 100 % refusée côté serveur. Les anciennes lignes gardent exactement leur prix.",
+    "Réglages : image de marque, paramètres de projets (types, échéancier de paiement à 100 %, validité, retenue, semaine de travail, jours fériés, unités), préférences IA, treize courriels par défaut avec variables sûres et aperçu, questions du journal mobile, matrice des notifications par rôle, état réel des services et retours d’assistance.",
+    "Les courriels de documents utilisent les modèles enregistrés ; l’analyse IA reçoit les préférences ; les échéanciers utilisent la semaine et les fériés des réglages.",
+    "Notifications métier : changements de statut, publications (sélections, rapports, journal, échéancier), bons marqués envoyés, factures fournisseur et heures approuvées ; filtrage par rôle et famille. Un statut changé à la main n’est jamais présenté comme un courriel envoyé.",
+    "Portail client en neuf rubriques (vue d’ensemble, contrats, soumissions, sélections, factures, rapports, fichiers, échéancier, journal) construit uniquement à partir des données filtrées par le serveur ; publication explicite de l’échéancier sans les responsables.",
+    "Projets : carte géographique (tuiles OpenStreetMap, coordonnées obtenues par géolocalisation explicite et effacées si l’adresse change), filtres de dates à huit préréglages annulables, sélection, export CSV et changement de statut groupé confirmé, « 0 résultat », filtres restaurés au retour.",
+    "Répertoire unifié : clients, professionnels sans accès logiciel, employés et administrateurs ; doublons signalés sans fusion automatique, import CSV prévisualisé (lignes invalides et doublons écartés), export protégé contre les formules, archivage/restauration.",
+    "68 tests automatisés (25 nouveaux) et compilation de production réussis.",
     "Projets : vues liste/cartes, recherche, filtres client et responsable, tri, étapes et pagination par 24.",
     "Feuille de temps : totaux et approbation limités à la semaine choisie, sept jours inclus, présentation mobile. Les journées à plusieurs saisies restent protégées contre l’écrasement de leurs taux.",
     "Devis et contrats : prix matériaux + main-d’œuvre avant taxes, marge de profit par ligne, notes publiques masquables, notes équipe en jaune et notes administration retirées côté serveur pour les autres rôles.",
@@ -274,11 +292,12 @@
     "Cloche et centre de notifications unifiés : mêmes événements, compteurs et lectures synchronisées."
   ],
   "limits": [
-    "La transcription automatique de l’écriture manuscrite et la reconstruction automatique d’un plan 2D coté ne sont pas encore implémentées.",
-    "La parité de chaque sous-menu et bouton Billdr n’est pas certifiée. Les points ci-dessous restent à compléter ou à vérifier dans un compte authentifié.",
-    "Les essais du navigateur utilisent la démonstration. Les envois réels de courriels, signatures, caméra et transferts média doivent encore être validés avec les services et appareils concernés.",
-    "Configuration de production à fournir : RESEND_API_KEY et MAIL_FROM pour les courriels, ANTHROPIC_API_KEY pour le service IA. Aucun envoi réel ni analyse IA ne peuvent être certifiés sans ces services.",
-    "Les deux nouveaux documents sont analysés ; la liste détaillée des écarts est conservée dans docs/BILLDR_COVERAGE_2026-10-08.md.",
-    "Carte géographique, crédits/paiements fournisseur, répertoire unifié, réglages complets, routines IA et migration restent ouverts."
+    "Services non configurés en production (vérifié le 8 octobre, noms de variables seulement) : RESEND_API_KEY et MAIL_FROM (courriels), ANTHROPIC_API_KEY (IA), NEXT_PUBLIC_SITE_URL. Aucun envoi réel ni analyse IA ne sont certifiés.",
+    "La transcription automatique de l’écriture manuscrite et la reconstruction automatique d’un plan 2D coté ne sont pas implémentées.",
+    "Non construits dans ce lot : Bob Chat et routines IA, dépenses globales à quatre familles (Tout/Dépenses/Factures/Crédits fournisseur au niveau entreprise), arborescence de fichiers à neuf dossiers système, modale d’ajout de contact à cinq types, routes URL par onglet, connexions QuickBooks/Zapier, SMS et push.",
+    "Gantt : glisser/redimensionner au pointeur et au clavier, zoom et groupes imbriqués restent à compléter ; les vues liste/Gantt/calendrier, dépendances sans cycle et jours ouvrés configurables existent.",
+    "Feuilles de temps : pointage mobile réel, divisions/catégories et clôture de paie restent à faire.",
+    "Recette multirôle avec au moins deux clients et deux prestataires réels non réalisée : l’isolation est couverte par des tests unitaires de filtrage serveur, pas par des comptes Supabase de test.",
+    "Migration Billdr non commencée (exports autorisés, mapping, simulation, rapprochement à prévoir). Incidents d’audit DL-0043 et tâche vide conservés dans la passation."
   ]
 }
