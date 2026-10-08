@@ -9,3 +9,4 @@ export default async function Layout({children}:{children:React.ReactNode}){cons
 import './atelier.css';
 
 import './modules.css';
+import './workspace-glass.css';
