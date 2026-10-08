@@ -177,3 +177,28 @@ export function vendorLedgerErrors(operations:ProjectOperations){
  for(const bill of operations.vendorBills)if(activeBill(bill)&&billBalance(operations,bill.id)<0)errors.add(`Facture ${bill.reference||bill.id} : paiements et crédits supérieurs au total.`);
  return [...errors];
 }
+
+export type LedgerFamily='Dépense'|'Facture fournisseur'|'Crédit fournisseur'|'Paiement fournisseur'|'Bon de commande';
+export type LedgerRow={id:string;family:LedgerFamily;projectId:string|null;reference:string;supplier:string;description:string;date:string;dueOn:string;costCode:string;subtotal:number;tax:number;total:number;balance:number;status:string;attachment:string;sourceId:string};
+type ProjectLike={id:string;data:{operations?:unknown}};
+type ExpenseLike={id:string;project_id:string|null;data:Record<string,any>};
+/**
+ * Company-wide supplier ledger (Billdr "Dépenses" families). Families stay separate: the "cost" total adds
+ * expenses and recognised supplier invoices minus applied credits, never payments nor purchase orders.
+ */
+export function supplierLedger(projects:ProjectLike[],expenses:ExpenseLike[],operationsOf:(value:unknown)=>ProjectOperations):LedgerRow[]{
+ const rows:LedgerRow[]=[];
+ for(const e of expenses){const net=Number(e.data.net||0),tax=Number(e.data.tps||0)+Number(e.data.tvq||0);rows.push({id:'e:'+e.id,family:'Dépense',projectId:e.project_id,reference:String(e.data.reference||e.data.number||''),supplier:String(e.data.supplier||''),description:String(e.data.title||e.data.category||''),date:String(e.data.date||''),dueOn:'',costCode:String(e.data.cost_code||e.data.category||''),subtotal:round(net),tax:round(tax),total:round(net+tax),balance:e.data.status==='Payée'?0:round(net+tax),status:String(e.data.status||''),attachment:String(e.data.receipt||e.data.attachment||''),sourceId:e.id})}
+ for(const p of projects){const ops=operationsOf(p.data.operations);
+  for(const b of ops.vendorBills)rows.push({id:'b:'+p.id+':'+b.id,family:'Facture fournisseur',projectId:p.id,reference:b.reference,supplier:b.supplier,description:ops.purchaseOrders.find(o=>o.id===b.orderId)?.title||b.notes,date:b.issuedOn,dueOn:b.dueOn,costCode:b.costCode,subtotal:b.subtotal,tax:b.tax,total:billTotal(b),balance:['Brouillon','Annulée'].includes(b.status)?0:billBalance(ops,b.id),status:b.status,attachment:b.attachment,sourceId:b.id});
+  for(const c of ops.vendorCredits)rows.push({id:'c:'+p.id+':'+c.id,family:'Crédit fournisseur',projectId:p.id,reference:c.reference,supplier:c.supplier,description:c.notes,date:c.issuedOn,dueOn:'',costCode:c.costCode,subtotal:-c.subtotal,tax:-c.tax,total:-billTotal(c),balance:0,status:c.status,attachment:'',sourceId:c.id});
+  for(const pay of ops.vendorPayments)rows.push({id:'p:'+p.id+':'+pay.id,family:'Paiement fournisseur',projectId:p.id,reference:pay.reference,supplier:pay.supplier,description:`${pay.method} · facture ${ops.vendorBills.find(b=>b.id===pay.billId)?.reference||'?'}`,date:pay.paidOn,dueOn:'',costCode:'',subtotal:pay.amount,tax:0,total:pay.amount,balance:0,status:pay.status+(pay.reconciled?' · rapproché':''),attachment:'',sourceId:pay.id});
+  for(const o of ops.purchaseOrders){const billing=orderBilling(ops,o);rows.push({id:'o:'+p.id+':'+o.id,family:'Bon de commande',projectId:p.id,reference:o.reference||'',supplier:o.supplier,description:o.title,date:o.neededBy,dueOn:'',costCode:o.costCode||'',subtotal:billing.value,tax:round(o.amount-billing.value),total:o.amount,balance:billing.unbilled,status:o.status,attachment:'',sourceId:o.id})}
+ }
+ return rows.sort((a,b)=>b.date.localeCompare(a.date)||a.id.localeCompare(b.id));
+}
+/** Cost total of a ledger selection: expenses + recognised invoices − applied credits (pre-tax and with taxes). */
+export function ledgerCost(rows:LedgerRow[]){
+ const counted=rows.filter(r=>(r.family==='Dépense')||(r.family==='Facture fournisseur'&&!['Brouillon','Annulée'].includes(r.status))||(r.family==='Crédit fournisseur'&&r.status==='Appliqué'));
+ return {subtotal:cents(counted.reduce((s,r)=>s.plus(r.subtotal),d(0))),tax:cents(counted.reduce((s,r)=>s.plus(r.tax),d(0))),total:cents(counted.reduce((s,r)=>s.plus(r.total),d(0))),payable:cents(rows.filter(r=>r.family==='Facture fournisseur'||r.family==='Dépense').reduce((s,r)=>s.plus(r.balance),d(0)))};
+}

@@ -88,3 +88,15 @@ test('budget keeps original, revised, labour and uncategorised rows separate',()
  assert.equal(rows.at(-1)!.key,UNCATEGORISED);
  assert.equal(total.forecast,420);
 });
+
+test('company supplier ledger keeps families apart and never adds payments or orders to cost',async()=>{
+ const {supplierLedger,ledgerCost}=await import('../lib/vendor-finance');
+ const project={id:'p1',data:{operations:{purchaseOrders:[{id:'o',supplier:'S',title:'Bois',amount:115,taxRate:15,status:'Envoyé'}],vendorBills:[{id:'b',reference:'F1',supplier:'S',orderId:'o',issuedOn:'2026-10-01',subtotal:100,tax:15,status:'À payer'},{id:'d',reference:'F2',supplier:'S',issuedOn:'2026-10-02',subtotal:50,tax:0,status:'Brouillon'}],vendorCredits:[{id:'c',reference:'C1',supplier:'S',billId:'b',issuedOn:'2026-10-03',subtotal:10,tax:1.5,status:'Appliqué'}],vendorPayments:[{id:'p',supplier:'S',billId:'b',paidOn:'2026-10-04',amount:50,status:'Émis'}]}}};
+ const expense={id:'e',project_id:'p1',data:{supplier:'Quinc',date:'2026-10-05',net:20,tps:1,tvq:1.99,status:'À payer'}};
+ const rows=supplierLedger([project],[expense],operationsFrom);
+ assert.deepEqual(rows.map(r=>r.family).sort(),['Bon de commande','Crédit fournisseur','Dépense','Facture fournisseur','Facture fournisseur','Paiement fournisseur']);
+ const cost=ledgerCost(rows);
+ assert.equal(cost.subtotal,110,'100 invoice − 10 credit + 20 expense; draft invoice, payment and order excluded');
+ assert.equal(cost.total,126.49);
+ assert.equal(rows.find(r=>r.id==='b:p1:b')!.balance,53.5);
+});
