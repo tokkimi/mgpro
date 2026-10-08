@@ -164,3 +164,44 @@
 .portal-contact{display:grid;gap:2px;border:1px solid #e3e9e1;border-radius:10px;padding:12px;font-size:14px;max-width:360px}
 .portal-empty{border:1px dashed #d4ddd1;border-radius:12px;padding:18px;text-align:center;color:#5d6d62;font-size:14px}
 .schedule-publication{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:16px 0 0;font-size:13px;color:#3d5546}
+
+/* Projects: map, date drawer, bulk actions */
+.project-map{display:grid;gap:10px;min-width:0}
+.project-map-tools{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;font-size:13px;color:#4d5f53}
+.project-map-canvas{position:relative;overflow:hidden;border:1px solid #dfe7dc;border-radius:12px;background:#e8eee6;touch-action:none;cursor:grab;user-select:none}
+.project-map-canvas:active{cursor:grabbing}
+.project-map-canvas:focus-visible{outline:2px solid #53775f;outline-offset:2px}
+.map-tile{position:absolute;width:256px;height:256px;pointer-events:none}
+.map-marker{position:absolute;width:18px;height:18px;margin:-18px 0 0 -9px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);cursor:pointer;padding:0}
+.map-marker.active,.map-marker:focus-visible{outline:3px solid #1f3d2c;outline-offset:1px;z-index:2}
+.map-popup{position:absolute;z-index:3;width:260px;background:#fff;border-radius:10px;box-shadow:0 6px 22px rgba(20,40,30,.22);padding:12px;display:grid;gap:4px;font-size:13px}
+.map-popup>.icon-button{position:absolute;top:6px;right:6px}
+.map-popup b{font-size:14px;overflow-wrap:anywhere;padding-right:20px}.map-popup small{color:#6b7a6f}
+.map-popup .btn{justify-self:start;margin-top:6px;font-size:13px;min-height:34px;padding:6px 12px}
+.map-zoom{position:absolute;right:10px;top:10px;display:grid;gap:4px;z-index:2}
+.map-zoom button{width:34px;height:34px;border:1px solid #d9e1d6;background:#fff;border-radius:8px;display:grid;place-items:center;cursor:pointer}
+.map-attribution{position:absolute;right:6px;bottom:4px;background:rgba(255,255,255,.85);padding:1px 6px;border-radius:4px;font-size:11px}
+.map-legend{display:flex;gap:12px;flex-wrap:wrap;list-style:none;margin:0;padding:0;font-size:12px;color:#4d5f53}
+.map-legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
+.map-missing{font-size:13px}.map-missing ul{list-style:none;padding:0;margin:6px 0 0;display:grid;gap:4px}
+.filter-drawer{border:1px solid #dfe7dc;border-radius:12px;background:#fff;padding:14px;display:grid;gap:10px;box-shadow:0 8px 24px rgba(20,40,30,.08)}
+.filter-drawer h3{margin:0;font-size:15px}
+.filter-drawer fieldset{border:1px solid #eef2ec;border-radius:10px;padding:8px 10px;display:grid;gap:8px}
+.filter-drawer legend{font-size:13px;font-weight:600;padding:0 4px}
+.filter-drawer select,.filter-drawer input{font:inherit;font-size:14px;padding:7px 9px;border:1px solid #d9e1d6;border-radius:8px;min-width:0;width:100%}
+.filter-range{display:grid;grid-template-columns:1fr 1fr;gap:8px}.filter-range label{display:grid;gap:4px;font-size:12px}
+.projects-bulk{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px;color:#4d5f53;padding:6px 0}
+.projects-bulk select{font:inherit;font-size:13px;padding:6px 8px;border:1px solid #d9e1d6;border-radius:8px}
+.projects-bulk .btn{font-size:13px;min-height:34px;padding:6px 12px}
+.project-select{display:inline-flex;align-items:center;padding:4px}
+.project-select input{width:17px;height:17px}
+.search-input .icon-button{border:0;background:none;padding:2px;cursor:pointer}
+
+/* Directory */
+.directory-centre{display:grid;gap:14px;min-width:0}
+.directory-name{display:inline-flex;align-items:center;gap:8px;overflow-wrap:anywhere}
+.directory-name img,.avatar-initials{width:28px;height:28px;border-radius:50%;object-fit:cover;flex:0 0 28px}
+.avatar-initials{display:inline-grid;place-items:center;background:#e6eee8;color:#2f4b3a;font-size:11px;font-weight:600}
+.directory-duplicates,.directory-import{border:1px solid #eadfca;background:#fffaf1;border-radius:12px;padding:12px 14px;display:grid;gap:8px;font-size:13px}
+.directory-duplicates ul,.directory-import ul{margin:4px 0 0;padding-left:18px}
+.directory-centre .upload-button{padding:10px 15px;color:inherit}
