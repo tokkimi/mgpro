@@ -1,4 +1,5 @@
 import {PDFDocument,StandardFonts,rgb,PDFFont,PDFPage} from 'pdf-lib';
+import {lineSale,unitSale} from './pricing';
 import {Data,defaults,totals,money,paymentRows,defaultPaymentSchedule} from './model';
 // Professional soumission / facture / report layout built on pdf-lib. Keeps the
 // original signature so existing callers (quote, invoice, visit, accounting) work.
@@ -49,7 +50,7 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
 
  const t=totals(data);
  const showPrice=view.unitPrices===true||isInvoice;
- const amountWidth=Math.max(92,...(data.lines||[]).map((line:Data)=>width(clean(money(Number(line.quantity)*Number(line.price)*(1+Number(line.margin||0)/100))),10,bold)+24),width(clean(money(t.total)),10)+24);
+ const amountWidth=Math.max(92,...(data.lines||[]).map((line:Data)=>width(clean(money(lineSale(line))),10,bold)+24),width(clean(money(t.total)),10)+24);
  const priceWidth=showPrice?Math.max(86,...(data.lines||[]).map((line:Data)=>width(clean(money(Number(line.price))),9.5)+22)):0;
  const qtyX=R-amountWidth-priceWidth-12,puX=R-amountWidth-12,amtX=R;
  const descriptionWidth=Math.max(100,qtyX-L-90);
@@ -77,8 +78,8 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
   // description (first line bold, rest normal muted)
   draw(descLines[0]||'',L+10,10,{f:bold});
   if(view.quantities!==false)fitRight(`${clean(String(l.quantity))} ${clean(l.unit||'')}`,qtyX,75,9.5,{color:MUTED});
-  if(view.unitPrices===true||isInvoice)right(money(Number(l.price)*(1+Number(l.margin||0)/100)),puX,9.5,{color:MUTED});
-  right(money(Number(l.quantity)*Number(l.price)*(1+Number(l.margin||0)/100)),amtX-10,10,{f:bold});
+  if(view.unitPrices===true||isInvoice)right(money(unitSale(l)),puX,9.5,{color:MUTED});
+  right(money(lineSale(l)),amtX-10,10,{f:bold});
   y-=14;
   for(const dl of descLines.slice(1)){ensure(14);draw(dl,L+10,9.5,{color:MUTED});y-=13;}
   if(l.notes&&l.show_notes!==false){for(const nl of wrap(l.notes,9,descriptionWidth)){ensure(13);draw(nl,L+14,9,{color:MUTED});y-=12;}}

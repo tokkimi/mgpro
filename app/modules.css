@@ -54,3 +54,42 @@
 @media(max-width:640px){.workspace .notification-popover.notification-unified{position:fixed;top:64px;left:12px;right:12px;width:auto;max-width:calc(100vw - 24px);max-height:calc(100dvh - 80px)}.notification-unified .module-centre{max-height:calc(100dvh - 200px)}.notification-unified .notification-history article{grid-template-columns:28px minmax(0,1fr)}.notification-unified .notification-symbol{width:28px;height:28px}}
 .workspace .notification-unified .module-centre{display:block;width:100%;box-sizing:border-box;white-space:normal;min-width:0}.notification-unified .module-section-heading,.notification-unified .module-section-heading>div,.notification-unified .notification-history,.notification-unified .notification-history article,.notification-unified .notification-history article>div{min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere}.notification-unified .notification-history h3,.notification-unified .notification-history p,.notification-unified .module-section-heading p{white-space:normal;overflow-wrap:anywhere}
 .workspace .notification-popover.notification-unified{background:rgba(250,253,250,.94);backdrop-filter:blur(24px) saturate(125%);-webkit-backdrop-filter:blur(24px) saturate(125%)}
+
+/* Supplier chain and cost-code budget (project Purchases / Budget tabs). */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.vendor-finance,.vendor-budget{min-width:0;display:grid;gap:14px;margin-top:22px;color:#253b30}
+.vendor-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.vendor-tabs button{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;border:1px solid #dfe7dc;background:#fff;border-radius:999px;padding:8px 13px;font-size:13px;font-weight:500;color:#3d5546;cursor:pointer}
+.vendor-tabs button span{min-width:20px;padding:1px 6px;border-radius:999px;background:#eef3ec;font-size:11px;text-align:center}
+.vendor-tabs button.active{background:#e6eee8;border-color:#53775f;color:#1f3d2c}
+.vendor-tabs button:focus-visible,.vendor-table:focus-visible{outline:2px solid #53775f;outline-offset:2px}
+.vendor-stack{display:grid;gap:12px;min-width:0}
+.vendor-card{border:1px solid #e0e6dc;border-radius:12px;padding:14px;background:rgba(255,255,255,.86);display:grid;gap:12px;min-width:0}
+.vendor-card header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.vendor-card h4{margin:0;font-size:15px;font-weight:600;overflow-wrap:anywhere}
+.vendor-card small{color:#6b7a6f}
+.vendor-figures{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:0}
+.vendor-figures div{background:#f6f8f4;border-radius:8px;padding:8px 10px}
+.vendor-figures dt{font-size:11px;color:#6b7a6f}.vendor-figures dd{margin:2px 0 0;font-weight:600;font-variant-numeric:tabular-nums}
+.vendor-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-items:end;border:1px solid #e0e6dc;border-radius:12px;padding:14px;background:#fafbf8}
+.vendor-form.compact{border:0;padding:0;background:none}
+.vendor-form label,.vendor-receive label{display:grid;gap:5px;font-size:12px;color:#4d5f53;min-width:0}
+.vendor-form .wide{grid-column:1/-1}
+.vendor-form input,.vendor-form select,.vendor-form textarea,.vendor-receive input{width:100%;min-width:0;font:inherit;font-size:14px;padding:8px 10px;border:1px solid #d9e1d6;border-radius:8px;background:#fff}
+.vendor-receive{display:grid;gap:8px}
+.vendor-table{max-width:100%;overflow-x:auto;border:1px solid #e3e9e1;border-radius:10px;background:#fff}
+.vendor-table table{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
+.vendor-table th,.vendor-table td{padding:8px 10px;border-bottom:1px solid #eef2ec;text-align:left;white-space:nowrap;font-variant-numeric:tabular-nums}
+.vendor-table thead th{font-size:11px;font-weight:600;color:#5d6d62;background:#f6f8f4;position:sticky;top:0}
+.vendor-table tbody th,.vendor-table tfoot th{position:sticky;left:0;background:#fff;font-weight:500;white-space:normal;min-width:140px}
+.vendor-table tfoot td,.vendor-table tfoot th{font-weight:600;background:#f6f8f4}
+.vendor-table tr.lowest td{background:#f0f6f1}
+.vendor-table .negative{color:#a23b2c}
+.vendor-actions{display:flex;gap:6px}
+.vendor-actions .btn,.vendor-stack .btn,.vendor-budget .btn{font-size:13px;min-height:36px;padding:7px 12px}
+.vendor-errors{margin:0;padding:10px 14px 10px 28px}
+.vendor-checklist{display:grid;gap:6px}
+.vendor-checklist label{display:flex;gap:8px;align-items:center;font-size:13px;overflow-wrap:anywhere}
+.vendor-findings{margin:0;padding-left:18px;display:grid;gap:4px;font-size:13px}
+.vendor-findings .warn{color:#8a5a12}.vendor-findings .ok{color:#3d6b4b}
+@media (max-width:520px){.vendor-form{grid-template-columns:1fr}.vendor-card{padding:12px}}

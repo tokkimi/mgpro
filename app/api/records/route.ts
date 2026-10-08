@@ -4,6 +4,9 @@ import {identity,db} from '@/lib/supabase';
 import {visible,sameOrigin} from '@/lib/access';
 import {kinds,RecordItem,totals} from '@/lib/model';
 import {z} from 'zod';
+import {pricingErrors} from '@/lib/pricing';
+import {operationsFrom} from '@/lib/project-operations';
+import {vendorLedgerErrors} from '@/lib/vendor-finance';
 import {signatureInput,applyContractSignature} from '@/lib/contract-signatures';
 import {contractError} from '@/lib/contracts';
 import {activeRecords,clientTrash} from '@/lib/client-trash';
@@ -20,6 +23,8 @@ export async function POST(req:Request){if(!sameOrigin(req))return NextResponse.
  if(payload.kind==='contract'&&!signing){const issue=contractError(payload.data);if(issue)return NextResponse.json({error:issue},{status:400});payload.data={...payload.data,totals:totals(payload.data)};}
  if(user.role==='admin'&&payload.data.access!==undefined){const access=payload.data.access as {client?:unknown;workers?:unknown};const accessProject=payload.kind==='project'?old?.id:payload.project_id;if(!access||typeof access!=='object'||typeof access.client!=='boolean'||!Array.isArray(access.workers)||access.workers.length>100||access.workers.some((id:unknown)=>typeof id!=='string'||!z.uuid().safeParse(id).success))return NextResponse.json({error:'Choix des accès invalide.'},{status:400});if(access.workers.length){if(!accessProject)return NextResponse.json({error:'Associez un projet avant de choisir ses prestataires.'},{status:400});const {data:members}=await db().from('memberships').select('user_id').eq('project_id',accessProject);const assigned=new Set((members||[]).map(member=>member.user_id));if(access.workers.some((id:string)=>!assigned.has(id)))return NextResponse.json({error:'Seuls les prestataires du projet peuvent accéder à ce document.'},{status:400});}}
  if(payload.kind==='quote'&&old?.data.signature_image)return NextResponse.json({error:'La soumission signée est figée. Créez une nouvelle version pour la modifier.'},{status:409});
+ if(['quote','invoice','contract'].includes(payload.kind)){const pricing=pricingErrors(payload.data);if(pricing.length)return NextResponse.json({error:pricing.join(' ')},{status:400});}
+ if(payload.kind==='project'&&payload.data.operations!==undefined){const ledger=vendorLedgerErrors(operationsFrom(payload.data.operations));if(ledger.length)return NextResponse.json({error:ledger.slice(0,4).join(' ')},{status:400});}
  if(payload.kind==='quote'&&user.role==='admin'){for(const key of ['signature_image','signature_name','signature_consent','signed_at','signed_by'])delete payload.data[key];}
  if(payload.kind==='contract'&&payload.data.partner_id){const partner=(await db().from('profiles').select('id,role,active').eq('id',payload.data.partner_id).maybeSingle()).data;if(!partner||partner.role!=='worker'||partner.active===false)return NextResponse.json({error:'Prestataire introuvable ou inactif.'},{status:400});}
  if(payload.kind==='settings'&&payload.data.calendly_url){try{const u=new URL(String(payload.data.calendly_url));if(u.protocol!=='https:'||u.hostname!=='calendly.com'||u.username||u.password)throw Error()}catch{return NextResponse.json({error:'Le lien doit être une adresse https://calendly.com valide.'},{status:400})}}
