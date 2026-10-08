@@ -30,8 +30,8 @@ test('task import offers each source line once and skips what is already importe
  assert.deepEqual(taskCandidates('Personnalisée',project,records,{}),[]);
 });
 
-test('nine system folders; generated documents cannot be moved; shared folder mirrors client visibility',()=>{
- assert.equal(systemFolders.length,9);
+test('system folders include contracts; generated documents cannot be moved; shared folder mirrors client visibility',()=>{
+ assert.equal(systemFolders.length,10);assert.ok(systemFolders.includes('Contrats'));
  const project=rec('p','project',{title:'X',operations:{dailyLogs:[{id:'l',date:'2026-10-02',summary:'ok',sharedWithClient:true}]}});
  const files=projectFiles(project,[project,rec('d1','document',{name:'plan.pdf',mime:'application/pdf',visibility:'client',folder:'Soumissions'},'p'),rec('d2','document',{name:'plan.pdf',mime:'application/pdf'},'p'),rec('q','quote',{number:'S-1',status:'Envoyé'},'p')]);
  assert.equal(files.filter(f=>f.name==='plan.pdf').length,2,'same name, two distinct files');

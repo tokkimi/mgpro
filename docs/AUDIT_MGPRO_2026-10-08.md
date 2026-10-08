@@ -31,3 +31,13 @@ Assistant et routines, quatre familles de coûts fournisseur, neuf dossiers syst
 82 tests automatisés réussis ; compilation production et TypeScript réussis. Contrôle visuel du menu à 320×640, 390×844 et 1280×720 : un dialogue, accès au dernier outil, aucune largeur de page supérieure à l’écran, aucune barre latérale mobile. Aucun courriel client réel envoyé pendant ces tests.
 
 Vercel : inventaire des deux pages de projets du compte ; un seul projet MG Pro identifié. Les autres projets appartiennent à d’autres sites et sont conservés. Les URL uniques de déploiement du même projet constituent son historique, pas des doublons de projet à supprimer.
+
+
+## Complément : réglages détaillés et effets réels
+
+- Palette de 11 couleurs, sélecteur natif et code hexadécimal ; logo PNG/JPEG local, visibilité de l’entreprise, du contact et du client ; téléchargement d’un vrai aperçu PDF avant enregistrement.
+- Le moteur PDF consomme maintenant ces réglages : couleur, bande, logo, taille de l’en-tête, coordonnées et visibilité. En-tête en deux colonnes avec retour à la ligne pour éviter les chevauchements.
+- Bibliothèque partagée accessible depuis Réglages : catégories, codes de coût et couleurs, gabarits, produits et échéanciers. Aucun second catalogue séparé.
+- Unités enregistrées utilisées par l’éditeur de devis. Contrats classés dans leur dossier, contrats prestataires exclus de la valeur commerciale client.
+- Courriels de documents et rappels : HTML échappé avec couleur et signature enregistrées. Domaine Resend toujours non validé : aucun envoi réel annoncé.
+- Restent notamment : application du questionnaire employé, retenues financières, notifications par événement, synchronisation QuickBooks, OCR/plan automatique, recette multi-comptes et migration Billdr. Cette livraison n’établit pas une parité complète Billdr.

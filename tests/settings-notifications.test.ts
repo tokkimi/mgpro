@@ -76,3 +76,14 @@ test('service status reveals only booleans and names what is missing',()=>{
  assert.equal(JSON.stringify(status).includes('secret-value'),false);
  assert.equal(status.find(s=>s.id==='sms')!.ready,false);
 });
+
+import {brandedEmail} from '../lib/email-branding';
+import {makePdf} from '../lib/pdf';
+import {PDFDocument} from 'pdf-lib';
+test('saved branding renders safe email and valid classic/compact PDFs',async()=>{
+ const settings={name:'MG Pro',branding:{accent:'#7c3aed',signature:'Signature MG',emailLogo:'signature',showClientEmail:false,showLicence:false,header:'compact'}};
+ const html=brandedEmail('<script>alert(1)</script>',settings);
+ assert.ok(html.includes('#7c3aed'));assert.ok(html.includes('Signature MG'));assert.ok(html.includes('&lt;script&gt;'));assert.ok(!html.includes('<script>'));
+ const bytes=await makePdf('Soumission',{lines:[{description:'Travaux',quantity:1,price:100}]},{name:'Client',email:'private@example.com'},settings);
+ assert.ok((await PDFDocument.load(bytes)).getPageCount()>0);
+});

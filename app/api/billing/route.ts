@@ -45,7 +45,7 @@ export async function POST(req:Request){
   const values={client_name:String(client.name||''),project_address:String(record.data.address||client.address||''),company_name:String(settings.name||'Rénovations MG Pro'),name:String(settings.name||''),phone_number:String(settings.phone||''),ref_number:String(record.data.number||record.data.title||''),signature:String(settings.name||'Rénovations MG Pro'),amount:money(outstanding(record.data)),total_amount:money(outstanding(record.data)),due_date:String(record.data.due||''),invoice_description:String(record.data.title||'')};
   const vars=variablesFor(template);
   const text=`${renderTemplate(template.body,values,vars).text}\n\n${template.button} : ${link}${record.data.payment_url?`\nPayer en ligne : ${record.data.payment_url}`:''}`;
-  const result=await sendMail({to,subject:renderTemplate(template.subject,values,vars).text,text,idempotencyKey:`reminder-${record.id}-${today}`});
+  const result=await sendMail({to,settings,subject:renderTemplate(template.subject,values,vars).text,text,idempotencyKey:`reminder-${record.id}-${today}`});
   if(result.status==='non configuré')return NextResponse.json({error:'Service de courriel non configuré (RESEND_API_KEY et MAIL_FROM) : aucun rappel n’a été envoyé.',configured:false},{status:503});
   const log:ReminderLog={at:new Date().toISOString(),kind:'manuel',offset:null,to,status:result.status==='envoyé'?'envoyé':'échec'};
   patch={reminders:[...remindersOf(record.data),log].slice(-30)};mailStatus=result.status;

@@ -5,8 +5,8 @@ import {ArrowDown,ArrowUp,Copy,GripVertical,Plus,Trash2,Undo2,Redo2} from 'lucid
 import {Data,money} from '@/lib/model';
 import {catalogueFrom} from '@/lib/catalogue';
 import QuoteLineDetails from './quote-line-details';
-const units=['unité','forfait','heure','jour','pi lin','pi²','pi³','m','m²','m³','lb','kg','litre','gallon','sac','boîte','lot'];
-export default function QuoteItemsEditor({lines,catalogue,onChange}:{lines:Data[];catalogue?:unknown;onChange:(lines:Data[])=>void}){
+const fallbackUnits=['unité','forfait','heure','jour','pi lin','pi²','pi³','m','m²','m³','lb','kg','litre','gallon','sac','boîte','lot'];
+export default function QuoteItemsEditor({lines,catalogue,units=fallbackUnits,onChange}:{lines:Data[];catalogue?:unknown;units?:string[];onChange:(lines:Data[])=>void}){
  const [history,setHistory]=useState<Data[][]>([]),[future,setFuture]=useState<Data[][]>([]),[category,setCategory]=useState(''),[collapsed,setCollapsed]=useState<string[]>([]),[noteIndex,setNoteIndex]=useState<number|null>(null);const drag=useRef<number|null>(null);
  const categories=[...new Set(lines.map(x=>String(x.category||'')))];const library=catalogueFrom(catalogue),categoryChoices=library.filter(x=>x.tab==='Mes catégories'),codes=library.filter(x=>x.tab==='Codes de coût');
  function commit(next:Data[]){setHistory(old=>[...old.slice(-19),structuredClone(lines)]);setFuture([]);onChange(next)}

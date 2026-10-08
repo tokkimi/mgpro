@@ -32,7 +32,7 @@ export async function GET(req:Request){
    const to=String(client.billing_email||client.email||'').trim();if(!to)continue;
    const values={client_name:String(client.name||''),company_name:String(settings.name),name:String(settings.name),phone_number:String(settings.phone),ref_number:String(inv.data.number||''),signature:String(settings.name),amount:money(outstanding(inv.data)),due_date:String(inv.data.due||''),invoice_description:String(inv.data.title||''),project_address:String(inv.data.address||client.address||'')};
    const link=inv.data.public_token?`${siteUrl(req)}/f/${inv.data.public_token}`:`${siteUrl(req)}/connexion`;
-   const result=await sendMail({to,subject:renderTemplate(template.subject,values,variablesFor(template)).text,text:`${renderTemplate(template.body,values,variablesFor(template)).text}\n\n${template.button} : ${link}${inv.data.payment_url?`\nPayer en ligne : ${inv.data.payment_url}`:''}`,idempotencyKey:`auto-reminder-${inv.id}-${offset}`});
+   const result=await sendMail({to,settings,subject:renderTemplate(template.subject,values,variablesFor(template)).text,text:`${renderTemplate(template.body,values,variablesFor(template)).text}\n\n${template.button} : ${link}${inv.data.payment_url?`\nPayer en ligne : ${inv.data.payment_url}`:''}`,idempotencyKey:`auto-reminder-${inv.id}-${offset}`});
    if(result.status==='non configuré'){report.emailNotConfigured=true;break}
    const log={at:new Date().toISOString(),kind:'automatique',offset,to,status:result.status==='envoyé'?'envoyé':'échec'};
    await db().from('records').update({data:{...inv.data,reminders:[...remindersOf(inv.data),log].slice(-30)},version:inv.version+1}).eq('id',inv.id).eq('version',inv.version);

@@ -1,10 +1,14 @@
 import {PDFDocument,StandardFonts,rgb,PDFFont,PDFPage} from 'pdf-lib';
 import {lineSale,unitSale} from './pricing';
+import {brandingFrom} from './settings-model';
 import {Data,defaults,totals,money,paymentRows,defaultPaymentSchedule} from './model';
 // Professional soumission / facture / report layout built on pdf-lib. Keeps the
 // original signature so existing callers (quote, invoice, visit, accounting) work.
 const INK=rgb(.11,.15,.13),MUTED=rgb(.42,.46,.42),GOLD=rgb(.67,.52,.28),FOREST=rgb(.13,.25,.2),SOFT=rgb(.96,.965,.94),LINE=rgb(.85,.87,.83);
 export async function makePdf(title:string,data:Data,client:Data={},settings:Data=defaults,photos:{bytes:Uint8Array;mime:string;caption:string}[]=[]){
+ const branding=brandingFrom(settings.branding);
+ const accent=branding.accent;
+ const FOREST=rgb(parseInt(accent.slice(1,3),16)/255,parseInt(accent.slice(3,5),16)/255,parseInt(accent.slice(5,7),16)/255),GOLD=FOREST;
  const pdf=await PDFDocument.create();
  const font=await pdf.embedFont(StandardFonts.Helvetica);
  const bold=await pdf.embedFont(StandardFonts.HelveticaBold);
@@ -26,24 +30,35 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
  }
 
  // ---- Header band ----
- page.drawRectangle({x:0,y:H-6,width:W,height:6,color:GOLD});
- draw(settings.name||defaults.name,L,20,{f:bold});
+ if(branding.showLogo&&branding.logo){try{const bytes=Uint8Array.from(atob(branding.logo.split(',')[1]),c=>c.charCodeAt(0));const image=branding.logo.startsWith('data:image/png')?await pdf.embedPng(bytes):await pdf.embedJpg(bytes);const d=image.scaleToFit(110,50);page.drawImage(image,{x:L,y:y-d.height,width:d.width,height:d.height});y-=d.height+14;}catch{}}
+
+ if(branding.colorAccent)page.drawRectangle({x:0,y:H-6,width:W,height:6,color:GOLD});
  const num=data.number||'';
  const isInvoice=/facture/i.test(title),isQuote=/soumission|devis|ordre de changement/i.test(title),isAgreement=/contrat/i.test(title),isContract=/contrat|cahier des charges/i.test(title),view=data.client_view||{};
- right(title,R,17,{f:bold,color:FOREST});y-=15;
- draw(settings.address||'',L,9,{color:MUTED});right(isInvoice?`Facture ${num?'# '+num:''}`:num,R,10,{color:INK});y-=13;
- draw(`${settings.phone||''}  •  ${settings.email||''}`,L,9,{color:MUTED});right(`${isInvoice?'Date de facturation':'Date'} : ${clean(data.date||new Date().toISOString().slice(0,10))}`,R,9,{color:MUTED});y-=13;
- const lic=[settings.rbq?`RBQ ${settings.rbq}`:'',settings.tps_number?`TPS ${settings.tps_number}`:'',settings.tvq_number?`TVQ ${settings.tvq_number}`:''].filter(Boolean).join('  •  ');
- draw(lic,L,8.5,{color:MUTED});if(data.signed_at)right(`Signé le ${clean(data.signed_at)}`,R,9,{color:MUTED});y-=18;
+ const headerStart=y,headerWidth=250;
+ para(settings.name||defaults.name,L,branding.header==='compact'?15:20,headerWidth,{f:bold});
+ if(branding.showCompanyAddress&&settings.address)para(settings.address,L,9,headerWidth,{color:MUTED});
+ const contact=branding.contactOverride||[branding.showContactName?branding.contactName:'',branding.showCompanyPhone?branding.contactPhone||settings.phone:'',branding.showCompanyEmail?branding.contactEmail||settings.email:''].filter(Boolean).join('  •  ');
+ if(contact)para(contact,L,9,headerWidth,{color:MUTED});
+ if(branding.showWebsite&&branding.website)para(branding.website,L,8.5,headerWidth,{color:MUTED});
+ const lic=[branding.showLicence&&settings.rbq?`RBQ ${settings.rbq}`:'',branding.showTaxNumbers&&settings.tps_number?`TPS ${settings.tps_number}`:'',branding.showTaxNumbers&&settings.tvq_number?`TVQ ${settings.tvq_number}`:''].filter(Boolean).join('  •  ');
+ if(lic)para(lic,L,8.5,headerWidth,{color:MUTED});
+ const companyEnd=y;y=headerStart;
+ para(title,325,16,R-325,{f:bold,color:FOREST});
+ para(isInvoice?`Facture ${num?'# '+num:''}`:num,325,10,R-325);
+ para(`${isInvoice?'Date de facturation':'Date'} : ${clean(data.date||new Date().toISOString().slice(0,10))}`,325,9,R-325,{color:MUTED});
+ if(data.signed_at)para(`Signé le ${clean(data.signed_at)}`,325,9,R-325,{color:MUTED});
+ y=Math.min(companyEnd,y)-12;
  page.drawLine({start:{x:L,y},end:{x:R,y},thickness:1,color:LINE});y-=22;
 
  // ---- Client / billing ----
  const colR=310;const startY=y;
  if(view.client!==false){draw(isAgreement?'DESTINATAIRE':'CLIENT',L,8,{f:bold,color:GOLD});y-=15;
- if(client.name)draw(client.name,L,12,{f:bold});y-=15;
- for(const v of [client.email,client.phone,data.project_number?`Projet ${data.project_number}`:'',client.address].filter(Boolean)){para(String(v),L,9.5,colR-L-15,{color:MUTED,gap:4});}}
+ if(branding.showClientName&&client.name)para(client.name,L,12,colR-L-15,{f:bold});
+ if(branding.showClientCompany&&client.company)para(client.company,L,10,colR-L-15,{color:MUTED});y-=3;
+ for(const v of [branding.showClientEmail?client.email:null,branding.showClientPhone?client.phone:null,data.project_number?`Projet ${data.project_number}`:'',client.address].filter(Boolean)){para(String(v),L,9.5,colR-L-15,{color:MUTED,gap:4});}}
  const leftEnd=y;y=startY;
- if(client.billing_address){draw('ADRESSE DE FACTURATION',colR,8,{f:bold,color:GOLD});y-=15;para(String(client.billing_address),colR,9.5,R-colR,{color:MUTED,gap:4});}
+ if(branding.showBillingAddress&&client.billing_address){draw('ADRESSE DE FACTURATION',colR,8,{f:bold,color:GOLD});y-=15;para(String(client.billing_address),colR,9.5,R-colR,{color:MUTED,gap:4});}
  y=Math.min(leftEnd,y)-16;
 
 
