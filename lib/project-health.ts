@@ -40,15 +40,20 @@ export function projectHealth(project:RecordItem,records:RecordItem[],today:stri
  const invoiced=round(issued.reduce((s,r)=>s+totals(r.data).total,0));
  const paid=round(issued.reduce((s,r)=>s+Number(r.data.paid||0),0));
  const overdueInvoices=round(issued.filter(r=>String(r.data.due||'')&&String(r.data.due)<today).reduce((s,r)=>s+Math.max(0,totals(r.data).total-Number(r.data.paid||0)),0));
- const signed=own.filter(r=>r.kind==='contract'&&r.data.status==='Signé');
+ const signed=own.filter(r=>r.kind==='contract'&&r.data.status==='Signé'&&!r.data.partner_id);
  const contract=round(signed.reduce((s,r)=>s+(Number(r.data.amount)||totals(r.data).total),0)+own.filter(r=>r.kind==='quote'&&r.data.status==='Accepté'&&!signed.some(c=>c.data.quote_id===r.id)).reduce((s,r)=>s+totals(r.data).total,0));
+ // Financial margins compare revenue and costs before tax. Legacy amount-only contracts
+ // use their linked quote when available, otherwise the document's tax rates.
+ const netContract=(r:RecordItem)=>{const quote=own.find(q=>q.kind==='quote'&&q.id===r.data.quote_id);if(quote)return totals(quote.data).net;if(r.data.lines?.length)return totals(r.data).net;return Number(r.data.amount||0)/(1+Number(r.data.tps??5)/100+Number(r.data.tvq??9.975)/100)};
+ const contractNet=round(signed.reduce((s,r)=>s+netContract(r),0)+own.filter(r=>r.kind==='quote'&&r.data.status==='Accepté'&&!signed.some(c=>c.data.quote_id===r.id)).reduce((s,r)=>s+totals(r.data).net,0));
+ const revenueNet=Math.max(contractNet,round(issued.reduce((s,r)=>s+totals(r.data).net,0)));
  const tasks=own.filter(r=>r.kind==='task');
  const openTasks=tasks.filter(t=>t.data.status!=='Validée');
  const overdueTasks=openTasks.filter(t=>String(t.data.due||'')&&String(t.data.due)<today).length;
  const age=(r:RecordItem,key='sent_at')=>Math.max(0,daysBetween(String(r.data[key]||r.updated_at),today));
  const clientWaits=[
   ...own.filter(r=>r.kind==='quote'&&r.data.status==='Envoyé').map(r=>({label:`${r.data.document_type==='change_order'?'Ordre de changement':'Soumission'} ${r.data.number||r.data.title||''} à approuver`,days:age(r),recordId:r.id})),
-  ...own.filter(r=>r.kind==='contract'&&r.data.status==='Envoyé').map(r=>({label:`Contrat ${r.data.title||''} à signer`,days:age(r),recordId:r.id})),
+  ...own.filter(r=>r.kind==='contract'&&r.data.status==='Envoyé'&&!r.data.partner_id).map(r=>({label:`Contrat ${r.data.title||''} à signer`,days:age(r),recordId:r.id})),
   ...((Array.isArray(project.data.selections)?project.data.selections:[]) as Data[]).filter(s=>s.published===true&&!s.decision).map(s=>({label:`Choix « ${s.title||'matériau'} »`,days:Math.max(0,daysBetween(String(s.published_at||s.date||project.updated_at),today)),recordId:project.id}))
  ];
  const start=String(project.data.start||project.created_at).slice(0,10);
@@ -57,7 +62,7 @@ export function projectHealth(project:RecordItem,records:RecordItem[],today:stri
  const upcoming=[...openTasks.filter(t=>String(t.data.due||'')>=today).map(t=>({date:String(t.data.due),label:String(t.data.title||'Tâche')})),...scheduleFrom(project.data.schedule).filter(a=>a.start&&a.kind==='milestone'&&a.start>=today).map(a=>({date:a.start,label:a.title})),...(end&&end>=today?[{date:end,label:'Livraison prévue'}]:[])].sort((a,b)=>a.date.localeCompare(b.date));
  const nextDeadline=upcoming[0]||null;
  if(isDone(project.data.status)){
-  const revenue=Math.max(contract,invoiced);const margin=revenue?round(revenue-costToDate):null;
+  const revenue=revenueNet;const margin=revenue?round(revenue-costToDate):null;
   return {projectId:project.id,title:String(project.data.title||'Projet'),clientId:project.client_id,manager:String(project.data.assignee||project.data.manager||''),score:100,status:'done',progress,expected:null,start,end,daysLeft:null,budget,costToDate,forecast:costToDate,contract,invoiced,paid,overdueInvoices,margin,marginPct:margin!==null&&revenue?Math.round(margin/revenue*100):null,budgetUsedPct:budget?Math.round(costToDate/budget*100):null,overdueTasks,openTasks:openTasks.length,clientWaits,nextDeadline,alerts};
  }
  let score=100,expected:number|null=null,daysLeft:number|null=null;
@@ -71,7 +76,7 @@ export function projectHealth(project:RecordItem,records:RecordItem[],today:stri
   if(daysLeft>=0&&daysLeft<=7&&progress<90)alerts.push({level:'warning',kind:'schedule',text:`Livraison dans ${daysLeft} j avec ${progress} % réalisé`});
  }
  if(overdueTasks>0){score-=Math.min(20,4*overdueTasks);alerts.push({level:overdueTasks>=5?'danger':'warning',kind:'tasks',text:overdueTasks===1?'1 tâche en retard':`${overdueTasks} tâches en retard`})}
- const blockers=ops.dailyLogs.filter(l=>l.blockers.trim()&&daysBetween(l.date||today,today)<=7).length;
+ const blockers=ops.dailyLogs.filter(l=>l.blockers.trim()&&daysBetween(l.date||today,today)>=0&&daysBetween(l.date||today,today)<=7).length;
  if(blockers){score-=Math.min(10,3*blockers);alerts.push({level:'warning',kind:'tasks',text:`${blockers} blocage(s) signalé(s) au journal cette semaine`})}
  let forecast=round(costToDate+budgetRows.openCommitment),usedPct:number|null=null;
  if(budget>0){
@@ -86,7 +91,7 @@ export function projectHealth(project:RecordItem,records:RecordItem[],today:stri
  const longest=clientWaits.reduce((m,w)=>Math.max(m,w.days),0);
  if(clientWaits.length){score-=longest>=7?15:6;alerts.push({level:longest>=7?'danger':'warning',kind:'client',text:`En attente du client : ${clientWaits.length} élément(s), le plus ancien depuis ${longest} j`})}
  if(overdueInvoices>0){score-=8;alerts.push({level:'warning',kind:'cash',text:`Factures en retard de paiement`})}
- const revenue=Math.max(contract,invoiced);const margin=revenue?round(revenue-forecast):null;
+ const revenue=revenueNet;const margin=revenue?round(revenue-forecast):null;
  score=Math.max(0,Math.min(100,score));
  const order={danger:0,warning:1,info:2} as const;alerts.sort((a,b)=>order[a.level]-order[b.level]);
  return {projectId:project.id,title:String(project.data.title||'Projet'),clientId:project.client_id,manager:String(project.data.assignee||project.data.manager||''),score,status:score>=75?'on_track':score>=50?'at_risk':'off_track',progress,expected,start,end,daysLeft,budget,costToDate,forecast,contract,invoiced,paid,overdueInvoices,margin,marginPct:margin!==null&&revenue?Math.round(margin/revenue*100):null,budgetUsedPct:usedPct,overdueTasks,openTasks:openTasks.length,clientWaits,nextDeadline,alerts};

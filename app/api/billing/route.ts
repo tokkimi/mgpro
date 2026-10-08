@@ -3,14 +3,14 @@ import {z} from 'zod';
 import {identity,db} from '@/lib/supabase';
 import {sameOrigin} from '@/lib/access';
 import {defaults,money,type Data,type RecordItem} from '@/lib/model';
-import {invoiceState,manualReminderAllowed,outstanding,remindersOf,type ReminderLog} from '@/lib/billing';
+import {invoiceState,manualReminderAllowed,outstanding,remindersOf,safePaymentUrl,type ReminderLog} from '@/lib/billing';
 import {renderTemplate,templatesFrom,variablesFor} from '@/lib/email-templates';
 import {sendMail,siteUrl} from '@/lib/mailer';
 
 const schema=z.discriminatedUnion('action',[
  z.object({action:z.literal('link'),id:z.string().uuid()}),
  z.object({action:z.literal('revoke'),id:z.string().uuid()}),
- z.object({action:z.literal('payment_url'),id:z.string().uuid(),url:z.union([z.literal(''),z.url().max(500).refine(u=>u.startsWith('https://'),'Le lien de paiement doit commencer par https://')])}),
+ z.object({action:z.literal('payment_url'),id:z.string().uuid(),url:z.union([z.literal(''),z.url().max(500).refine(u=>Boolean(safePaymentUrl(u)),'Le lien de paiement doit commencer par https://')])}),
  z.object({action:z.literal('remind'),id:z.string().uuid()})
 ]);
 

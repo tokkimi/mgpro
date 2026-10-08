@@ -2,12 +2,41 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import type {RecordItem,Profile} from '../lib/model';
 import {projectHealth} from '../lib/project-health';
-import {autoReminderDue,clientDecisions,invoiceState,manualReminderAllowed,reminderSettingsFrom} from '../lib/billing';
+import {autoReminderDue,clientDecisions,invoiceState,manualReminderAllowed,reminderSettingsFrom,publicInvoiceAllowed,safePaymentUrl} from '../lib/billing';
 import {weeklyReportDraft} from '../lib/weekly-report';
 import {redact} from '../lib/redact';
 
 const rec=(id:string,kind:any,data:any,project_id:string|null=null,client_id:string|null='c1',updated='2026-10-07T12:00:00Z'):RecordItem=>({id,kind,data,client_id,project_id,version:1,created_at:'2026-09-01T00:00:00Z',updated_at:updated});
 const inv=(data:any)=>({lines:[{quantity:1,price:1000}],tps:5,tvq:9.975,status:'Émise',date:'2026-09-01',due:'2026-10-01',paid:0,...data});
+
+test('public invoice access stops for deleted clients, withdrawn project access and drafts',()=>{
+ const client=rec('c1','client',{}),project=rec('p','project',{}),invoice=rec('i','invoice',inv({public_token:'token'}),'p');
+ assert.equal(publicInvoiceAllowed(invoice,client,project),true);
+ for(const data of [{deleted_at:'2026-10-08'},{access:{client:false}},{status:'Brouillon'}])assert.equal(publicInvoiceAllowed({...invoice,data:{...invoice.data,...data}},client,project),false);
+ assert.equal(publicInvoiceAllowed(invoice,{...client,data:{deleted_at:'2026-10-08'}},project),false);
+ assert.equal(publicInvoiceAllowed(invoice,client,{...project,data:{access:{client:false}}}),false);
+ assert.equal(publicInvoiceAllowed(invoice,rec('other','client',{}),project),false);
+ assert.equal(publicInvoiceAllowed(invoice,client,{...project,client_id:'other'}),false);
+});
+
+test('payment links accept HTTPS only, without embedded credentials',()=>{
+ assert.equal(safePaymentUrl('https://pay.example.test/invoice'),'https://pay.example.test/invoice');
+ for(const value of ['javascript:alert(1)','https:garbage','http://pay.example.test','https://user:pass@pay.example.test',null])assert.equal(safePaymentUrl(value),'');
+ const invoice=rec('i','invoice',inv({payment_url:'https://pay.example.test/invoice',public_token:'token'}),'p');
+ assert.equal(redact({id:'c',role:'client',name:'C',email:'c@test',client_id:'c1'},invoice).data.payment_url,'https://pay.example.test/invoice');
+ assert.equal(redact({id:'w',role:'worker',name:'W',email:'w@test',client_id:null},invoice).data.payment_url,undefined);
+});
+
+test('health profit excludes taxes and supplier contracts from customer revenue',()=>{
+ const project=rec('p','project',{status:'Terminé'});
+ const quote=rec('q','quote',{status:'Accepté',lines:[{quantity:1,price:1000}]},'p');
+ const contract=rec('k','contract',{status:'Signé',quote_id:'q',amount:1149.75},'p');
+ const supplier=rec('s','contract',{status:'Signé',partner_id:'worker',amount:5000},'p');
+ const waitingSupplier=rec('w','contract',{status:'Envoyé',partner_id:'worker'},'p');
+ const expense=rec('e','expense',{net:600},'p');
+ const health=projectHealth(project,[project,quote,contract,supplier,waitingSupplier,expense],'2026-10-08');
+ assert.equal(health.contract,1149.75);assert.equal(health.margin,400);assert.equal(health.marginPct,40);assert.deepEqual(health.clientWaits,[]);
+});
 
 test('invoice state is derived from dates and payments, never from a button',()=>{
  assert.equal(invoiceState(inv({}),'2026-09-15'),'Émise');

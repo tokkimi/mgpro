@@ -401,3 +401,45 @@
 .workspace-content .fm-header .eyebrow,.workspace-content .fm-header h1{display:none}
 .fm-chips{width:auto;border-radius:14px}
 @media (max-width:420px){.fm-chips button{padding:6px 9px;font-size:12px}.fm-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.fm-stat strong{font-size:18px;overflow-wrap:anywhere}.fm-row-main{flex-wrap:wrap}.fm-decision .module-actions{flex-wrap:wrap}}
+
+/* Shared tool launcher: no clipped disclosure menus, one scrollable surface. */
+.tools-dialog{width:min(760px,calc(100vw - 32px));max-width:calc(100vw - 32px);max-height:calc(100dvh - 48px);padding:0;border:1px solid #dce7df;border-radius:24px;background:rgba(255,255,255,.97);color:#20392c;box-shadow:0 28px 90px #17372f30;overflow:hidden}
+.tools-dialog[open]{display:flex;flex-direction:column}
+.tools-dialog::backdrop{background:rgba(20,40,30,.3);backdrop-filter:blur(5px)}
+.tools-dialog>header{display:flex;gap:8px;align-items:center;padding:18px 20px 12px;flex-shrink:0}
+.tools-dialog>header h2{font:600 18px 'DM Sans',sans-serif;margin:0;flex:1;letter-spacing:-.3px}
+.tools-search{display:flex;align-items:center;gap:9px;margin:0 20px 12px;border:1px solid #dce7df;border-radius:12px;padding:10px 12px;flex-shrink:0}
+.tools-search input{border:0!important;padding:0!important;background:transparent;outline:none;min-width:0;width:100%;font-size:16px}
+.tools-content{padding:0 20px 20px;overflow-y:auto;overscroll-behavior:contain;min-height:0;scrollbar-width:none}
+.tools-content::-webkit-scrollbar,.workspace .sidebar::-webkit-scrollbar{display:none}
+.tools-group{margin:0 0 18px}
+.tools-group h3{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#6f8075;margin:6px 0 9px;font-weight:600}
+.tools-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.tools-grid button{border:1px solid #e0e8e1;background:#f9fbf9;border-radius:14px;padding:15px 9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:86px;font-size:13px;line-height:1.35;font-weight:500;text-align:center;color:#284333;cursor:pointer;overflow-wrap:anywhere}
+.tools-grid button svg{flex-shrink:0;color:#397557}
+.tools-grid button:hover,.tools-grid button[aria-current=page]{background:#eaf4ee;border-color:#9cbdab}
+.tools-grid button:focus-visible,.tools-footer a:focus-visible,.tools-footer button:focus-visible{outline:2px solid #397557;outline-offset:2px}
+.tools-footer{display:flex;gap:16px;justify-content:space-between;border-top:1px solid #e0e8e1;padding-top:14px;font-size:13px;flex-wrap:wrap}
+.tools-footer button{color:#7b4b42}
+.workspace .sidebar{scrollbar-width:none;overscroll-behavior:contain;padding:18px 14px 14px;gap:0}
+.workspace .sidebar nav{flex-shrink:0}
+.workspace .sidebar nav>button{padding:10px 12px;min-height:40px;font-size:13px;font-weight:500;border-radius:10px;gap:10px;margin:2px 0}
+.workspace .sidebar .workspace-logo{padding:0 12px 14px}
+.workspace .sidebar .workspace-switch{margin-bottom:14px;padding:12px;min-height:0}
+.workspace .sidebar .sidebar-contacts{margin-top:18px;padding:10px}
+.workspace .sidebar .sidebar-contact{padding:7px 0}
+.workspace .sidebar .sidebar-bottom{margin-top:auto;padding-top:18px;flex-shrink:0}
+.workspace .sidebar .all-tools-button{border:1px solid #dce7df;margin-top:9px;background:#f3f8f4;color:#315b43}
+.desktop-tools-trigger{display:inline-flex}
+@media(max-width:900px){
+ .workspace .sidebar,.workspace .sidebar-backdrop,.workspace .desktop-tools-trigger{display:none!important}
+ .workspace .workspace-main{margin-left:0!important;width:100%;min-width:0}
+ .tools-dialog{position:fixed;inset:auto 0 calc(78px + env(safe-area-inset-bottom));margin:0 auto;width:calc(100vw - 16px);max-width:calc(100vw - 16px);max-height:calc(100dvh - 120px - env(safe-area-inset-top) - env(safe-area-inset-bottom));border-radius:22px}
+ .tools-dialog>header{padding:15px 14px 10px}
+ .tools-content{padding:0 14px 16px}
+ .tools-search{margin:0 14px 12px}
+ .tools-grid{gap:8px}
+ .tools-grid button{font-size:12px;min-height:80px;padding:12px 6px}
+}
+@media(max-width:350px){.tools-content{padding:0 10px 12px}.tools-grid{gap:6px}.tools-grid button{font-size:11px;padding:10px 4px;min-height:78px}}
+.tools-dialog .tools-search{flex-direction:row!important;align-items:center}.tools-dialog .tools-search svg{flex:none}.tools-dialog .tools-search input{min-width:0;width:100%}

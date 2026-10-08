@@ -1,5 +1,15 @@
 import {round,totals,type Data,type RecordItem} from './model';
 
+/** Only explicit HTTPS payment links can be presented to a client. */
+export function safePaymentUrl(value:unknown){
+ if(typeof value!=='string'||value.length>500||!/^https:\/\//i.test(value)||/[\s\\]/.test(value))return '';
+ try{const url=new URL(value);return url.protocol==='https:'&&!url.username&&!url.password?url.href:''}catch{return ''}
+}
+/** Public invoice links stop working when the client/project is removed or client access is withdrawn. */
+export function publicInvoiceAllowed(invoice:RecordItem,client:RecordItem|null,project:RecordItem|null){
+ return invoice.kind==='invoice'&&Boolean(invoice.data.public_token)&&!['Brouillon','Annulée'].includes(String(invoice.data.status))&&!invoice.data.deleted_at&&invoice.data.access?.client!==false&&Boolean(invoice.client_id&&client?.id===invoice.client_id&&client.kind==='client'&&!client.data.deleted_at)&&(!invoice.project_id||Boolean(project?.id===invoice.project_id&&project.kind==='project'&&project.client_id===invoice.client_id&&!project.data.deleted_at&&project.data.access?.client!==false));
+}
+
 /*
  * Client billing follow-up adapted from Follow My Future: derived invoice status, public view/pay link,
  * payment reminders (manual at most once a day, automatic once per offset) and the client decision center.

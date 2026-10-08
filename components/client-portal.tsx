@@ -2,6 +2,7 @@
 
 import {useEffect,useState} from 'react';
 import {defaults,money,totals,type Data,type RecordItem} from '@/lib/model';
+import {invoiceState,outstanding,safePaymentUrl} from '@/lib/billing';
 import {scheduleEnd,scheduleFrom} from '@/lib/schedule';
 import {SharedProjectTools} from './project-client-tools';
 import {clientRequestsFrom,type ClientRequest} from '@/lib/client-requests';
@@ -28,12 +29,13 @@ export default function ClientPortal({records,demo,onOpen,onUpdate}:Props){
  const [projectId,setProjectId]=useState(projects[0]?.id||'');
  const [section,setSection]=useState<Section>('Vue d’ensemble');
  useEffect(()=>{if(!projects.some(p=>p.id===projectId)&&projects[0])setProjectId(projects[0].id)},[projects,projectId]);
+ const today=new Date().toLocaleDateString('en-CA',{timeZone:'America/Montreal'});
  const project=projects.find(p=>p.id===projectId);
  if(!project)return <section className="panel client-portal"><h2>Votre espace client</h2><Empty>Aucun projet n’est encore partagé avec vous.</Empty></section>;
  const own=records.filter(r=>r.project_id===project.id);
  const quotes=own.filter(r=>r.kind==='quote'&&r.data.document_type!=='change_order');
  const changes=own.filter(r=>r.kind==='quote'&&r.data.document_type==='change_order');
- const contracts=own.filter(r=>r.kind==='contract');
+ const contracts=own.filter(r=>r.kind==='contract'&&!r.data.partner_id);
  const invoices=own.filter(r=>r.kind==='invoice');
  const files=own.filter(r=>r.kind==='document');
  const reports:Data[]=Array.isArray(project.data.construction_reports)?project.data.construction_reports:[];
@@ -65,7 +67,7 @@ export default function ClientPortal({records,demo,onOpen,onUpdate}:Props){
    {section==='Contrats'&&<><Rows head={['Contrat','Date','Statut','Total','']} rows={contracts.map(c=>[title(c),date(c.data.date||c.created_at),String(c.data.status||''),money(Number(c.data.amount)||totals(c.data).total),open(c.id)])} empty="Aucun contrat n’a encore été partagé."/><h3>Ordres de changement</h3><Rows head={['Ordre de changement','Reçu le','Statut','Total','']} rows={changes.map(c=>[title(c),date(c.data.date||c.created_at),String(c.data.status||''),money(totals(c.data).total),open(c.id)])} empty="Aucun ordre de changement."/></>}
    {section==='Soumissions'&&<Rows head={['Soumission','Reçue le','Validité','Statut','Total','']} rows={quotes.map(q=>[title(q),date(q.data.date||q.created_at),String(q.data.validity||'—'),String(q.data.status||''),money(totals(q.data).total),open(q.id)])} empty="Aucune soumission n’a encore été partagée."/>}
    {section==='Sélections'&&(selections.length?<><p className="muted">Votre choix est enregistré et horodaté. Il ne modifie jamais un contrat signé : un écart de prix fera l’objet d’un ordre de changement à approuver.</p><SharedProjectTools project={project} demo={demo} onUpdate={onUpdate}/></>:<Empty>Aucune sélection de matériaux n’est encore partagée. Elle apparaîtra ici lorsque l’équipe la publiera.</Empty>)}
-   {section==='Factures'&&<Rows head={['Facture','Émise le','Échéance','Description','Total','Solde','Statut','']} rows={issued.map(i=>[String(i.data.number||'—'),date(i.data.date),date(i.data.due),String(i.data.title||''),money(totals(i.data).total),money(Math.max(0,totals(i.data).total-Number(i.data.paid||0))),String(i.data.status||''),open(i.id)])} empty="Aucune facture émise."/>}
+   {section==='Factures'&&<Rows head={['Facture','Émise le','Échéance','Description','Total','Solde','Statut','']} rows={issued.map(i=>[String(i.data.number||'—'),date(i.data.date),date(i.data.due),String(i.data.title||''),money(totals(i.data).total),money(Math.max(0,totals(i.data).total-Number(i.data.paid||0))),invoiceState(i.data,today),<div key={i.id} className="module-actions">{open(i.id)}{outstanding(i.data)>0&&safePaymentUrl(i.data.payment_url)&&<a className="btn primary" href={safePaymentUrl(i.data.payment_url)} target="_blank" rel="noopener noreferrer">Payer en ligne</a>}</div>])} empty="Aucune facture émise."/>}
    {section==='Rapports'&&<Rows head={['Rapport','Reçu le','Avancement','Notes']} rows={reports.map(r=>[String(r.title||'Rapport'),date(r.date),`${Number(r.progress||0)} %`,String(r.notes||'')])} empty="Aucun rapport de chantier publié pour le moment."/>}
    {section==='Fichiers'&&<Rows head={['Fichier','Ajouté le','']} rows={files.map(f=>[String(f.data.name||f.data.title||'Fichier'),date(f.created_at),<a key="d" className="btn ghost" href={`/api/documents?id=${f.id}`}>Télécharger</a>])} empty="Aucun fichier partagé avec vous."/>}
    {section==='Échéancier'&&(project.data.schedule_published===true?<Rows head={['Étape','Début','Fin','Avancement']} rows={schedule.map(a=>[a.kind==='group'?<b key="t">{a.title}</b>:a.kind==='milestone'?`◆ ${a.title}`:a.title,a.start||'À planifier',a.start?scheduleEnd(a):'—',`${a.progress} %`])} empty="L’échéancier publié ne contient pas encore d’étape."/>:<Empty>L’échéancier est en préparation. Il apparaîtra ici lorsque l’équipe le publiera.</Empty>)}
