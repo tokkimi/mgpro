@@ -21,7 +21,7 @@ Cette liste analyse les deux documents joints et l’état du code. « Présent 
 | Feuille de temps | Global/projet, filtres, saisie et approbation, export CSV | Pointage mobile réel, divisions, clôture/paie et recette hebdomadaire complète |
 | Journal | Global/projet, travaux/blocages, photos, partage explicite | Exports et abonnements quotidiens, rattachement de toutes les pièces |
 | Rapports | Rapport projet, périmètre, progression, publication client | Photos, PDF dédié, notifications de publication et historique immuable |
-| Notifications | Centre global, filtres et lectures serveur par utilisateur | Unifier la cloche avec le centre ; préférences détaillées, push/courriel/SMS |
+| Notifications | Cloche et centre global unifiés, filtres et lectures serveur par utilisateur | Préférences détaillées, push/courriel/SMS |
 | Clients | Fiches, projets, notes, suppression/restauration | Répertoire contacts unifié avec professionnels/employés/admins, import/doublons |
 | Équipe | Comptes/rôles/affectations existants | Invitations réelles et matrice complète des permissions à recetter |
 | Gabarits de soumission | Quatre structures MG Pro sans prix imposés | Bibliothèque Billdr exhaustive à importer après validation/licence |

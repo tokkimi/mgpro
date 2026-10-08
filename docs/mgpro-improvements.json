@@ -270,7 +270,8 @@
     "Rubriques projet dédiées aux factures, dépenses, sélections client et rapports publiables.",
     "Centre de notifications avec événements autorisés et lectures persistantes par utilisateur.",
     "Projection des prix client corrigée : coûts et totaux internes masqués, prix de vente et taxes conservés.",
-    "43 tests automatisés réussis et compilation de production réussie."
+    "43 tests automatisés réussis et compilation de production réussie.",
+    "Cloche et centre de notifications unifiés : mêmes événements, compteurs et lectures synchronisées."
   ],
   "limits": [
     "La transcription automatique de l’écriture manuscrite et la reconstruction automatique d’un plan 2D coté ne sont pas encore implémentées.",
@@ -278,7 +279,6 @@
     "Les essais du navigateur utilisent la démonstration. Les envois réels de courriels, signatures, caméra et transferts média doivent encore être validés avec les services et appareils concernés.",
     "Configuration de production à fournir : RESEND_API_KEY et MAIL_FROM pour les courriels, ANTHROPIC_API_KEY pour le service IA. Aucun envoi réel ni analyse IA ne peuvent être certifiés sans ces services.",
     "Les deux nouveaux documents sont analysés ; la liste détaillée des écarts est conservée dans docs/BILLDR_COVERAGE_2026-10-08.md.",
-    "Carte géographique, crédits/paiements fournisseur, répertoire unifié, réglages complets, routines IA et migration restent ouverts.",
-    "La cloche existante et le nouveau centre de notifications restent à unifier."
+    "Carte géographique, crédits/paiements fournisseur, répertoire unifié, réglages complets, routines IA et migration restent ouverts."
   ]
 }
