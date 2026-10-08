@@ -1,5 +1,6 @@
 import {NextResponse} from 'next/server';
-import {identity} from '@/lib/supabase';
+import {identity,db} from '@/lib/supabase';
+import {aiInstructions} from '@/lib/settings-model';
 import {sameOrigin} from '@/lib/access';
 import {z} from 'zod';
 import {analyzeTranscript,buildAnalysisMessages,parseModelAnalysis,ANALYZE_MODEL,Analysis} from '@/lib/analyze';
@@ -17,7 +18,7 @@ export async function POST(req:Request){
  const key=process.env.ANTHROPIC_API_KEY;
  if(key){
   try{
-   const {system,messages}=buildAnalysisMessages(transcript,context);
+   const built=buildAnalysisMessages(transcript,context),messages=built.messages;const preferences=(await db().from('records').select('data').eq('kind','settings').limit(1).maybeSingle()).data?.data?.ai_preferences;const system=`${built.system}\n\n${aiInstructions(preferences)}`;
    const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),25000);
    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',signal:controller.signal,headers:{'x-api-key':key,'anthropic-version':'2023-06-01','content-type':'application/json'},body:JSON.stringify({model:ANALYZE_MODEL,max_tokens:1500,system,messages})}).finally(()=>clearTimeout(timer));
    if(res.ok){
