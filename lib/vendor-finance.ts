@@ -1,5 +1,5 @@
 import Decimal from 'decimal.js';
-import {round} from './model';
+import {money,round} from './model';
 import type {BidResponse,ProjectOperations,PurchaseOrder,VendorBill,VendorCredit,VendorPayment} from './project-operations';
 
 /*
@@ -114,7 +114,7 @@ export function validatePayment(operations:ProjectOperations,payment:VendorPayme
  else if(!activeBill(bill))errors.push('Une facture brouillon ou annulée ne peut pas être payée.');
  if(!payment.paidOn)errors.push('Indiquez la date du paiement.');
  if(payment.amount<=0)errors.push('Le montant doit être supérieur à zéro.');
- if(bill&&payment.status==='Émis'&&payment.amount>billBalance(operations,bill.id,{paymentId:payment.id}))errors.push(`Le paiement dépasse le solde dû (${billBalance(operations,bill.id,{paymentId:payment.id}).toFixed(2)} $).`);
+ if(bill&&payment.status==='Émis'&&payment.amount>billBalance(operations,bill.id,{paymentId:payment.id}))errors.push(`Le paiement dépasse le solde dû (${money(billBalance(operations,bill.id,{paymentId:payment.id}))}).`);
  if(bill&&payment.supplier&&payment.supplier.toLowerCase()!==bill.supplier.toLowerCase())errors.push('Le fournisseur du paiement diffère de celui de la facture.');
  return errors;
 }

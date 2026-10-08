@@ -5,6 +5,7 @@ import {ChevronLeft,ChevronRight,ClipboardList,Clock3,Package,Plus,ReceiptText,T
 import type {Data,RecordItem} from '@/lib/model';
 import {money} from '@/lib/model';
 import VendorFinance,{VendorBudgetTable} from './vendor-finance';
+import {vendorBudget} from '@/lib/vendor-finance';
 import {emptyOperations,operationsFrom,operationTotals,timesheetsForDates,approveTimesheets,type ProjectOperations} from '@/lib/project-operations';
 
 type Tab='budget'|'orders'|'field';
@@ -28,7 +29,7 @@ export default function ProjectOperations({record,demo,onSave,section='budget',o
  dataRef.current=record.data;
  useEffect(()=>{setOperations(operationsFrom(record.data.operations));},[record.id,record.data.operations]);
 
- const totals=operationTotals(operations);const labourCost=operations.timesheets.reduce((sum,sheet)=>sum+sheet.hours*sheet.hourlyRate,0);
+ const totals=operationTotals(operations),budget=vendorBudget(operations);const labourCost=operations.timesheets.reduce((sum,sheet)=>sum+sheet.hours*sheet.hourlyRate,0);
  async function commit(next:ProjectOperations){
   setOperations(next);
   try{localStorage.setItem(key,JSON.stringify(next));}catch{}
@@ -50,7 +51,7 @@ export default function ProjectOperations({record,demo,onSave,section='budget',o
    {tab==='budget'&&<aside className="operations-rail">
     <p className="eyebrow">SUIVI FINANCIER</p>
     <h3>État financier</h3>
-    <dl><div><dt>Budget prévu</dt><dd>{money(totals.planned)}</dd></div><div><dt>Prix en attente</dt><dd>{money(totals.requested)}</dd></div><div><dt>Engagé fournisseur</dt><dd>{money(totals.committed)}</dd></div><div><dt>Main-d’œuvre</dt><dd>{money(labourCost)}</dd></div><div><dt>Réel saisi</dt><dd>{money(totals.actual)}</dd></div><div><dt>Reste indicatif</dt><dd className={totals.remaining<0?'negative':''}>{money(totals.remaining-labourCost)}</dd></div></dl>
+    <dl><div><dt>Budget révisé</dt><dd>{money(budget.total.revised)}</dd></div><div><dt>Prix en attente</dt><dd>{money(totals.requested)}</dd></div><div><dt>Bons engagés · avant taxes</dt><dd>{money(budget.total.committed)}</dd></div><div><dt>Réalisé (factures, crédits, heures, saisi)</dt><dd>{money(budget.total.actual)}</dd></div><div><dt>À payer aux fournisseurs</dt><dd>{money(budget.total.payable)}</dd></div><div><dt>Prévision finale</dt><dd>{money(budget.total.forecast)}</dd></div><div><dt>Reste à engager</dt><dd className={budget.total.remaining<0?'negative':''}>{money(budget.total.remaining)}</dd></div></dl>
     <p className="muted">Les données sont enregistrées dans le projet. Elles restent en brouillon local si le réseau coupe.</p>
    </aside>}
   </div>
