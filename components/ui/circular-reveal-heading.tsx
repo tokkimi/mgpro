@@ -2,7 +2,6 @@
 
 import {useId,useState} from 'react';
 import {ArrowUpRight} from 'lucide-react';
-import {LiquidButton} from './liquid-glass-button';
 
 export type CircularAction={text:string;title:string;detail:string;image:string;imageAlt:string;href?:string;onClick?:()=>void;external?:boolean};
 
@@ -26,6 +25,5 @@ export function CircularRevealHeading({items,centerText}:{items:CircularAction[]
     </a>)}
    </svg>
   </div>
-  <div className="mg-wheel-actions" aria-label="Les quatre actions MG Pro">{items.map((item,index)=><LiquidButton key={item.text} href={item.href} external={item.external} onClick={item.onClick} onMouseEnter={()=>setActive(index)} onFocus={()=>setActive(index)} onBlur={()=>setActive(null)}><span>{item.text}</span><ArrowUpRight size={16}/></LiquidButton>)}</div>
  </div>;
 }

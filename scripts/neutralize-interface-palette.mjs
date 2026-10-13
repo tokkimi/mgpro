@@ -2,7 +2,9 @@ import {readFile,writeFile} from 'node:fs/promises';
 const banned=(r,g,b)=>{
  const max=Math.max(r,g,b),min=Math.min(r,g,b),delta=max-min;if(delta<2)return false;
  let h=max===r?((g-b)/delta)%6:max===g?(b-r)/delta+2:(r-g)/delta+4;h=(h*60+360)%360;
- return (h>=15&&h<=65)||(h>=245&&h<=335);
+ // Retain red error states; all decorative colors become neutral silver.
+ const semanticRed=(h<15||h>345)&&r>g*1.25&&r>b*1.25;
+ return !semanticRed;
 };
 const grey=(r,g,b)=>Math.round(.2126*r+.7152*g+.0722*b);
 for(const file of ['app/atelier.css','app/brand.css','app/responsive.css','app/workspace-glass.css','app/modules.css','app/globals.css']){
@@ -15,4 +17,4 @@ for(const file of ['app/atelier.css','app/brand.css','app/responsive.css','app/w
  css=css.replace(/(rgba?)\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)([^)]*)\)/gi,(full,fn,r,g,b,end)=>{const rgb=[r,g,b].map(Number);if(!banned(...rgb))return full;const c=grey(...rgb);return `${fn}(${c},${c},${c}${end})`});
  await writeFile(file,css);
 }
-console.log('Warm brown/beige and violet interface colors replaced with neutral equivalents.');
+console.log('Decorative interface colors harmonized to neutral silver, retaining red error states.');

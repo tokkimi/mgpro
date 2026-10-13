@@ -11,3 +11,4 @@ import './atelier.css';
 
 import './modules.css';
 import './workspace-glass.css';
+import './theme-silver.css';
