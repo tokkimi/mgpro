@@ -124,7 +124,7 @@ body:has(.mg-brand-intro)>:not(:has(.mg-brand-intro)){visibility:hidden;pointer-
 /* Renovation sequence: native scrolling advances frames while the viewport remains pinned. */
 .atelier-site:has(.hero-scroll-sequence){--hero-header-size:94px}
 .atelier-site:has(.hero-scroll-sequence)>.atelier-header{position:sticky;top:0;z-index:80}
-.hero-scroll-sequence{--hero-copy-alpha:0;--hero-copy-blur:12px;--hero-copy-shift:18px;--hero-action-alpha:0;--hero-secondary-alpha:0;height:calc(100svh - var(--hero-header-size) + 280svh);position:relative}
+.hero-scroll-sequence{--hero-copy-alpha:0;--hero-copy-blur:12px;--hero-copy-shift:18px;--hero-action-alpha:0;--hero-secondary-alpha:0;height:calc(100svh - var(--hero-header-size) + 140svh);position:relative}
 .hero-scroll-pin{position:sticky;top:var(--hero-header-size);height:calc(100svh - var(--hero-header-size))}
 .atelier-site .hero-scroll-pin .atelier-hero{height:100%;min-height:0}
 .hero-first-frame{position:absolute;inset:0;display:block}
@@ -141,7 +141,7 @@ body:has(.mg-brand-intro)>:not(:has(.mg-brand-intro)){visibility:hidden;pointer-
 .hero-scroll-sequence.is-static .hero-first-frame,.hero-scroll-sequence.is-static .hero-frame-canvas{display:none}
 .atelier-site:has(.hero-scroll-sequence[data-animating=true]) .atelier-contact{opacity:0;pointer-events:none;visibility:hidden}
 @media(max-width:1200px){.atelier-site:has(.hero-scroll-sequence){--hero-header-size:84px}}
-@media(max-width:600px){.atelier-site:has(.hero-scroll-sequence){--hero-header-size:78px}.hero-scroll-sequence{height:calc(100svh - var(--hero-header-size) + 240svh)}}
+@media(max-width:600px){.atelier-site:has(.hero-scroll-sequence){--hero-header-size:78px}.hero-scroll-sequence{height:calc(100svh - var(--hero-header-size) + 120svh)}}
 @media(max-width:600px) and (max-height:720px){.atelier-site .hero-scroll-sequence .atelier-hero-copy{top:65px}.atelier-site .hero-scroll-sequence h1{font-size:44px}.hero-scroll-sequence .hero-intro-line{margin-bottom:18px}.hero-scroll-sequence .hero-finance{bottom:25px;right:5%}.hero-scroll-sequence .hero-photo-credit{bottom:14px}.hero-scroll-sequence .hero-project-button{margin-top:12px}}
 @media(prefers-reduced-motion:reduce){.hero-scroll-sequence{height:auto;--hero-copy-alpha:1;--hero-copy-blur:0px;--hero-copy-shift:0px;--hero-action-alpha:1;--hero-secondary-alpha:1}.hero-scroll-pin{position:relative;top:auto}.hero-first-frame,.hero-frame-canvas{display:none}.atelier-site:has(.hero-scroll-sequence) .atelier-contact{opacity:1;visibility:visible;pointer-events:auto}}
 @media(min-width:601px) and (max-height:600px){.atelier-site .hero-scroll-sequence .atelier-hero-copy{top:38px;left:6%}.atelier-site .hero-scroll-sequence h1{font-size:clamp(24px,7svh,40px);line-height:1.06}.hero-scroll-sequence .hero-intro-line{font-size:6px;letter-spacing:1px;margin-bottom:10px}.atelier-site .hero-scroll-sequence .atelier-hero-copy>p{font-size:10px;line-height:1.5;margin:10px 0}.hero-scroll-sequence .hero-project-button{margin-top:10px}.hero-scroll-sequence .atelier-hero-topline{top:14px;font-size:7px}.hero-scroll-sequence .hero-finance{width:184px;right:4%;bottom:22px;padding:14px}.hero-scroll-sequence .hero-finance p{font-size:10px}.hero-scroll-sequence .hero-photo-credit{bottom:10px;font-size:6px}}
