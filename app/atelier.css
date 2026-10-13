@@ -80,3 +80,21 @@
 @media(max-width:800px){.atelier-close.atelier-wheel-close{grid-template-columns:1fr;gap:42px;padding:64px 22px;text-align:center}.atelier-wheel-close .mg-wheel-intro h2{font-size:clamp(34px,7vw,58px);letter-spacing:-1.8px}.mg-action-wheel{width:min(100%,440px)}.mg-wheel-copy>strong{font-size:22px}.mg-wheel-intro>p{font-size:14px}.mg-wheel-actions{max-width:440px}}
 @media(max-width:390px){.atelier-close.atelier-wheel-close{padding:48px 16px}.mg-wheel-copy{padding:12px;gap:7px}.mg-wheel-copy>strong{font-size:17px}.mg-wheel-copy>small{font-size:9px}.mg-wheel-copy>span{font-size:7px;letter-spacing:1px}.mg-wheel-actions>a,.mg-wheel-actions>button{padding:11px 10px!important;font-size:11px!important}}
 @media(prefers-reduced-motion:reduce){.mg-action-wheel,.mg-wheel-ring{animation:none}.mg-wheel-center img{transition:none}}
+
+/* Liquid Glass reference: common geometry, exact light-mode shadow stack and filter. */
+.mg-liquid-filter{position:absolute;pointer-events:none;overflow:hidden}
+.atelier-site .glass-button,.atelier-site .mg-liquid-button,.atelier-site .mg-wheel-actions>.mg-liquid-button{position:relative!important;isolation:isolate;display:inline-flex!important;align-items:center;justify-content:center!important;gap:8px;width:260px!important;max-width:100%;height:56px!important;min-height:56px!important;box-sizing:border-box;flex-shrink:0;padding:8px 20px!important;margin:0;border:0!important;border-radius:999px!important;background:transparent!important;color:var(--forest,#193f39)!important;font-size:14px!important;font-weight:500!important;line-height:1.25;white-space:nowrap;text-decoration:none;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;transition:transform .3s,color .3s;cursor:pointer;overflow:visible}
+.atelier-site .glass-button::before,.atelier-site .mg-liquid-button::before{content:'';position:absolute;inset:0;z-index:-1;border-radius:999px;pointer-events:none;box-shadow:0 0 6px rgba(0,0,0,.03),0 2px 6px rgba(0,0,0,.08),inset 3px 3px .5px -3px rgba(0,0,0,.9),inset -3px -3px .5px -3px rgba(0,0,0,.85),inset 1px 1px 1px -.5px rgba(0,0,0,.6),inset -1px -1px 1px -.5px rgba(0,0,0,.6),inset 0 0 6px 6px rgba(0,0,0,.12),inset 0 0 2px 2px rgba(0,0,0,.06),0 0 12px rgba(255,255,255,.15)}
+.atelier-site .glass-button::after,.atelier-site .mg-liquid-button::after{content:'';position:absolute;inset:0;z-index:-2;overflow:hidden;border-radius:999px;pointer-events:none;backdrop-filter:url('#mg-container-glass');-webkit-backdrop-filter:blur(4px);background:rgba(255,255,255,.06)}
+.atelier-site .glass-button:hover,.atelier-site .mg-liquid-button:hover{transform:scale(1.05)}
+.atelier-site .glass-button:active,.atelier-site .mg-liquid-button:active{transform:scale(.98)}
+.atelier-site .glass-button:focus-visible,.atelier-site .mg-liquid-button:focus-visible{outline:3px solid #7a977d;outline-offset:5px}
+.atelier-site .glass-button:disabled,.atelier-site .mg-liquid-button:disabled{opacity:.5;pointer-events:none}
+.mg-liquid-content{display:flex;align-items:center;justify-content:center;gap:8px;position:relative;z-index:1;pointer-events:none}
+.atelier-site .glass-button svg,.atelier-site .mg-liquid-button svg{width:16px;height:16px;pointer-events:none;flex-shrink:0}
+.atelier-site .atelier-hero .glass-button{color:#fff!important}
+.mg-wheel-actions{grid-template-columns:repeat(2,260px);max-width:none;width:530px;max-width:100%;justify-content:center;gap:12px}
+@media(max-width:1100px){.mg-wheel-actions{grid-template-columns:260px;width:260px}}
+@media(max-width:800px){.mg-wheel-actions{grid-template-columns:repeat(2,260px);width:532px}}
+@media(max-width:580px){.mg-wheel-actions{grid-template-columns:minmax(0,260px);width:260px;max-width:100%}.atelier-site .glass-button,.atelier-site .mg-liquid-button{max-width:100%;font-size:13px!important}.atelier-site .atelier-header .header-quote{display:none}}
+@media(prefers-reduced-motion:reduce){.atelier-site .glass-button,.atelier-site .mg-liquid-button{transition:none}.atelier-site .glass-button:hover,.atelier-site .mg-liquid-button:hover{transform:none}}
