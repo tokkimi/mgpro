@@ -33,7 +33,9 @@ body{background:#fff;color:var(--ink)}
 .site-mobile-menu-panel::-webkit-scrollbar{display:none}.site-mobile-menu-panel::backdrop{background:#40576924;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .site-mobile-menu-panel[open]{animation:mg-menu-enter .25s ease both}
 .site-mobile-menu-panel>header{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:20px}
-.atelier-site .site-mobile-menu-panel>header>a,.atelier-site .site-mobile-menu-panel>header>a>img{border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;backdrop-filter:none!important;padding:0!important}
+.atelier-site .site-mobile-menu-panel>header>a,.atelier-site .site-mobile-menu-panel>header>a>img{border:0!important;outline:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;backdrop-filter:none!important;padding:0!important}
+.atelier-site .site-mobile-menu-panel>header>a::before,.atelier-site .site-mobile-menu-panel>header>a::after{content:none!important}
+.atelier-site .site-mobile-menu-panel>header>a:focus-visible>img{filter:drop-shadow(0 0 4px #769ab6)}
 .atelier-site .site-mobile-menu-panel>header>a{display:block;width:104px;height:68px;flex:none}
 .atelier-site .site-mobile-menu-panel>header>a>img{display:block;width:100%;height:100%;object-fit:contain}
 .site-mobile-menu-panel>header>button{display:grid;place-items:center;width:42px;height:42px;border:1px solid #e0e8ee;border-radius:50%;background:#ffffff80}
