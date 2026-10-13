@@ -1,4 +1,5 @@
 import {PDFDocument,StandardFonts,rgb,PDFFont,PDFPage} from 'pdf-lib';
+import brandLogo from '../content/brand-logo.json';
 import {lineSale,unitSale} from './pricing';
 import {brandingFrom} from './settings-model';
 import {Data,defaults,totals,money,paymentRows,defaultPaymentSchedule} from './model';
@@ -30,7 +31,7 @@ export async function makePdf(title:string,data:Data,client:Data={},settings:Dat
  }
 
  // ---- Header band ----
- if(branding.showLogo&&branding.logo){try{const bytes=Uint8Array.from(atob(branding.logo.split(',')[1]),c=>c.charCodeAt(0));const image=branding.logo.startsWith('data:image/png')?await pdf.embedPng(bytes):await pdf.embedJpg(bytes);const d=image.scaleToFit(110,50);page.drawImage(image,{x:L,y:y-d.height,width:d.width,height:d.height});y-=d.height+14;}catch{}}
+ if(branding.showLogo){try{const bytes=Uint8Array.from(atob(branding.logo?branding.logo.split(',')[1]:brandLogo.png),c=>c.charCodeAt(0));const image=!branding.logo||branding.logo.startsWith('data:image/png')?await pdf.embedPng(bytes):await pdf.embedJpg(bytes);const d=image.scaleToFit(110,65);page.drawImage(image,{x:L,y:y-d.height,width:d.width,height:d.height});y-=d.height+14;}catch{}}
 
  if(branding.colorAccent)page.drawRectangle({x:0,y:H-6,width:W,height:6,color:GOLD});
  const num=data.number||'';
