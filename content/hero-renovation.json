@@ -1,9 +1,10 @@
 {
+  "directory": "/images/hero-renovation-v2",
   "frames": [
     "frame_001",
     "frame_001",
     "frame_001",
-    "frame_001",
+    "frame_004",
     "frame_005",
     "frame_006",
     "frame_007",
@@ -13,7 +14,7 @@
     "frame_011",
     "frame_012",
     "frame_013",
-    "frame_014",
+    "frame_013",
     "frame_015",
     "frame_016",
     "frame_017",
