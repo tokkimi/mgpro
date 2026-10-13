@@ -3,7 +3,7 @@ import {redirect} from 'next/navigation';
 import {identity} from '@/lib/supabase';
 import Workspace from '@/components/workspace';
 /* Installable as a phone app for the management space only: the public site has no manifest. */
-export const metadata:Metadata={title:'Espace de gestion',robots:{index:false,follow:false},manifest:'/app/manifest.webmanifest?v=5',appleWebApp:{capable:true,title:'MG Pro',statusBarStyle:'default'},icons:{apple:'/app/brand-v5-180.png'}};
+export const metadata:Metadata={title:'Espace de gestion',robots:{index:false,follow:false},manifest:'/app/manifest.webmanifest?v=6',appleWebApp:{capable:true,title:'MG Pro',statusBarStyle:'default'},icons:{apple:'/app/brand-v6-180.png'}};
 export const viewport:Viewport={themeColor:'#ffffff',viewportFit:'cover'};
 export const dynamic='force-dynamic';
 export default async function Page(){const user=await identity();if(!user)redirect('/connexion');return <Workspace demo={false} initialUser={user}/>}
