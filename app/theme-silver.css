@@ -77,8 +77,7 @@ body{background:#fff;color:var(--ink)}
 @keyframes mg-swipe-light{0%,100%{opacity:.55;transform:scale(.85)}50%{opacity:1;transform:scale(1.2)}}
 .mg-brand-intro{display:grid!important;background:#fff!important;opacity:1!important;visibility:visible!important;animation:none!important;z-index:2147483647}
 html:has(.mg-brand-intro){overflow:hidden}
-.atelier-site:has(>.mg-brand-intro)>:not(.mg-brand-intro):not(noscript){visibility:hidden;pointer-events:none}
-body:has(.mg-brand-intro)>:not(:has(.mg-brand-intro)){visibility:hidden;pointer-events:none}
+body:has(>.mg-brand-intro)>:not(.mg-brand-intro):not(noscript){visibility:hidden;pointer-events:none}
 .mg-intro-progress span{animation-duration:3s}
 @media(prefers-reduced-motion:reduce){.mg-intro-brand{animation:none;transform:none;filter:none;opacity:1}}
 @media(max-width:800px) and (prefers-reduced-motion:reduce){.atelier-site .expertise-dock-section::before,.atelier-site .expertise-dock-section::after{animation:none;opacity:.8;transform:none}}
