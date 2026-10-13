@@ -35,19 +35,30 @@ export default function RenovationHero({locale='fr',finance,onQuote}:Props){
   const suffix=mobile?'mobile':'desktop';
   const loaded=new Map<string,HTMLImageElement>();
   const pending=new Map<string,Promise<HTMLImageElement|null>>();
-  let cancelled=false,raf=0,currentFrame=0,start=0,distance=1,painted='';
+  let cancelled=false,raf=0,framePosition=0,start=0,distance=1,painted='';
   let width=0,height=0,cropX=.5,cropY=.5;
   const source=(index:number)=>`${sequence.directory}/${sequence.frames[index]}-${suffix}.webp`;
   const draw=()=>{
-   const image=loaded.get(source(currentFrame));
+   const lower=Math.floor(framePosition),upper=Math.min(lower+1,sequence.frames.length-1);
+   const image=loaded.get(source(lower));
    if(!image)return;
-   const key=`${currentFrame}:${width}:${height}`;
+   const next=loaded.get(source(upper));
+   container.dataset.paintedFrame=(lower+(next?framePosition-lower:0)+1).toFixed(3);
+   const blend=next&&next!==image?framePosition-lower:0;
+   container.dataset.blend=blend.toFixed(3);
+   const key=`${lower}:${blend.toFixed(3)}:${width}:${height}`;
    if(key===painted)return;
    painted=key;
-   const scale=Math.max(surface.width/image.naturalWidth,surface.height/image.naturalHeight);
-   const imageWidth=image.naturalWidth*scale,imageHeight=image.naturalHeight*scale;
    // Use the exact CSS crop of the original photo, so the final frame cannot jump.
-   context.drawImage(image,(surface.width-imageWidth)*cropX,(surface.height-imageHeight)*cropY,imageWidth,imageHeight);
+   const paint=(frame:HTMLImageElement,alpha:number)=>{
+    const scale=Math.max(surface.width/frame.naturalWidth,surface.height/frame.naturalHeight);
+    const imageWidth=frame.naturalWidth*scale,imageHeight=frame.naturalHeight*scale;
+    context.globalAlpha=alpha;
+    context.drawImage(frame,(surface.width-imageWidth)*cropX,(surface.height-imageHeight)*cropY,imageWidth,imageHeight);
+   };
+   paint(image,1);
+   if(next&&blend>0)paint(next,blend);
+   context.globalAlpha=1;
    setReady(true);
   };
   const load=(index:number):Promise<HTMLImageElement|null>=>{
@@ -56,7 +67,12 @@ export default function RenovationHero({locale='fr',finance,onQuote}:Props){
    if(pending.has(url))return pending.get(url)!;
    const promise=new Promise<HTMLImageElement|null>(resolve=>{
     const image=new Image();image.decoding='async';image.fetchPriority=index===0?'high':'low';
-    image.onload=()=>{if(!cancelled){loaded.set(url,image);draw()}resolve(image)};
+    image.onload=async()=>{
+     // Decode before caching, rather than doing it for the first time during a scroll paint.
+     try{await image.decode()}catch{/* A completed image can still be drawn if decode is unavailable. */}
+     if(!cancelled){loaded.set(url,image);draw()}
+     resolve(image);
+    };
     image.onerror=()=>{if(index===0&&!cancelled)setStaticMode(true);resolve(null)};
     image.src=url;
    });
@@ -65,19 +81,22 @@ export default function RenovationHero({locale='fr',finance,onQuote}:Props){
   const update=()=>{
    raf=0;
    const progress=clamp((window.scrollY-start)/distance);
-   currentFrame=Math.round(progress*(sequence.frames.length-1));
+   framePosition=progress*(sequence.frames.length-1);
    const copyAlpha=smooth((progress-.28)/.58),actionAlpha=smooth((progress-.6)/.35);
    container.style.setProperty('--hero-copy-alpha',String(copyAlpha));
    container.style.setProperty('--hero-copy-blur',`${(1-copyAlpha)*12}px`);
    container.style.setProperty('--hero-copy-shift',`${(1-copyAlpha)*18}px`);
    container.style.setProperty('--hero-action-alpha',String(actionAlpha));
    container.style.setProperty('--hero-secondary-alpha',String(smooth((progress-.68)/.3)));
-   container.dataset.progress=progress.toFixed(4);container.dataset.frame=String(currentFrame+1);
+   container.dataset.progress=progress.toFixed(4);container.dataset.frame=String(Math.round(framePosition)+1);
    container.dataset.animating=progress<1?'true':'false';
    container.dataset.revealed=copyAlpha===1?'true':'false';
    if(copy.current)copy.current.inert=copyAlpha<.95;
    if(financeLink.current)financeLink.current.inert=actionAlpha<.95;
-   if(loaded.has(source(currentFrame)))draw();else void load(currentFrame);
+   const lower=Math.floor(framePosition),upper=Math.min(lower+1,sequence.frames.length-1);
+   if(!loaded.has(source(lower)))void load(lower);
+   if(!loaded.has(source(upper)))void load(upper);
+   draw();
   };
   const schedule=()=>{if(!raf)raf=window.requestAnimationFrame(update)};
   const measure=()=>{
