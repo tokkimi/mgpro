@@ -182,3 +182,29 @@ body:has(.mg-brand-intro)>:not(:has(.mg-brand-intro)){visibility:hidden;pointer-
 .workspace .btn:focus-visible{outline:2px solid #7f9cb0;outline-offset:4px}
 .workspace .btn>svg{flex:none;max-width:18px;max-height:18px}
 .workspace .btn>.lucide-arrow-up-right,.workspace .btn>.lucide-arrow-right{display:none}
+
+/* Faster, line-by-line plan drawing beside the unchanged approach accordion. */
+.atelier-site .plan-scroll-track{--plan-pane-height:min(650px,42vw,calc(100svh - var(--hero-header-size,94px) - 48px));height:calc(var(--plan-pane-height) + 60svh);min-height:0!important;position:relative;align-self:start;overflow:visible;border:0;border-radius:0;background:transparent;box-shadow:none}
+.plan-scroll-pin{position:sticky;top:calc(var(--hero-header-size,94px) + 24px);height:var(--plan-pane-height);background:#fff}
+.plan-scroll-fallback,.plan-scroll-canvas{position:absolute;inset:0;width:100%;height:100%;filter:grayscale(1)}
+.plan-scroll-fallback{display:block}
+.plan-scroll-fallback img{width:100%;height:100%;object-fit:contain;padding:3.5%;display:block}
+.plan-scroll-canvas{opacity:0;pointer-events:none}
+.plan-scroll-track[data-ready=true] .plan-scroll-canvas{opacity:1}
+.plan-scroll-track[data-ready=true] .plan-scroll-fallback{opacity:0}
+.atelier-site .plan-scroll-caption{position:absolute;left:0;right:0;bottom:-32px;margin:0;font-size:11px;font-weight:400;line-height:1.5;text-align:center;color:#81929e}
+.atelier-site .plan-scroll-track.is-static{height:var(--plan-pane-height)}
+.plan-scroll-track.is-static .plan-scroll-pin{position:relative;top:auto}
+.plan-scroll-track.is-static .plan-scroll-canvas{display:none}
+.plan-scroll-track.is-static .plan-scroll-fallback{opacity:1}
+@media(max-width:800px){.atelier-site .plan-scroll-track{--plan-pane-height:min(440px,84vw,calc(100svh - var(--hero-header-size,78px) - 40px));height:calc(var(--plan-pane-height) + 50svh)}.plan-scroll-pin{top:calc(var(--hero-header-size,78px) + 16px)}}
+@media(prefers-reduced-motion:reduce){.atelier-site .plan-scroll-track{height:var(--plan-pane-height)}.plan-scroll-pin{position:relative;top:auto}.plan-scroll-canvas{display:none}.plan-scroll-track[data-ready=true] .plan-scroll-fallback{opacity:1}}
+
+/* One spacing rhythm for the home, with no extra padding stacked around tiles. */
+.atelier-site main:has(>.hero-scroll-sequence){--home-section-space:clamp(32px,3.35vw,48px)}
+.atelier-site main:has(>.hero-scroll-sequence)>:is(.expertise-dock-section,.atelier-manifesto,.atelier-promises,.atelier-approach,.atelier-close,.atelier-coverflow-section,.atelier-advice,.atelier-territory,.atelier-finance){padding-block:var(--home-section-space)}
+.atelier-site main:has(>.hero-scroll-sequence) .dock-topline{margin-bottom:12px}
+.atelier-site main:has(>.hero-scroll-sequence) .expertise-dock{padding:12px 4px!important}
+.atelier-site main:has(>.hero-scroll-sequence) .expertise-tile{padding:0}
+@media(min-width:801px) and (min-height:800px){.atelier-site .atelier-approach:has(.plan-scroll-track:not(.is-static)) .approach-content{position:sticky;top:calc(var(--hero-header-size,94px) + 24px);align-self:start}}
+@media(max-width:800px){.atelier-site main:has(>.hero-scroll-sequence) .expertise-dock-section::before,.atelier-site main:has(>.hero-scroll-sequence) .expertise-dock-section::after{top:auto;bottom:calc(var(--home-section-space) + 80px)}}
