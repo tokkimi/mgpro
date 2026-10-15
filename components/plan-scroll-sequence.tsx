@@ -11,11 +11,12 @@ export default function PlanScrollSequence({locale='fr'}:{locale?:'fr'|'en'}){
   const root=track.current,viewport=pin.current,surface=canvas.current;
   if(!root||!viewport||!surface||staticMode)return;
   const media=window.matchMedia('(prefers-reduced-motion: reduce)');
-  const context=surface.getContext('2d');
+  const context=surface.getContext('2d',{willReadFrequently:true});
   if(!context||media.matches){setStaticMode(true);return}
   const variant=window.matchMedia('(max-width:800px)').matches?'mobile':'desktop';
   const images=new Map<number,HTMLImageElement>(),pending=new Map<number,Promise<void>>();
   let cancelled=false,started=false,raf=0,frame=0,start=0,distance=1,painted=-1;
+  let grain=new Float32Array(0);
   const draw=()=>{
    const image=images.get(frame);if(!image||painted===frame)return;
    const inset=Math.min(surface.width,surface.height)*.035;
@@ -23,6 +24,15 @@ export default function PlanScrollSequence({locale='fr'}:{locale?:'fr'|'en'}){
    const width=image.naturalWidth*scale,height=image.naturalHeight*scale;
    context.clearRect(0,0,surface.width,surface.height);
    context.drawImage(image,(surface.width-width)/2,(surface.height-height)/2,width,height);
+   // Chalk pigment stays inside the original strokes: no outline, halo or frame.
+   const pixels=context.getImageData(0,0,surface.width,surface.height);
+   for(let i=0,pixel=0;i<pixels.data.length;i+=4,pixel++){
+    if(!pixels.data[i+3])continue;
+    const ink=1-(pixels.data[i]*.299+pixels.data[i+1]*.587+pixels.data[i+2]*.114)/255;
+    pixels.data[i+3]=Math.round(pixels.data[i+3]*ink*grain[pixel]);
+    pixels.data[i]=pixels.data[i+1]=pixels.data[i+2]=255;
+   }
+   context.putImageData(pixels,0,0);
    painted=frame;root.dataset.paintedFrame=String(frame+1);setReady(true);
   };
   const load=(index:number):Promise<void>=>{
@@ -45,6 +55,13 @@ export default function PlanScrollSequence({locale='fr'}:{locale?:'fr'|'en'}){
    distance=Math.max(1,root.offsetHeight-viewport.offsetHeight);
    const density=Math.min(window.devicePixelRatio||1,1.5);
    surface.width=Math.round(surface.clientWidth*density);surface.height=Math.round(surface.clientHeight*density);
+   grain=new Float32Array(surface.width*surface.height);
+   let seed=1709;
+   for(let i=0;i<grain.length;i++){
+    seed=(Math.imul(seed,1664525)+1013904223)>>>0;
+    const noise=seed/4294967296,x=i%surface.width,y=Math.floor(i/surface.width);
+    grain[i]=Math.min(1,(noise>.95?.48:.76+noise*.24)*(.93+.07*Math.sin(x*.17+y*.11)));
+   }
    painted=-1;update();
   };
   const onScroll=()=>{if(!raf)raf=requestAnimationFrame(update)};

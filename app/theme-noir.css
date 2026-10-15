@@ -95,7 +95,8 @@ body:has(.atelier-site) .cookie-actions button{background:#4a4640;color:#ecf4ff;
 .atelier-site .expertise-dock-section{background:radial-gradient(ellipse at 50% 45%,#f5d9971b,transparent 75%)!important}
 .atelier-site .atelier-finance{background:radial-gradient(ellipse at 80% 70%,#f9e1a61a,transparent 75%)!important}
 .atelier-site .plan-scroll-pin{background:transparent}
-.atelier-site .plan-scroll-fallback,.atelier-site .plan-scroll-canvas{filter:grayscale(1) invert(1) brightness(1.4) sepia(1) saturate(1.7)}
+.atelier-site .plan-scroll-fallback{filter:grayscale(1) invert(1) brightness(1.3)}
+.atelier-site .plan-scroll-canvas{filter:none}
 .atelier-site .atelier-header{background:rgba(8,9,11,.27);box-shadow:0 1px 0 #fff0c316,0 8px 32px #0002}
 .atelier-site .glass-surface{background:radial-gradient(ellipse at var(--glass-x,18%) var(--glass-y,0%),#fff0c330,transparent 65%),linear-gradient(130deg,#fff0c321,#fae4ad0a 52%,#fff0c316);border-color:#fae4ad66;box-shadow:0 14px 36px #0003,inset 0 1px 1px #fff0c3a1,inset 1px 0 1px #fff0c330,inset 0 -1px 2px #eac27055}
 .atelier-site :is(.glass-button,.atelier-text-link)::after,.atelier-site .mg-liquid-button::after{background:radial-gradient(ellipse at var(--glass-x,24%) var(--glass-y,0%),#fff0c350,transparent 70%),linear-gradient(120deg,#fff0c324,#fff0c30c 55%,#fff0c320);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
@@ -151,7 +152,7 @@ body:has(.atelier-site) .cookie-actions button{background:#4a4640;color:#ecf4ff;
 @media(prefers-reduced-motion:reduce){.atelier-site :is(.expertise-glass-gallery,.mg-coverflow-card,.finance-offer,.blog-card)::after,.atelier-site .mg-action-wheel::before,.atelier-site .expertise-dock .pictogram-reflection{animation:none;opacity:0}.atelier-site .mg-action-wheel,.atelier-site .mg-wheel-ring{animation:none}}
 
 /* Full-screen photography throughout the dive, without cropped black bands. */
-.atelier-site main>.immersive-banner{--portal-height:100dvh;height:calc(var(--portal-height) + 65svh);padding:0;margin:0;position:relative;isolation:isolate;overflow:visible;background:#08090b!important}
+.atelier-site main>.immersive-banner{--portal-height:100dvh;height:calc(var(--portal-height) + 110svh);padding:0;margin:0;position:relative;isolation:isolate;overflow:visible;background:#08090b!important}
 .immersive-banner-pin{position:sticky;top:0;height:var(--portal-height);width:100%}
 .immersive-banner-window,.immersive-banner-picture{position:absolute;inset:0;overflow:hidden;background:#08090b;display:block}
 .immersive-banner-picture img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;transform:scale(var(--portal-scale,1));transform-origin:50% 50%;display:block}
@@ -162,7 +163,7 @@ body:has(.atelier-site) .cookie-actions button{background:#4a4640;color:#ecf4ff;
 .atelier-site .expertise-tile:focus-visible{outline-color:#e5bd66}
 @media(min-width:1201px){.atelier-site>.atelier-header>nav>a::after{background:linear-gradient(105deg,transparent,#fff0c3d9,transparent)}}
 body:has(.immersive-banner[data-active=true]) .atelier-site .atelier-header{background:#08090b18;border-bottom-color:transparent;box-shadow:none;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
-@media(max-width:800px){.atelier-site main>.immersive-banner{height:calc(var(--portal-height) + 55svh)}.atelier-site .immersive-banner-copy h2{font-size:clamp(34px,9vw,56px)}.immersive-banner-copy{gap:12px}}
+@media(max-width:800px){.atelier-site main>.immersive-banner{height:calc(var(--portal-height) + 90svh)}.atelier-site .immersive-banner-copy h2{font-size:clamp(34px,9vw,56px)}.immersive-banner-copy{gap:12px}}
 @media(prefers-reduced-motion:reduce){.atelier-site main>.immersive-banner{height:100svh}.immersive-banner-pin{position:relative;top:auto;height:100%}.immersive-banner-picture img{transform:none!important}.immersive-banner-copy{opacity:1!important}.immersive-banner-shade{opacity:.82!important}}
 
 /* Three-second welcome: sculpted glass, travelling highlights and restrained gold light. */
@@ -173,6 +174,9 @@ body:has(.immersive-banner[data-active=true]) .atelier-site .atelier-header{back
 .mg-intro-light{position:absolute;inset:-50%;pointer-events:none;background:linear-gradient(120deg,transparent 44%,#ffe7a805 48%,#ffe7a810 50%,transparent 54%);animation:noir-intro-light 3s cubic-bezier(.2,.65,.4,1) both}
 .mg-brand-intro .mg-intro-brand{width:min(82vw,430px);max-width:none;animation:none;perspective:800px}
 .mg-intro-logo{position:relative;width:100%;aspect-ratio:1000/780;animation:noir-intro-logo 3s cubic-bezier(.2,.65,.35,1) both;transform-style:preserve-3d}
+.mg-intro-flare{position:absolute;inset:-40% -45%;mix-blend-mode:screen;pointer-events:auto;mask-image:radial-gradient(ellipse,black 30%,transparent 72%);-webkit-mask-image:radial-gradient(ellipse,black 30%,transparent 72%)}
+.mg-intro-logo:has(.nextjs-flare[data-ready=true])>img{opacity:.42;transition:opacity .2s}
+.mg-intro-logo:has(.nextjs-flare[data-ready=true])>.mg-intro-logo-sheen{display:none}
 .mg-brand-intro .mg-intro-logo img{display:block;width:100%;height:100%;object-fit:contain;border:0;border-radius:0;background:none;box-shadow:none;filter:drop-shadow(0 8px 15px #000a) drop-shadow(0 0 12px #edc56c30)}
 .mg-intro-logo-sheen{position:absolute;inset:0;pointer-events:none;mask:url('/images/logo-mgpro-noir.svg') center/contain no-repeat;-webkit-mask:url('/images/logo-mgpro-noir.svg') center/contain no-repeat;background:linear-gradient(115deg,transparent 38%,#fff7df55 45%,#fffef1 49%,#ffe8a877 53%,transparent 61%);background-size:300% 100%;mix-blend-mode:screen;animation:noir-intro-sheen 2.8s .1s ease-in-out both}
 .mg-brand-intro .mg-intro-brand p{white-space:normal;margin:16px 0 0;padding:0 8px;font-size:13px;line-height:1.6;letter-spacing:.1em;color:#f2e2bb;animation:noir-intro-phrase .8s .35s ease both}
