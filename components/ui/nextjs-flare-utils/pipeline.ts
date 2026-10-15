@@ -50,10 +50,10 @@ interface BoundLogo extends LogoRaster {
 
 const GLYPH_CENTER_IN_BOX: Point = [0.5, 0.5];
 const LOGO_HEIGHT_RATIO = 0.55;
-const MAX_RENDER_WIDTH = 1920;
+const MAX_RENDER_WIDTH = 2048;
 const PULSE_TRANSITION_SECONDS = 2;
 const PULSE_FLOOR = 0.2;
-const FLARE_COLOR = [1, 0.77, 0.33] as const;
+const FLARE_COLOR = [1, 1, 1] as const;
 const BLUR_CENTER_WEIGHT = 0.0799404796215474;
 const BLUR_TAPS = [
   [1.48500449838059, 0.15215191554518462, 0, 0],
@@ -230,7 +230,7 @@ export class FlarePipeline {
         rimIntensity: attenuation,
         extension: 0.6,
         beamIntensity: 0.8 * attenuation,
-        filmGrain: 0.03,
+        filmGrain: 0,
         smoothness: 1,
         logoOpacity: 1,
         frameIndex,
@@ -328,7 +328,7 @@ export function backingDimensions(
 ): Point {
   const pixelRatio = Math.min(
     Math.max(dpr, 1),
-    1.75,
+    3,
     MAX_RENDER_WIDTH / Math.max(width, 1)
   );
   return [

@@ -63,11 +63,9 @@ fn resolveDarkColor(radiance: vec3f) -> vec3f {
   let spot = max(rimSample, rimBlur * 0.85 * params.rimFill) * (1.0 + halo * 1.5);
   let scatterSignal = rimRays * params.beamIntensity * params.scatter;
 
-  var radiance = params.flareColor * haloLine;
-  radiance += vec3f(scene) * params.logoOpacity * 0.22;
-  radiance += mix(vec3f(1.0), params.flareColor, 0.5) * spot * params.rimIntensity;
-  radiance += params.flareColor * spot * 0.4 * params.rimIntensity;
-  radiance += params.flareColor * scatterSignal;
+  // The crisp vector brand is rendered separately above this canvas.
+  // Keep only soft scattered light here, never another outline around its edges.
+  let radiance = params.flareColor * (scatterSignal + rimBlur * halo * 0.12);
 
   let radialMask = smoothstep(1.35, 0.25, length((uv - params.logoCenter) * params.aspect));
   let color = resolveDarkColor(radiance * radialMask);

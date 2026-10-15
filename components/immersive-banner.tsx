@@ -18,7 +18,7 @@ export default function ImmersiveBanner({scene,locale='fr'}:{scene:keyof typeof 
    frame=0;if(!root)return;
    const raw=(scrollY-start)/distance;
    const progress=reduced.matches?0:Math.max(0,Math.min(1,raw));
-   root.style.setProperty('--portal-scale',String(1+progress*(innerWidth<800?.06:.1)));
+   root.style.setProperty('--portal-scale',String(1+Math.pow(progress,1.2)*(innerWidth<=800?.65:.8)));
    root.style.setProperty('--portal-copy-opacity',String(1-Math.min(1,Math.max(0,(progress-.35)/.5))));
    root.style.setProperty('--portal-shade',String(.82-progress*.62));
    root.dataset.progress=progress.toFixed(4);

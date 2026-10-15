@@ -2,6 +2,7 @@
 
 import {useEffect,useRef,useState} from 'react';
 import sequence from '@/content/plan-trace.json';
+import {PlanFallback,PlanHandwriting,planTextMasks} from './plan-handwriting';
 
 export default function PlanScrollSequence({locale='fr'}:{locale?:'fr'|'en'}){
  const track=useRef<HTMLDivElement>(null),pin=useRef<HTMLDivElement>(null),canvas=useRef<HTMLCanvasElement>(null);
@@ -15,15 +16,24 @@ export default function PlanScrollSequence({locale='fr'}:{locale?:'fr'|'en'}){
   if(!context||media.matches){setStaticMode(true);return}
   const variant=window.matchMedia('(max-width:800px)').matches?'mobile':'desktop';
   const images=new Map<number,HTMLImageElement>(),pending=new Map<number,Promise<void>>();
-  let cancelled=false,started=false,raf=0,frame=0,start=0,distance=1,painted=-1;
+  let cancelled=false,started=false,raf=0,frame=0,start=0,distance=1,painted=-1,writing=0;
+  const strokes=Array.from(root.querySelectorAll<SVGPathElement>('[data-writing] path')).map(path=>({path,length:path.getTotalLength(),offset:1}));
+  const totalInk=strokes.reduce((sum,stroke)=>sum+stroke.length,0);
+  const write=()=>{
+   const progress=frame===sequence.frames.length-1&&images.has(frame)?writing:0;
+   let remaining=progress*totalInk;
+   for(const stroke of strokes){const offset=1-Math.max(0,Math.min(1,remaining/stroke.length));if(offset!==stroke.offset){stroke.path.style.strokeDashoffset=String(offset);stroke.offset=offset}remaining-=stroke.length}
+   root.dataset.writingProgress=progress.toFixed(4);
+  };
   let grain=new Float32Array(0);
   const draw=()=>{
-   const image=images.get(frame);if(!image||painted===frame)return;
-   const inset=Math.min(surface.width,surface.height)*.035;
-   const scale=Math.min((surface.width-inset*2)/image.naturalWidth,(surface.height-inset*2)/image.naturalHeight);
+   write();const image=images.get(frame);if(!image||painted===frame)return;
+   const scale=Math.min(surface.width/image.naturalWidth,surface.height/image.naturalHeight);
    const width=image.naturalWidth*scale,height=image.naturalHeight*scale;
    context.clearRect(0,0,surface.width,surface.height);
    context.drawImage(image,(surface.width-width)/2,(surface.height-height)/2,width,height);
+   // Remove only the old raster labels before applying chalk pigment.
+   for(const [x,y,w,h] of planTextMasks)context.clearRect((surface.width-width)/2+x/1200*width,(surface.height-height)/2+y/1130*height,w/1200*width,h/1130*height);
    // Chalk pigment stays inside the original strokes: no outline, halo or frame.
    const pixels=context.getImageData(0,0,surface.width,surface.height);
    for(let i=0,pixel=0;i<pixels.data.length;i+=4,pixel++){
@@ -46,7 +56,7 @@ export default function PlanScrollSequence({locale='fr'}:{locale?:'fr'|'en'}){
   };
   const update=()=>{
    raf=0;const progress=Math.max(0,Math.min(1,(window.scrollY-start)/distance));
-   frame=Math.round(progress*(sequence.frames.length-1));root.dataset.frame=String(frame+1);root.dataset.progress=progress.toFixed(4);
+   frame=Math.round(Math.min(1,progress/.7)*(sequence.frames.length-1));writing=Math.max(0,(progress-.7)/.3);root.dataset.frame=String(frame+1);root.dataset.progress=progress.toFixed(4);
    if(started){if(images.has(frame))draw();else void load(frame)}
   };
   const measure=()=>{
@@ -79,8 +89,7 @@ export default function PlanScrollSequence({locale='fr'}:{locale?:'fr'|'en'}){
  },[staticMode]);
  return <div className={`approach-photo plan-scroll-track${staticMode?' is-static':''}`} ref={track} data-ready={ready?'true':'false'}>
   <div className="plan-scroll-pin" ref={pin} role="img" aria-label={en?'A renovation floor plan drawn line by line':'Un plan de rénovation dessiné trait par trait'}>
-   <picture className="plan-scroll-fallback"><source media="(max-width:800px)" srcSet={`${sequence.directory}/frame_050-mobile.webp`}/><img src={`${sequence.directory}/frame_050-desktop.webp`} alt="" loading="lazy"/></picture>
-   <canvas ref={canvas} className="plan-scroll-canvas" aria-hidden="true"/>
+   <div className="plan-drawing-area"><PlanFallback locale={locale}/><canvas ref={canvas} className="plan-scroll-canvas" aria-hidden="true"/><PlanHandwriting locale={locale} animated/></div>
    <p className="plan-scroll-caption">{en?'From the first line. To the final finish.':'Du premier trait. À la dernière finition.'}</p>
   </div>
   <noscript><style>{'.plan-scroll-track{height:var(--plan-pane-height)!important}.plan-scroll-pin{position:relative!important;top:auto!important}'}</style></noscript>
