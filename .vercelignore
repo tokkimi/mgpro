@@ -7,3 +7,4 @@ node_modules/
 *.tsbuildinfo
 test-results/
 .sites-runtime/
+design/immersive/
