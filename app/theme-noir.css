@@ -81,6 +81,7 @@ body:has(.atelier-site){background:#08090b;color:#fff;color-scheme:dark}
 body:has(.atelier-site) .cookie-consent{background:#141a23;color:#fff;border-color:#fae3ac33;box-shadow:0 10px 35px #0008}
 body:has(.atelier-site) .cookie-consent h2{color:#fff}
 body:has(.atelier-site) .cookie-consent p,body:has(.atelier-site) .cookie-settings-footer button{color:#fff}
+html:has(.atelier-site),body:has(.atelier-site) .cookie-settings-footer{background:#08090b}
 body:has(.atelier-site) .cookie-actions button{background:#4a4640;color:#fff;border-color:#f5d8964d}
 .mg-brand-intro{background:#08090b!important}
 .mg-intro-brand p{color:#fff}
