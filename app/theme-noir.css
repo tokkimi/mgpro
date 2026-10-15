@@ -185,18 +185,18 @@ body:has(.immersive-banner[data-active=true]) .atelier-site .atelier-header{back
 .mg-intro-aura::before,.mg-intro-aura::after{content:'';position:absolute;width:min(75vw,800px);height:min(75vw,800px);left:50%;top:50%;border-radius:45% 55% 65% 35%;background:radial-gradient(ellipse,#ffffff1c,transparent 65%);filter:blur(30px);transform:translate(-60%,-60%);animation:noir-intro-aura 3s ease-in-out both}
 .mg-intro-aura::after{width:min(60vw,600px);height:min(60vw,600px);background:radial-gradient(ellipse,#ffffff16,transparent 65%);animation-direction:reverse;left:54%;top:48%}
 .mg-intro-light{position:absolute;inset:-50%;pointer-events:none;background:linear-gradient(120deg,transparent 44%,#ffffff05 48%,#ffffff10 50%,transparent 54%);animation:noir-intro-light 3s cubic-bezier(.2,.65,.4,1) both}
-.mg-brand-intro .mg-intro-brand{width:min(82vw,430px);max-width:none;animation:none;perspective:800px}
-.mg-intro-logo{position:relative;width:100%;aspect-ratio:1000/780;animation:noir-intro-logo 3s cubic-bezier(.2,.65,.35,1) both;transform-style:preserve-3d}
+.mg-brand-intro .mg-intro-brand{width:min(82vw,430px);max-width:none;animation:none;perspective:none}
+.mg-intro-logo{position:relative;width:100%;aspect-ratio:1000/780;animation:noir-intro-logo 3s cubic-bezier(.2,.65,.35,1) both;transform-style:flat}
 .mg-intro-flare{position:absolute;inset:-40% -45%;mix-blend-mode:screen;pointer-events:auto;mask-image:radial-gradient(ellipse,black 30%,transparent 72%);-webkit-mask-image:radial-gradient(ellipse,black 30%,transparent 72%)}
 .mg-intro-logo:has(.nextjs-flare[data-ready=true])>img{opacity:1}
 .mg-intro-logo:has(.nextjs-flare[data-ready=true])>.mg-intro-logo-sheen{display:none}
 .mg-brand-intro .mg-intro-logo img{position:relative;z-index:1;display:block;width:100%;height:100%;object-fit:contain;border:0;border-radius:0;background:none;box-shadow:none;filter:none}
-.mg-intro-logo-sheen{position:absolute;inset:0;pointer-events:none;mask:url('/images/logo-mgpro-noir.svg') center/contain no-repeat;-webkit-mask:url('/images/logo-mgpro-noir.svg') center/contain no-repeat;background:linear-gradient(115deg,transparent 38%,#fff7df55 45%,#fffef1 49%,#ffe8a877 53%,transparent 61%);background-size:300% 100%;mix-blend-mode:screen;animation:noir-intro-sheen 2.8s .1s ease-in-out both}
+.mg-intro-logo-sheen{position:absolute;inset:0;pointer-events:none;mask:url('/images/brand-noir/logo-1024.png') center/contain no-repeat;-webkit-mask:url('/images/brand-noir/logo-1024.png') center/contain no-repeat;background:linear-gradient(115deg,transparent 38%,#fff7df55 45%,#fffef1 49%,#ffe8a877 53%,transparent 61%);background-size:300% 100%;mix-blend-mode:screen;animation:noir-intro-sheen 2.8s .1s ease-in-out both}
 .mg-brand-intro .mg-intro-brand p{white-space:normal;margin:16px 0 0;padding:0 8px;font-size:13px;line-height:1.6;letter-spacing:.1em;color:#f2e2bb;animation:noir-intro-phrase .8s .35s ease both}
 .mg-brand-intro .mg-intro-progress{width:min(58vw,220px);margin-top:26px;height:2px;background:#edc56c21}
 .mg-brand-intro .mg-intro-progress span{animation:mg-intro-fill 3s cubic-bezier(.22,.65,.35,1) forwards;background:linear-gradient(90deg,#ba8a35,#f2d58f 65%,#fff8df);box-shadow:0 0 10px #edc56c88,0 0 22px #f4d68a44}
 .mg-brand-intro .mg-intro-progress span::after{background:#fff9e8;box-shadow:0 0 7px #fff3bc,0 0 16px #dfac4b}
-@keyframes noir-intro-logo{0%{opacity:0;transform:translateY(10px) scale(.98)}25%{opacity:1}70%{transform:translateY(-3px) scale(1.01)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes noir-intro-logo{0%{opacity:0}18%,100%{opacity:1}}
 @keyframes noir-intro-sheen{0%{background-position:130% 50%;opacity:0}18%{opacity:.75}80%{opacity:.9}100%{background-position:-30% 50%;opacity:0}}
 @keyframes noir-intro-aura{0%{opacity:.25;transform:translate(-65%,-60%) rotate(-18deg) scale(.8)}60%{opacity:1}100%{opacity:.7;transform:translate(-40%,-50%) rotate(28deg) scale(1.15)}}
 @keyframes noir-intro-light{from{transform:translateX(-25%);opacity:0}35%{opacity:1}to{transform:translateX(25%);opacity:0}}

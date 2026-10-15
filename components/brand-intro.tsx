@@ -3,6 +3,7 @@
 import {useEffect,useState} from 'react';
 import {usePathname} from 'next/navigation';
 import NextjsFlare from './ui/nextjs-flare';
+import PublicBrandLogo from './public-brand-logo';
 
 export default function BrandIntro(){
  const path=usePathname();
@@ -19,5 +20,5 @@ export default function BrandIntro(){
   return()=>window.clearTimeout(timer);
  },[publicPage,visible]);
  if(!visible||!publicPage)return null;
- return <><div className="mg-brand-intro" role="region" aria-label={en?'Welcome to MG Pro':'Bienvenue chez MG Pro'}><div className="mg-intro-aura" aria-hidden="true"/><div className="mg-intro-light" aria-hidden="true"/><div className="mg-intro-brand"><div className="mg-intro-logo"><img src="/images/logo-mgpro-noir.svg" alt="MG Pro" fetchPriority="high"/><div className="mg-intro-flare"><NextjsFlare/></div><span className="mg-intro-logo-sheen" aria-hidden="true"/></div><p>{en?'Your vision. Our expertise.':'Vos idées. Notre savoir-faire.'}</p><div className="mg-intro-progress" aria-hidden="true"><span/></div></div></div><noscript><style>{'.mg-brand-intro{display:none!important}html:has(.mg-brand-intro){overflow:auto!important}body:has(>.mg-brand-intro)>:not(.mg-brand-intro):not(noscript){visibility:visible!important;pointer-events:auto!important}'}</style></noscript></>;
+ return <><div className="mg-brand-intro" role="region" aria-label={en?'Welcome to MG Pro':'Bienvenue chez MG Pro'}><div className="mg-intro-aura" aria-hidden="true"/><div className="mg-intro-light" aria-hidden="true"/><div className="mg-intro-brand"><div className="mg-intro-logo"><PublicBrandLogo variant={'intro'} alt="MG Pro"/><div className="mg-intro-flare"><NextjsFlare/></div><span className="mg-intro-logo-sheen" aria-hidden="true"/></div><p>{en?'Your vision. Our expertise.':'Vos idées. Notre savoir-faire.'}</p><div className="mg-intro-progress" aria-hidden="true"><span/></div></div></div><noscript><style>{'.mg-brand-intro{display:none!important}html:has(.mg-brand-intro){overflow:auto!important}body:has(>.mg-brand-intro)>:not(.mg-brand-intro):not(noscript){visibility:visible!important;pointer-events:auto!important}'}</style></noscript></>;
 }
