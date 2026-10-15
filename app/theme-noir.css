@@ -1,0 +1,89 @@
+/* Separate public presentation. Every selector excludes the workspace and portals. */
+body:has(.atelier-site){background:#08090b;color:#edf0f5;color-scheme:dark}
+.atelier-site{--ink:#edf0f5;--muted:#afb7c2;--forest:#dce3ed;--gold:#aebbc9;--bg:#08090b;--line:#30343c;background:#08090b;color:#edf0f5}
+.atelier-site main,.atelier-site main>section,.atelier-site .about-mgpro,.atelier-site .about-mgpro>section,.atelier-site .atelier-footer,.atelier-site .blog-index,.atelier-site .blog-article,.atelier-site .legal-page{background:#08090b!important}
+.atelier-site h1,.atelier-site h2,.atelier-site h3,.atelier-site strong,.atelier-site .manifesto-number{color:#f0f3f8}
+.atelier-site :is(h1,h2)>span:not(.gold-dot){color:#a3acb9}
+.atelier-site p,.atelier-site .section-kicker,.atelier-site small,.atelier-site figcaption{color:#afb7c2}
+.atelier-site main :is(p,small,figcaption){color:#b8c2d0!important}
+.atelier-site .mg-wheel-phone,.atelier-site .atelier-footer a,.atelier-site .atelier-footer button{color:#c0cbdb}
+.atelier-site .section-kicker,.atelier-site .gold-dot{color:#adbdcf}
+.atelier-site .atelier-header{background:rgba(8,9,11,.45);border-bottom-color:rgba(207,222,240,.08);box-shadow:0 4px 20px #00000015}
+.atelier-site .atelier-header nav a,.atelier-site .atelier-header .client-access,.atelier-site .atelier-header .language-switch{color:#e3e8ef}
+.atelier-site .atelier-header .header-quote,.atelier-site .site-mobile-menu-panel .glass-button{color:#edf1f7!important}
+.atelier-site .atelier-brand img{object-fit:contain}
+.atelier-site .glass-surface{background:linear-gradient(135deg,#ffffff14,#c1d2ed06 48%,#ffffff0c);border-color:#c9d7e633;box-shadow:0 16px 36px #0004,inset 0 1px 1px #ffffff38,inset 1px 0 1px #ffffff18,inset 0 -1px 2px #8fa9c629}
+.atelier-site :is(.glass-button,.atelier-text-link),.atelier-site .mg-liquid-button{color:#edf1f7!important}
+.atelier-site :is(.glass-button,.atelier-text-link)::before,.atelier-site .mg-liquid-button::before{box-shadow:0 2px 12px #0006,inset 2px 2px 1px -2px #fff,inset -2px -2px 1px -2px #a5b3c8,inset 0 0 8px 4px #ffffff12,inset 0 0 2px 1px #ffffff24}
+.atelier-site :is(.glass-button,.atelier-text-link)::after,.atelier-site .mg-liquid-button::after{background:#d8e5f010}
+.atelier-site :is(.glass-button,.atelier-text-link):hover,.atelier-site .mg-liquid-button:hover{background-color:#e0ecff0a}
+.atelier-site .expertise-dock-section{background:radial-gradient(ellipse at center,#b8c9df0a,transparent 72%)!important}
+.atelier-site .expertise-dock .glass-pictogram::before{box-shadow:0 6px 22px #0004,inset 3px 3px 1px -3px #fff,inset -3px -3px 1px -3px #93a7c5,inset 0 0 6px 6px #ffffff0f,inset 0 0 2px 2px #ffffff12}
+.atelier-site .expertise-dock .glass-pictogram::after{background:#c8ddf50a}
+.atelier-site .expertise-dock .glass-pictogram>svg{stroke:#c2cddd;filter:none}
+.atelier-site .expertise-dock .expertise-frame-label{color:#d2dbe8}
+.atelier-site .dock-topline>span{color:#aeb9c8}
+.atelier-site .atelier-promises,.atelier-site .about-intro,.atelier-site .about-commitments,.atelier-site .about-territory,.atelier-site .service-accordion details,.atelier-site .approach-accordion details,.atelier-site .atelier-advice details,.atelier-site .footer-bottom{border-color:#ffffff20}
+.atelier-site .atelier-promises svg,.atelier-site .about-commitments svg,.atelier-site .approach-accordion summary>svg,.atelier-site .service-accordion summary svg{color:#b2c0d2}
+.atelier-site .plan-scroll-pin{background:#08090b}
+.atelier-site .plan-scroll-fallback,.atelier-site .plan-scroll-canvas{filter:grayscale(1) invert(1)}
+.atelier-site .expertise-glass-gallery,.atelier-site .mg-coverflow-card{background:linear-gradient(135deg,#191d23ee,#11151b 55%,#1c222ccc);border-color:#b6cbe329;box-shadow:0 18px 40px #0005,inset 0 1px 1px #ffffff24,inset 0 -1px 1px #91a5c82b}
+.atelier-site .expertise-glass-gallery .gallery-track,.atelier-site .gallery-track img{background:#0e1116}
+.atelier-site .expertise-glass-gallery .gallery-column-bottom button,.atelier-site .home-expertise-heading button,.atelier-site .mg-coverflow-controls>button,.atelier-site .mg-coverflow-photo-nav button{color:#dce6f3;background:linear-gradient(135deg,#e7efff16,#acbdd207);border-color:#f4f8ff29;box-shadow:0 4px 14px #0003,inset 0 1px 1px #ffffff24}
+.atelier-site .home-expertise-heading button:disabled,.atelier-site .gallery-column-bottom button:disabled{opacity:.3}
+.atelier-site .expertise-gallery-note>span:first-child{color:#e1e7ef}
+.atelier-site .expertise-gallery-note>span:last-child{color:#aab5c5}
+.atelier-site .mg-coverflow{color:#ecf1f8}
+.atelier-site .mg-coverflow-body{background:linear-gradient(135deg,#121720ad,#080b117a);border-color:#d5e3f22b}
+.atelier-site .mg-coverflow-body p,.atelier-site .mg-coverflow-photo-nav span,.atelier-site .mg-coverflow-caption,.atelier-site .mg-coverflow-hint{color:#bdc8d8}
+.atelier-site .mg-coverflow-body h3,.atelier-site .mg-coverflow-status{color:#e1e9f5}
+.atelier-site .mg-coverflow-expand{color:#e0ebf8;background:#0c142080;border-color:#e0edff70}
+.atelier-site .mg-coverflow-dots button::after{background:#8295ad}
+.atelier-site .mg-coverflow-dots button[aria-selected=true]::after{background:#d3deed}
+.atelier-site .mg-coverflow-dots button span{background:#7b8ca5}
+.atelier-site .mg-coverflow-dots button.is-active span{background:#c9d9ef;box-shadow:0 0 10px #bfd8e94d}
+.atelier-site .mg-action-wheel{background:linear-gradient(145deg,#1d232d,#0c0f14);box-shadow:18px 18px 38px #0007,-15px -15px 32px #cadbff04,inset 0 0 0 1px #e3ecfa26}
+.atelier-site .mg-wheel-inset{box-shadow:inset 5px 5px 12px #0005,inset -5px -5px 12px #c9dfff07;border-color:#e0e9fa12}
+.atelier-site .mg-wheel-center{background:linear-gradient(145deg,#131923,#0a0d12);box-shadow:0 0 0 1px #dde8f71a}
+.atelier-site .mg-wheel-copy{color:#e1e9f6}
+.atelier-site .mg-wheel-copy.has-image{background:linear-gradient(180deg,#080b1120,#080b11c9);color:#fff}
+.atelier-site .mg-wheel-ring text{fill:#bdc8d8}
+.atelier-site .mg-wheel-ring a.active text,.atelier-site .mg-wheel-ring a:hover text{fill:#fff}
+.atelier-site .location-list span,.atelier-site .service-location{background:#b6c9e20d;border-color:#c6d9f122;color:#d0dae8}
+.atelier-site .atelier-finance{background:#08090b!important}
+.atelier-site .finance-orb{opacity:.08}
+.atelier-site .finance-offer{background:linear-gradient(135deg,#242c394d,#11161fb3);border-color:#d5e5f32b}
+.atelier-site .financeit-logo{filter:brightness(0) invert(1)}
+.atelier-site .hero-finance{background:linear-gradient(135deg,#171b24a3,#11151b66);border-color:#e9f1ff36}
+.atelier-site .hero-finance>div>span,.atelier-site .hero-finance p,.atelier-site .hero-finance b>svg{color:#e4ecf7}
+.atelier-site .contact-glass-trigger,.atelier-site .contact-glass-panel{color:#e6edf7;background:linear-gradient(135deg,#1a202be6,#0b1018e6);border-color:#d4e2f22b}
+.atelier-site .contact-glass-trigger b,.atelier-site .contact-glass-panel h2{color:#e8eef7}
+.atelier-site .contact-glass-panel>a,.atelier-site .contact-glass-panel>button{border-color:#ffffff1a;color:#d7e3f3}
+.atelier-site .contact-indicator{color:#d4e0f0;background:#d0dff519;border-color:#e9f2ff2e;box-shadow:0 2px 6px #0003}
+.atelier-site .site-mobile-menu-trigger{background:linear-gradient(145deg,#262c36,#131821);border-color:#c6d6ee38;color:#e4edf9;box-shadow:inset 0 1px 1px #ffffff20,0 4px 12px #0003}
+.atelier-site .site-mobile-menu-panel{color:#e1e9f5;background:linear-gradient(145deg,#151b24f5,#090e16f5);border-color:#d4e3f32b;box-shadow:0 20px 70px #0008,inset 0 1px 0 #ffffff29}
+.atelier-site .site-mobile-menu-panel>header>button,.atelier-site .site-mobile-menu-panel .language-switch{background:#edf5ff0c;color:#e5edfa!important;border-color:#deebff29}
+.atelier-site .site-mobile-menu-panel nav>a,.atelier-site .site-mobile-menu-panel footer{border-color:#dbe5ec29}
+.atelier-site .atelier-header .site-mobile-menu-panel nav>a,.atelier-site .site-menu-client{color:#e1e9f5}
+.atelier-site .site-mobile-menu-panel nav>a svg,.atelier-site .site-mobile-menu-panel footer>a,.atelier-site .site-menu-language{color:#b5c5dc}
+.atelier-site .site-mobile-menu-panel::backdrop,.atelier-site .request-dialog::backdrop{background:#0008;backdrop-filter:blur(10px)}
+.atelier-site .request-dialog{color:#e4ebf5;background:#11161f;border-color:#dce8fb33;box-shadow:0 20px 60px #0008}
+.atelier-site .request-modal-header{background:#11161f}
+.atelier-site .request-modal :is(input,textarea,select),.atelier-site .address-suggestions{color:#e3ebf7;background:#1a222f;border-color:#a7bcda40}
+.atelier-site .request-modal :is(label,.eyebrow,.muted),.atelier-site .address-field>small{color:#c5cfdd}
+.atelier-site .request-modal .service-choices button,.atelier-site .request-modal .btn,.atelier-site .request-modal .icon-button{color:#e1eaf6;background:#202a38;border-color:#b9cce54d}
+.atelier-site .request-modal .service-choices button.chosen,.atelier-site .request-modal .btn.primary{color:#fff;background:#38495f;border-color:#c8ddf170}
+.atelier-site .request-modal .form-steps span.active{color:#eff5ff;border-color:#c6d7ed}
+.atelier-site .request-photo-drop,.atelier-site .request-summary{background:#c8ddff08;border-color:#b8cdea4d}
+.atelier-site .address-suggestions li:hover,.atelier-site .address-suggestions li[aria-selected=true]{background:#344152}
+.atelier-site .blog-card{background:linear-gradient(135deg,#1b222c,#0c1119);border-color:#d4e0f226}
+.atelier-site .blog-card h2,.atelier-site .legal-page h1,.atelier-site .legal-page h2{color:#edf2fa}
+body:has(.atelier-site) .cookie-consent{background:#141a23;color:#edf2fb;border-color:#d0dff133;box-shadow:0 10px 35px #0008}
+body:has(.atelier-site) .cookie-consent h2{color:#eff4fc}
+body:has(.atelier-site) .cookie-consent p,body:has(.atelier-site) .cookie-settings-footer button{color:#b9c5d6}
+body:has(.atelier-site) .cookie-actions button{background:#243044;color:#ecf4ff;border-color:#bacde44d}
+.mg-brand-intro{background:#08090b!important}
+.mg-intro-brand p{color:#c1cddd}
+.mg-intro-progress{background:#d0dff526}
+.mg-intro-progress span{background:linear-gradient(90deg,#7289a4,#dbe8fc 70%,#fff);box-shadow:0 0 7px #b5cff2,0 0 15px #d4e6ff70}
+@media(min-width:1201px){.atelier-site>.atelier-header>nav>a:is(:hover,:focus-visible){color:#fff}.atelier-site>.atelier-header>nav>a::before{background:#dbe8ff16;box-shadow:inset 0 1px 1px #fff7,inset 0 -1px 1px #bfd4ef66,0 4px 10px #0005}}

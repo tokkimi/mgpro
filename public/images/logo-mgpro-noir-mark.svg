@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="220 15 560 560" fill="none">
+ <title>MG Pro — monogramme argenté cerclé</title>
+ <defs>
+  <linearGradient id="metal" x1="220" y1="80" x2="720" y2="650" gradientUnits="userSpaceOnUse"><stop stop-color="#626b75"/><stop offset=".15" stop-color="#f9fbff"/><stop offset=".3" stop-color="#afb8c4"/><stop offset=".43" stop-color="#ffffff"/><stop offset=".55" stop-color="#7d8794"/><stop offset=".7" stop-color="#f4f7fc"/><stop offset=".86" stop-color="#b9c2ce"/><stop offset="1" stop-color="#f6f8fc"/></linearGradient>
+  <linearGradient id="edge" x1="300" y1="60" x2="660" y2="540" gradientUnits="userSpaceOnUse"><stop stop-color="#fff"/><stop offset=".4" stop-color="#dbe1e9"/><stop offset=".65" stop-color="#636d7b"/><stop offset="1" stop-color="#f9fbff"/></linearGradient>
+  <linearGradient id="letter" x1="300" y1="260" x2="650" y2="430" gradientUnits="userSpaceOnUse"><stop stop-color="#fff"/><stop offset=".22" stop-color="#c1c9d4"/><stop offset=".45" stop-color="#f9fbff"/><stop offset=".58" stop-color="#909ba9"/><stop offset=".8" stop-color="#ecf1f8"/><stop offset="1" stop-color="#c6ced9"/></linearGradient>
+ </defs>
+ <circle cx="500" cy="295" r="240" stroke="#1b2028" stroke-width="13"/>
+ <circle cx="500" cy="295" r="239" stroke="url(#metal)" stroke-width="9"/>
+ <circle cx="500" cy="295" r="233" stroke="url(#edge)" stroke-width="1.5" opacity=".8"/>
+ <path d="M324 419V176L479 336 620 169C582 225 549 273 510 323L474 369 344 225V419Z" fill="url(#letter)" stroke="url(#edge)" stroke-width="1.5"/>
+ <path d="M324 180L344 226V419H324ZM351 227L479 359 490 344 479 336Z" fill="#eef3fb" opacity=".35"/>
+ <path d="M660 258C636 222 602 205 563 207 499 211 458 266 461 328 465 390 507 425 569 425 608 425 636 413 660 393V325H597V337H633V392C617 405 597 412 573 412 522 412 487 375 485 322 483 269 515 221 563 220 600 219 628 236 648 268Z" fill="url(#letter)" stroke="url(#edge)" stroke-width="1.5"/>
+ <path d="M345 248C397 302 448 366 509 408 548 435 598 441 633 423 588 432 548 416 517 394 454 349 401 290 345 235Z" fill="url(#metal)" stroke="url(#edge)" stroke-width="1"/>
+ 
+</svg>

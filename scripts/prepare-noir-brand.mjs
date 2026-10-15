@@ -1,0 +1,14 @@
+import sharp from 'sharp';
+import {readFile,writeFile} from 'node:fs/promises';
+const logo=await readFile('public/images/logo-mgpro-noir.svg','utf8');
+await sharp(Buffer.from(logo)).resize({width:2560}).png().toFile('public/images/logo-mgpro-noir-2560.png');
+const mark=logo.replace('viewBox="0 0 1000 780"','viewBox="220 15 560 560"').replace(/<text[\s\S]*?<\/text>/,'');
+await writeFile('public/images/logo-mgpro-noir-mark.svg',mark);
+for(const size of [32,180,192,512])await sharp(Buffer.from(mark)).resize(size,size).png().toFile(`public/app/brand-noir-${size}.png`);
+await sharp(Buffer.from(mark)).resize(380,380).extend({top:66,bottom:66,left:66,right:66,background:'#08090b'}).png().toFile('public/app/brand-noir-maskable-512.png');
+const png=await sharp(Buffer.from(mark)).resize(32,32).png().toBuffer();
+const header=Buffer.alloc(22);header.writeUInt16LE(1,2);header.writeUInt16LE(1,4);header[6]=32;header[7]=32;header.writeUInt16LE(1,10);header.writeUInt16LE(32,12);header.writeUInt32LE(png.length,14);header.writeUInt32LE(22,18);
+await writeFile('app/favicon.ico',Buffer.concat([header,png]));
+await sharp(Buffer.from(mark)).resize(180,180).png().toFile('app/apple-icon.png');
+await sharp(Buffer.from(logo)).resize(700).flatten({background:'#08090b'}).png().toFile('C:/Users/bello/AppData/Local/Temp/mgpro-noir-logo-preview.png');
+console.log('Vector logo, 2560px PNG and application icons prepared');
