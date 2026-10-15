@@ -87,3 +87,52 @@ body:has(.atelier-site) .cookie-actions button{background:#243044;color:#ecf4ff;
 .mg-intro-progress{background:#d0dff526}
 .mg-intro-progress span{background:linear-gradient(90deg,#7289a4,#dbe8fc 70%,#fff);box-shadow:0 0 7px #b5cff2,0 0 15px #d4e6ff70}
 @media(min-width:1201px){.atelier-site>.atelier-header>nav>a:is(:hover,:focus-visible){color:#fff}.atelier-site>.atelier-header>nav>a::before{background:#dbe8ff16;box-shadow:inset 0 1px 1px #fff7,inset 0 -1px 1px #bfd4ef66,0 4px 10px #0005}}
+
+/* Silver light on black: the original layout and all photographs stay intact. */
+.atelier-site main{background:radial-gradient(ellipse 75% 650px at 12% 24%,#cbd6e412,transparent 80%),radial-gradient(ellipse 65% 800px at 94% 63%,#e0e5ec14,transparent 80%),#08090b!important}
+.atelier-site main>section{background:transparent!important}
+.atelier-site .atelier-coverflow-section{background:radial-gradient(ellipse at 50% 48%,#dce3ec1c,transparent 70%)!important}
+.atelier-site .expertise-dock-section{background:radial-gradient(ellipse at 50% 45%,#d5dee51b,transparent 75%)!important}
+.atelier-site .atelier-finance{background:radial-gradient(ellipse at 80% 70%,#dce4ee1a,transparent 75%)!important}
+.atelier-site .plan-scroll-pin{background:transparent}
+.atelier-site .plan-scroll-fallback,.atelier-site .plan-scroll-canvas{filter:grayscale(1) invert(1) brightness(1.4)}
+.atelier-site .atelier-header{background:rgba(8,9,11,.27);box-shadow:0 1px 0 #ffffff16,0 8px 32px #0002}
+.atelier-site .glass-surface{background:radial-gradient(ellipse at var(--glass-x,18%) var(--glass-y,0%),#ffffff30,transparent 65%),linear-gradient(130deg,#ffffff21,#e4e9f20a 52%,#ffffff16);border-color:#e7edf266;box-shadow:0 14px 36px #0003,inset 0 1px 1px #ffffffa1,inset 1px 0 1px #ffffff30,inset 0 -1px 2px #b7c1cb55}
+.atelier-site :is(.glass-button,.atelier-text-link)::after,.atelier-site .mg-liquid-button::after{background:radial-gradient(ellipse at var(--glass-x,24%) var(--glass-y,0%),#ffffff50,transparent 70%),linear-gradient(120deg,#ffffff24,#ffffff0c 55%,#ffffff20);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.atelier-site :is(.glass-button,.atelier-text-link)::before,.atelier-site .mg-liquid-button::before{box-shadow:0 5px 20px #0004,inset 2px 2px 2px -1px #ffffffe0,inset -2px -2px 2px -1px #c9d0d47a,inset 0 0 10px 4px #ffffff17,inset 0 0 2px 1px #ffffff70}
+.atelier-site :is(.glass-button,.atelier-text-link):hover,.atelier-site .mg-liquid-button:hover{background-color:#ffffff14}
+.atelier-site .expertise-dock .glass-pictogram::before{box-shadow:0 8px 26px #0004,inset 2px 2px 2px -1px #ffffffe6,inset -2px -2px 2px -1px #c1c9d28c,inset 0 0 10px 5px #ffffff1a,inset 0 0 2px 1px #ffffff55}
+.atelier-site .expertise-dock .glass-pictogram::after{background:radial-gradient(ellipse at var(--glass-x,20%) var(--glass-y,8%),#ffffff4d,transparent 70%),linear-gradient(135deg,#ffffff26,#ffffff0c 60%,#ffffff1c);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.atelier-site .expertise-dock .glass-pictogram>svg{stroke:#eef2f6;filter:drop-shadow(0 1px 4px #ffffff26)}
+.atelier-site .expertise-dock .expertise-frame-label{color:#edf1f5}
+.atelier-site .expertise-dock .pictogram-reflection{animation:noir-icon-light 7s ease-in-out infinite;animation-play-state:var(--noir-motion,paused);background:linear-gradient(112deg,transparent 41%,#ffffff7a 48%,#ffffffb3 50%,transparent 57%)}
+.atelier-site .expertise-tile:nth-child(2n) .pictogram-reflection{animation-delay:-2s}
+.atelier-site .expertise-tile:nth-child(3n) .pictogram-reflection{animation-delay:-4s}
+.atelier-site .expertise-glass-gallery,.atelier-site .mg-coverflow-card,.atelier-site .finance-offer,.atelier-site .blog-card{background:radial-gradient(ellipse at var(--glass-x,8%) var(--glass-y,0%),#ffffff30,transparent 65%),linear-gradient(135deg,#373b4199,#171a1f99 52%,#30343b80);border-color:#e2e7ed70;box-shadow:0 18px 44px #0004,0 0 26px #dde7f208,inset 0 1px 1px #ffffffb3,inset 1px 0 1px #ffffff33,inset 0 -1px 1px #d6dce666}
+.atelier-site .home-expertise-track .home-expertise-card{position:relative}
+.atelier-site .expertise-glass-gallery,.atelier-site .finance-offer,.atelier-site .blog-card{overflow:hidden}
+.atelier-site :is(.expertise-glass-gallery,.mg-coverflow-card,.finance-offer,.blog-card)::after{content:'';position:absolute;inset:0;z-index:8;border-radius:inherit;pointer-events:none;background:linear-gradient(113deg,transparent 30%,#ffffff06 42%,#ffffff38 49%,#ffffff09 55%,transparent 65%);transform:translateX(-110%);opacity:0;animation:noir-glass-light 8s ease-in-out infinite;animation-play-state:var(--noir-motion,paused)}
+.atelier-site .expertise-glass-gallery:nth-child(2n)::after{animation-delay:-2.5s}
+.atelier-site .expertise-glass-gallery:nth-child(3n)::after{animation-delay:-5s}
+.atelier-site .finance-offer,.atelier-site .blog-card{position:relative}
+.atelier-site .mg-coverflow-card.is-center{border-color:#f4f7fbb3;box-shadow:0 24px 56px #0005,0 0 38px #e1e8f01a,inset 0 1px 2px #ffffffd9}
+.atelier-site .mg-coverflow-body{background:radial-gradient(ellipse at 0 0,#ffffff30,transparent 70%),linear-gradient(135deg,#16191c8c,#08090b6b);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid #ffffff4d}
+.atelier-site .mg-coverflow-body h3{text-shadow:0 2px 10px #0008}
+.atelier-site .expertise-glass-gallery .gallery-column-bottom button,.atelier-site .home-expertise-heading button,.atelier-site .mg-coverflow-controls>button,.atelier-site .mg-coverflow-photo-nav button{background:radial-gradient(ellipse at 25% 0,#ffffff3d,transparent 75%),linear-gradient(135deg,#ffffff1f,#ffffff0a);border-color:#edf2f66b;box-shadow:0 5px 15px #0003,inset 0 1px 1px #ffffff99}
+.atelier-site .mg-action-wheel{background:radial-gradient(ellipse at var(--glass-x,24%) var(--glass-y,10%),#ffffff40,transparent 65%),linear-gradient(140deg,#4b505b70,#0d0f13 55%,#3b414a80);box-shadow:16px 22px 48px #0005,0 0 60px #e1e8f015,inset 0 2px 2px #ffffffb3,inset 0 -1px 2px #d3dce08c;animation-play-state:var(--noir-motion,paused)}
+.atelier-site .mg-action-wheel::before{content:'';position:absolute;inset:0;border-radius:50%;pointer-events:none;background:conic-gradient(from 25deg,transparent 0 15%,#ffffff80 18%,transparent 24% 60%,#ffffff4d 65%,transparent 72%);mask:radial-gradient(transparent calc(70.71% - 5px),#000 calc(70.71% - 4px));animation:noir-rim-light 10s linear infinite;animation-play-state:var(--noir-motion,paused)}
+.atelier-site .mg-wheel-inset{border-color:#e0e9fa40;box-shadow:inset 5px 5px 15px #0005,inset -3px -3px 9px #ffffff1a}
+.atelier-site .mg-wheel-center{background:radial-gradient(ellipse at 20% 0,#ffffff24,transparent 70%),linear-gradient(145deg,#24282f9c,#0a0c10b3);box-shadow:0 0 0 1px #dde8f74d,inset 0 1px 3px #ffffff3d}
+.atelier-site .mg-wheel-ring{animation-play-state:var(--noir-motion,paused)}
+.atelier-site .mg-action-wheel:is(:hover,:focus-within) .mg-wheel-ring{animation-play-state:paused}
+.atelier-site .hero-finance{background:radial-gradient(ellipse at var(--glass-x,10%) var(--glass-y,0%),#ffffff38,transparent 75%),linear-gradient(135deg,#ffffff24,#0b0e1370);border-color:#ffffff70}
+.atelier-site .contact-glass-trigger,.atelier-site .contact-glass-panel{background:radial-gradient(ellipse at var(--glass-x,10%) var(--glass-y,0%),#ffffff2e,transparent 75%),linear-gradient(135deg,#343940d9,#101318d9);border-color:#e9f0f36b;box-shadow:0 8px 30px #0004,inset 0 1px 1px #ffffff8c}
+.atelier-site .site-mobile-menu-panel{background:radial-gradient(ellipse at 5% 0,#ffffff20,transparent 70%),linear-gradient(145deg,#252a32f0,#090c11f0);border-color:#dce4ed59}
+.atelier-site .location-list span,.atelier-site .service-location{background:linear-gradient(135deg,#ffffff1c,#ffffff08);border-color:#dce4ed47;color:#e0e7ef;box-shadow:inset 0 1px 0 #ffffff24}
+.atelier-site .finance-orb{opacity:.14}
+@keyframes noir-glass-light{0%,8%{transform:translateX(-110%);opacity:0}18%{opacity:.65}42%{transform:translateX(110%);opacity:0}100%{transform:translateX(110%);opacity:0}}
+@keyframes noir-icon-light{0%,8%{transform:translateX(-60%);opacity:0}18%{opacity:.75}42%,100%{transform:translateX(60%);opacity:0}}
+@keyframes noir-rim-light{to{transform:rotate(360deg)}}
+@media(hover:hover){.atelier-site .expertise-dock .expertise-tile:hover .glass-pictogram>svg{stroke:#fff}.atelier-site .mg-coverflow-arrow:hover,.atelier-site .mg-coverflow-photo-nav button:not(:disabled):hover{background:#ffffff26}}
+@media(max-width:850px){.atelier-site .expertise-glass-gallery{position:relative}}
+@media(prefers-reduced-motion:reduce){.atelier-site :is(.expertise-glass-gallery,.mg-coverflow-card,.finance-offer,.blog-card)::after,.atelier-site .mg-action-wheel::before,.atelier-site .expertise-dock .pictogram-reflection{animation:none;opacity:0}.atelier-site .mg-action-wheel,.atelier-site .mg-wheel-ring{animation:none}}
