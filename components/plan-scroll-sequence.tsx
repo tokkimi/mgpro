@@ -16,7 +16,7 @@ export default function PlanScrollSequence({locale='fr'}:{locale?:'fr'|'en'}){
   if(!context||media.matches){setStaticMode(true);return}
   const variant=window.matchMedia('(max-width:800px)').matches?'mobile':'desktop';
   const images=new Map<number,HTMLImageElement>(),pending=new Map<number,Promise<void>>();
-  let cancelled=false,started=false,raf=0,frame=0,start=0,distance=1,painted=-1,writing=0;
+  let cancelled=false,started=false,raf=0,frame=0,start=0,entry=0,distance=1,painted=-1,writing=0;
   const strokes=Array.from(root.querySelectorAll<SVGPathElement>('[data-writing] path')).map(path=>({path,length:path.getTotalLength(),offset:1}));
   const totalInk=strokes.reduce((sum,stroke)=>sum+stroke.length,0);
   const write=()=>{
@@ -56,12 +56,17 @@ export default function PlanScrollSequence({locale='fr'}:{locale?:'fr'|'en'}){
   };
   const update=()=>{
    raf=0;const progress=Math.max(0,Math.min(1,(window.scrollY-start)/distance));
-   frame=Math.round(Math.min(1,progress/.7)*(sequence.frames.length-1));writing=Math.max(0,(progress-.7)/.3);root.dataset.frame=String(frame+1);root.dataset.progress=progress.toFixed(4);
+   // Draw as soon as the plan enters the screen, before it reaches its sticky position.
+   // Keep the existing end of the drawing and the separate handwriting phase.
+   const drawing=Math.max(0,Math.min(1,(window.scrollY-entry)/Math.max(1,start+distance*.7-entry)));
+   frame=Math.round(drawing*(sequence.frames.length-1));writing=Math.max(0,(progress-.7)/.3);root.dataset.frame=String(frame+1);root.dataset.progress=progress.toFixed(4);root.dataset.drawingProgress=drawing.toFixed(4);
    if(started){if(images.has(frame))draw();else void load(frame)}
   };
   const measure=()=>{
    const top=parseFloat(getComputedStyle(viewport).top)||0;
-   start=root.getBoundingClientRect().top+window.scrollY-top;
+   const documentTop=root.getBoundingClientRect().top+window.scrollY;
+   start=documentTop-top;
+   entry=documentTop-window.innerHeight;
    distance=Math.max(1,root.offsetHeight-viewport.offsetHeight);
    const density=Math.min(window.devicePixelRatio||1,1.5);
    surface.width=Math.round(surface.clientWidth*density);surface.height=Math.round(surface.clientHeight*density);
@@ -80,7 +85,7 @@ export default function PlanScrollSequence({locale='fr'}:{locale?:'fr'|'en'}){
    void load(0);void load(frame);void load(sequence.frames.length-1);
    let next=0;const preload=async()=>{while(!cancelled&&next<sequence.frames.length)await load(next++)};
    void preload();void preload();
-  },{rootMargin:'700px 0px'});
+  },{rootMargin:`${Math.max(window.innerHeight,1000)}px 0px`});
   observer.observe(root);
   const resize=new ResizeObserver(measure);resize.observe(viewport);
   const onMotion=()=>{if(media.matches)setStaticMode(true)};
