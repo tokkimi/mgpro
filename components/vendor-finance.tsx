@@ -135,10 +135,10 @@ function Credits({operations,commit,suppliers,initialOpen=false}:Shared&{initial
  </div>;
 }
 
-function Payments({operations,commit}:Shared){
- const [draft,setDraft]=useState<VendorPayment|null>(null),[errors,setErrors]=useState<string[]>([]);
+function Payments({operations,commit,initialOpen=false}:Shared&{initialOpen?:boolean}){
+ const [draft,setDraft]=useState<VendorPayment|null>(()=>initialOpen?{id:uid(),reference:'',supplier:'',billId:'',paidOn:today(),method:'Virement',amount:0,status:'Émis',reconciled:false,reconciledOn:'',notes:''}:null),[errors,setErrors]=useState<string[]>([]),[saving,setSaving]=useState(false);
  const bills=operations.vendorBills.filter(x=>!['Brouillon','Annulée'].includes(x.status));
- function save(){if(!draft)return;const problems=validatePayment(operations,draft);setErrors(problems);if(problems.length)return;void commit(refreshBillStatuses({...operations,vendorPayments:[draft,...operations.vendorPayments.filter(x=>x.id!==draft.id)]}));setDraft(null)}
+ async function save(){if(!draft||saving)return;const problems=validatePayment(operations,draft);setErrors(problems);if(problems.length)return;setSaving(true);try{await commit(refreshBillStatuses({...operations,vendorPayments:[draft,...operations.vendorPayments.filter(x=>x.id!==draft.id)]}));setDraft(null)}catch(error){setErrors([(error as Error).message])}finally{setSaving(false)}}
  return <div className="vendor-stack">
   {draft?<form className="vendor-form" onSubmit={e=>{e.preventDefault();save()}} aria-label="Paiement fournisseur">
    <label>Facture payée<select required value={draft.billId} onChange={e=>{const bill=bills.find(x=>x.id===e.target.value);setDraft({...draft,billId:e.target.value,supplier:bill?.supplier||'',amount:bill?billBalance(operations,bill.id,{paymentId:draft.id}):draft.amount})}}><option value="">Choisir…</option>{bills.map(x=><option key={x.id} value={x.id}>{x.reference} · {x.supplier} · solde {money(billBalance(operations,x.id,{paymentId:draft.id}))}</option>)}</select></label>
@@ -147,9 +147,9 @@ function Payments({operations,commit}:Shared){
    <label>Montant ($)<input required type="number" min="0.01" step="0.01" value={draft.amount||''} onChange={e=>setDraft({...draft,amount:Number(e.target.value)})}/></label>
    <label>Référence (n° chèque, virement)<input value={draft.reference} onChange={e=>setDraft({...draft,reference:e.target.value})}/></label>
    <label>Statut<select value={draft.status} onChange={e=>setDraft({...draft,status:e.target.value as VendorPayment['status']})}><option>Émis</option><option>Annulé</option></select></label>
-   <p className="wide muted">Paiement consigné manuellement : aucun virement ni paiement réel n’est déclenché par MG Pro.</p>
+   <label className="wide">Note<textarea value={draft.notes} onChange={e=>setDraft({...draft,notes:e.target.value})}/></label><p className="wide muted">Paiement consigné manuellement : aucun virement ni paiement réel n’est déclenché par MG Pro.</p>
    <Errors errors={errors}/>
-   <div className="module-actions wide"><button className="btn primary"><Check size={16}/>Enregistrer</button><button type="button" className="btn ghost" onClick={()=>{setDraft(null);setErrors([])}}>Annuler</button></div>
+   <div className="module-actions wide"><button className="btn primary" disabled={saving}><Check size={16}/>Enregistrer</button><button type="button" className="btn ghost" disabled={saving} onClick={()=>{setDraft(null);setErrors([])}}>Annuler</button></div>
   </form>:<button className="btn primary" disabled={!bills.length} onClick={()=>{setDraft({id:uid(),reference:'',supplier:'',billId:'',paidOn:today(),method:'Virement',amount:0,status:'Émis',reconciled:false,reconciledOn:'',notes:''});setErrors([])}}><Plus size={16}/>Consigner un paiement</button>}
   {!bills.length&&<p className="muted">Enregistrez d’abord une facture fournisseur reconnue.</p>}
   <Table head={['Payé le','Fournisseur','Facture','Méthode','Référence','Montant','Statut','Rapproché','']} rows={operations.vendorPayments.map(payment=>[payment.paidOn,payment.supplier,operations.vendorBills.find(x=>x.id===payment.billId)?.reference||'—',payment.method,payment.reference||'—',money(payment.amount),payment.status,payment.reconciled?`Oui · ${payment.reconciledOn}`:'Non',<button key="e" className="btn ghost" onClick={()=>{setDraft(structuredClone(payment));setErrors([])}}>Modifier</button>])} empty="Aucun paiement fournisseur."/>
@@ -183,6 +183,6 @@ export function VendorBudgetTable({operations}:{operations:ProjectOperations}){
 }
 
 /** Reuses the same validated supplier forms from the project purchase workflow. */
-export function VendorDocumentEntry(props:Shared&{family:'Facture fournisseur'|'Crédit fournisseur'}){
- return props.family==='Facture fournisseur'?<Bills {...props} initialOpen/>:<Credits {...props} initialOpen/>;
+export function VendorDocumentEntry(props:Shared&{family:'Facture fournisseur'|'Crédit fournisseur'|'Paiement fournisseur'}){
+ return props.family==='Facture fournisseur'?<Bills {...props} initialOpen/>:props.family==='Paiement fournisseur'?<Payments {...props} initialOpen/>:<Credits {...props} initialOpen/>;
 }
