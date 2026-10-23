@@ -85,10 +85,10 @@ function Orders({operations,commit,phases}:Shared){
 }
 
 const emptyBill=():VendorBill=>({id:uid(),reference:'',supplier:'',orderId:'',costCode:'',phaseId:'',issuedOn:today(),dueOn:'',subtotal:0,tax:0,status:'À payer',attachment:'',notes:''});
-function Bills({operations,commit,phases,suppliers}:Shared){
- const [draft,setDraft]=useState<VendorBill|null>(null),[errors,setErrors]=useState<string[]>([]);
+function Bills({operations,commit,phases,suppliers,initialOpen=false}:Shared&{initialOpen?:boolean}){
+ const [draft,setDraft]=useState<VendorBill|null>(()=>initialOpen?{...emptyBill(),status:'Brouillon'}:null),[errors,setErrors]=useState<string[]>([]),[saving,setSaving]=useState(false);
  const orders=operations.purchaseOrders.filter(x=>['Envoyé','Partiellement reçu','Reçu'].includes(x.status));
- function save(){if(!draft)return;const bill={...draft,reference:draft.reference.trim(),supplier:draft.supplier.trim()};const problems=validateBill(operations,bill);setErrors(problems);if(problems.length)return;void commit(refreshBillStatuses({...operations,vendorBills:[bill,...operations.vendorBills.filter(x=>x.id!==bill.id)]}));setDraft(null)}
+ async function save(){if(!draft||saving)return;const bill={...draft,reference:draft.reference.trim(),supplier:draft.supplier.trim()};const problems=validateBill(operations,bill);setErrors(problems);if(problems.length)return;setSaving(true);try{await commit(refreshBillStatuses({...operations,vendorBills:[bill,...operations.vendorBills.filter(x=>x.id!==bill.id)]}));setDraft(null)}catch(error){setErrors([(error as Error).message])}finally{setSaving(false)}}
  return <div className="vendor-stack">
   {draft?<form className="vendor-form" onSubmit={e=>{e.preventDefault();save()}} aria-label="Facture fournisseur">
    <label>Bon de commande lié<select value={draft.orderId} onChange={e=>{const order=orders.find(x=>x.id===e.target.value);setDraft({...draft,orderId:e.target.value,...(order?{supplier:order.supplier,costCode:order.costCode||'',phaseId:order.phaseId||''}:{})})}}><option value="">Aucun (facture directe)</option>{orders.map(x=><option key={x.id} value={x.id}>{x.title} · {x.supplier}</option>)}</select></label>
@@ -105,17 +105,17 @@ function Bills({operations,commit,phases,suppliers}:Shared){
    <label className="wide">Notes internes<textarea value={draft.notes} onChange={e=>setDraft({...draft,notes:e.target.value})}/></label>
    <p className="wide">Total : <b>{money(billTotal(draft))}</b></p>
    <Errors errors={errors}/>
-   <div className="module-actions wide"><button className="btn primary"><Check size={16}/>Enregistrer</button><button type="button" className="btn ghost" onClick={()=>{setDraft(null);setErrors([])}}>Annuler</button></div>
+   <div className="module-actions wide"><button className="btn primary" disabled={saving}><Check size={16}/>Enregistrer</button><button type="button" className="btn ghost" disabled={saving} onClick={()=>{setDraft(null);setErrors([])}}>Annuler</button></div>
   </form>:<button className="btn primary" onClick={()=>{setDraft(emptyBill());setErrors([])}}><Plus size={16}/>Ajouter une facture fournisseur</button>}
   <datalist id="vendor-suppliers">{suppliers.map((x,i)=><option key={i} value={x.name}>{x.email}</option>)}</datalist>
   <Table head={['N°','Fournisseur','Bon','Code','Émise','Échéance','Avant taxes','Taxes','Total','Solde','Statut','']} rows={operations.vendorBills.map(bill=>[bill.reference,bill.supplier,operations.purchaseOrders.find(x=>x.id===bill.orderId)?.title||'—',bill.costCode||UNCATEGORISED,bill.issuedOn,bill.dueOn||'—',money(bill.subtotal),money(bill.tax),money(billTotal(bill)),money(['Brouillon','Annulée'].includes(bill.status)?0:billBalance(operations,bill.id)),bill.status,<button key="e" className="btn ghost" onClick={()=>{setDraft(structuredClone(bill));setErrors([])}}>Modifier</button>])} empty="Aucune facture fournisseur."/>
  </div>;
 }
 
-function Credits({operations,commit,suppliers}:Shared){
- const [draft,setDraft]=useState<VendorCredit|null>(null),[errors,setErrors]=useState<string[]>([]);
+function Credits({operations,commit,suppliers,initialOpen=false}:Shared&{initialOpen?:boolean}){
+ const [draft,setDraft]=useState<VendorCredit|null>(()=>initialOpen?{id:uid(),reference:'',supplier:'',billId:'',costCode:'',issuedOn:today(),subtotal:0,tax:0,status:'Brouillon',notes:''}:null),[errors,setErrors]=useState<string[]>([]),[saving,setSaving]=useState(false);
  const bills=operations.vendorBills.filter(x=>!['Brouillon','Annulée'].includes(x.status));
- function save(){if(!draft)return;const credit={...draft,reference:draft.reference.trim(),supplier:draft.supplier.trim()};const problems=validateCredit(operations,credit);setErrors(problems);if(problems.length)return;void commit(refreshBillStatuses({...operations,vendorCredits:[credit,...operations.vendorCredits.filter(x=>x.id!==credit.id)]}));setDraft(null)}
+ async function save(){if(!draft||saving)return;const credit={...draft,reference:draft.reference.trim(),supplier:draft.supplier.trim()};const problems=validateCredit(operations,credit);setErrors(problems);if(problems.length)return;setSaving(true);try{await commit(refreshBillStatuses({...operations,vendorCredits:[credit,...operations.vendorCredits.filter(x=>x.id!==credit.id)]}));setDraft(null)}catch(error){setErrors([(error as Error).message])}finally{setSaving(false)}}
  return <div className="vendor-stack">
   {draft?<form className="vendor-form" onSubmit={e=>{e.preventDefault();save()}} aria-label="Crédit fournisseur">
    <label>Facture liée<select value={draft.billId} onChange={e=>{const bill=bills.find(x=>x.id===e.target.value);setDraft({...draft,billId:e.target.value,...(bill?{supplier:bill.supplier,costCode:bill.costCode}:{})})}}><option value="">Aucune (crédit en attente)</option>{bills.map(x=><option key={x.id} value={x.id}>{x.reference} · {x.supplier} · solde {money(billBalance(operations,x.id,{creditId:draft.id}))}</option>)}</select></label>
@@ -128,7 +128,7 @@ function Credits({operations,commit,suppliers}:Shared){
    <CostCodeSelect operations={operations} value={draft.costCode} onChange={costCode=>setDraft({...draft,costCode})}/>
    <label className="wide">Motif<textarea value={draft.notes} onChange={e=>setDraft({...draft,notes:e.target.value})}/></label>
    <Errors errors={errors}/>
-   <div className="module-actions wide"><button className="btn primary"><Check size={16}/>Enregistrer</button><button type="button" className="btn ghost" onClick={()=>{setDraft(null);setErrors([])}}>Annuler</button></div>
+   <div className="module-actions wide"><button className="btn primary" disabled={saving}><Check size={16}/>Enregistrer</button><button type="button" className="btn ghost" disabled={saving} onClick={()=>{setDraft(null);setErrors([])}}>Annuler</button></div>
   </form>:<button className="btn primary" onClick={()=>{setDraft({id:uid(),reference:'',supplier:'',billId:'',costCode:'',issuedOn:today(),subtotal:0,tax:0,status:'Brouillon',notes:''});setErrors([])}}><Plus size={16}/>Ajouter un crédit fournisseur</button>}
   <datalist id="vendor-suppliers">{suppliers.map((x,i)=><option key={i} value={x.name}>{x.email}</option>)}</datalist>
   <Table head={['N°','Fournisseur','Facture liée','Code','Émis','Avant taxes','Total','Statut','']} rows={operations.vendorCredits.map(credit=>[credit.reference,credit.supplier,operations.vendorBills.find(x=>x.id===credit.billId)?.reference||'—',credit.costCode||UNCATEGORISED,credit.issuedOn,money(credit.subtotal),money(billTotal(credit)),credit.status,<button key="e" className="btn ghost" onClick={()=>{setDraft(structuredClone(credit));setErrors([])}}>Modifier</button>])} empty="Aucun crédit fournisseur."/>
@@ -180,4 +180,9 @@ export function VendorBudgetTable({operations}:{operations:ProjectOperations}){
  return <section className="vendor-budget"><div className="operations-heading"><div><h3>Budget par code de coût</h3><p>Montants avant taxes. Un bon brouillon n’est pas engagé ; une facture remplace la part engagée de son bon ; un paiement ne crée pas de coût.</p></div><button className="btn secondary" onClick={exportCsv}><Download size={16}/>Exporter</button></div>
   {rows.length?<div className="vendor-table" role="region" aria-label="Budget par code de coût" tabIndex={0}><table><thead><tr><th>Code de coût</th>{columns.map(([k,label])=><th key={k}>{label}</th>)}</tr></thead><tbody>{rows.map(r=><tr key={r.key}><th scope="row">{r.label}</th>{columns.map(([k])=><td key={k} className={k==='remaining'&&r.remaining<0?'negative':''}>{money(r[k] as number)}</td>)}</tr>)}</tbody><tfoot><tr><th scope="row">Total</th>{columns.map(([k])=><td key={k} className={k==='remaining'&&total.remaining<0?'negative':''}>{money(total[k] as number)}</td>)}</tr></tfoot></table></div>:<p className="muted">Ajoutez des codes de coût avec leur budget, ou des postes budgétaires, pour suivre l’original, le révisé et le réalisé.</p>}
  </section>;
+}
+
+/** Reuses the same validated supplier forms from the project purchase workflow. */
+export function VendorDocumentEntry(props:Shared&{family:'Facture fournisseur'|'Crédit fournisseur'}){
+ return props.family==='Facture fournisseur'?<Bills {...props} initialOpen/>:<Credits {...props} initialOpen/>;
 }

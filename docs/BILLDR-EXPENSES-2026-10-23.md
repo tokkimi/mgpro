@@ -59,3 +59,14 @@ Ajouts :
 À terminer : fidélité visuelle exacte, iRef/référence distinctes, taxes séparées dans tous les formulaires fournisseur, ventilation multicode, compte de paiement, intégration fiscale QuickBooks réelle, transfert email/OCR, remboursement fournisseur distinct d’un crédit appliqué, prévisualisation justificatif dans la fiche, menus et transitions exhaustifs, tests multirôles et recette navigateur du nouveau code.
 
 88 tests, TypeScript et build de production réussis. Aucun déploiement ni migration ; la recette visuelle de ce nouveau lot n’a pas été effectuée. La fiche de consultation ajoutée ne remplace pas l’éditeur Billdr à l’identique.
+
+## Lot de production de la barre supérieure
+
+- Menu Nouveau : Dépense ouvre l’éditeur existant ; Facture fournisseur et Crédit fournisseur proposent le projet puis réutilisent directement les formulaires validés du circuit achats, sans quitter la liste. Les nouveaux formulaires fournisseur commencent en brouillon.
+- Périodes de date : toutes dates, 7 jours, 4 semaines, 3/12 mois, mois/trimestre/année à ce jour, dates personnalisées. Calcul sur date civile Montréal, borne de mois corrigée.
+- Plus de filtres : fenêtre native, saisie provisoire, confirmation/annulation et réinitialisation ; type, projet, fournisseur, coût et justificatif. Les outils MG Pro et familles paiements/bons restent accessibles.
+- Échec de sauvegarde facture/crédit : le formulaire reste ouvert ; attente de persistance et bouton désactivé pendant la requête.
+- Bouton transfert email : fenêtre indiquant honnêtement que la réception n’est pas connectée ; aucune adresse fictive ou adresse Billdr réutilisée. Ce bouton ne constitue pas une intégration de réception livrée.
+- 89 tests, TypeScript et build production réussis. Recette interactive et visuelle du nouveau lot non effectuée ; pas de déploiement.
+
+Le module et l’ensemble de la parité ne peuvent pas encore être annoncés intégralement prêts : réception des pièces par courriel, écarts de formulaires mentionnés ci-dessus et recette complète restent ouverts.
