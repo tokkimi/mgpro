@@ -1,0 +1,11 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {filterHistory,groupHistory,historyDay,type HistoryEvent} from '../lib/notification-history';
+import type {RecordItem} from '../lib/model';
+const record=(id:string,kind:RecordItem['kind'],project_id:string|null,data:Record<string,unknown>={}):RecordItem=>({id,kind,project_id,client_id:null,data,version:1,created_at:'',updated_at:''});
+const records=[record('p','project',null,{title:'Cuisine',number:'P-123'}),record('q','quote','p'),record('other','project',null,{title:'Garage'})];
+const filters={unread:false,query:'',kind:'',action:'',project:'',from:'',to:''};
+const rows:HistoryEvent[]=[{id:'1',recordId:'q',kind:'quote',title:'Soumission',label:'Document consulté',action:'view',date:'2026-10-23T01:30:00Z',read:false},{id:'2',recordId:'other',kind:'project',title:'Garage',action:'save',date:'2026-10-23T14:00:00Z',read:true}];
+test('notification dates respect Montreal midnight and both DST offsets',()=>{assert.equal(historyDay(rows[0].date),'2026-10-22');assert.equal(historyDay('2026-01-05T04:30:00Z'),'2026-01-04');assert.equal(historyDay('invalid'),'')});
+test('notification filters combine project ancestry, local date, action and unread state',()=>{assert.deepEqual(filterHistory(rows,records,{...filters,project:'p',action:'view',unread:true,from:'2026-10-22',to:'2026-10-22'}).map(r=>r.id),['1']);assert.equal(filterHistory(rows,records,{...filters,project:'p',from:'2026-10-23'}).length,0);assert.equal(filterHistory(rows,records,{...filters,project:'p',action:'save'}).length,0)});
+test('search finds project references without matching unrelated records; grouping follows sorted days',()=>{assert.deepEqual(filterHistory(rows,records,{...filters,query:'p-123'}).map(r=>r.id),['1']);const sorted=filterHistory(rows,records,filters);assert.deepEqual(groupHistory(sorted).map(g=>g.day),['2026-10-23','2026-10-22']);assert.equal(rows[0].id,'1')});
