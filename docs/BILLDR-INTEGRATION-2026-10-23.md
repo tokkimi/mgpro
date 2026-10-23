@@ -65,3 +65,13 @@ Pour chaque prochaine livraison, vérifier séparément observation Billdr, réa
 ## Déploiement
 
 Le SHA, les URLs et les résultats de vérification en ligne sont consignés dans le compte rendu de publication. Ce document décrit le périmètre testé ; il ne certifie pas la parité exhaustive.
+
+
+## Lot de présentation — navigation et Gabarits & coûts
+
+- Vue d’ensemble en tête de navigation ; Paramètres dans le pied fixe du menu. Les outils MG Pro supplémentaires restent accessibles dans Tous les outils. Le bloc de contacts n’encombre plus la barre latérale.
+- Dix onglets horizontaux de bibliothèque, cartes compactes à vignette, tableaux distincts pour tâches, catégories, codes de coût, produits et sélections. Les gabarits MG Pro conservent leurs données ; aucune donnée Billdr importée.
+- Édition des tâches simples dans le tableau avec sauvegarde explicite, conservation du brouillon en cas d’erreur. Les tâches à plusieurs prestations gardent l’éditeur détaillé existant et leurs calculs. Sélection, colonnes produits, filtres, pagination, duplication et export conservés.
+- Styles limités à l’espace de travail blanc ; site public noir inchangé. Bob laissé de côté à la demande de l’utilisateur.
+- Vérifications : 106 tests, TypeScript et build de production réussis ; navigation de 16 modules, dix sous-onglets du catalogue, position des menus, recherche/filtres, création de dossier en démonstration et affichages ordinateur/mobile contrôlés dans le navigateur sans erreur JavaScript.
+- Ce lot n’affirme pas la parité complète de chaque outil Billdr. Les contrôles de persistance et droits avec de vrais comptes et la migration des données restent distincts.

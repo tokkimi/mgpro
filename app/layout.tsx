@@ -16,3 +16,4 @@ import './workspace-glass.css';
 import './theme-silver.css';
 
 import './theme-noir.css';
+import './workspace-billdr.css';
