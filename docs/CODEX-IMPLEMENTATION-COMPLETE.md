@@ -675,3 +675,10 @@ Création : choisir projet et soumission, puis sélectionner catégories/tâches
 Les dates réelles d’envoi/ouverture, l’envoi serveur au fournisseur, les retours fournisseur par portail et les catégories hiérarchiques ne sont pas livrés par ce lot. Le lien mailto existant prépare un message et ne prouve pas un envoi. La référence existante n’est pas un identifiant Billdr iRef. La création reste un éditeur MG Pro, pas une reproduction complète du parcours Billdr.
 
 93 tests existants réussis, TypeScript et build production réussis. Pas de recette interactive/visuelle du nouveau tableau, pas de déploiement ni migration. L’ensemble ne doit pas être annoncé intégralement prêt à déployer.
+
+
+---
+
+# Contacts — dossier complémentaire
+
+Voir `docs/CODEX-CONTACTS-DETAIL.md` : relevé des quatre listes et formulaires, contrat de données, imports/exports, documents, droits et recette. Le complément est la référence détaillée pour ce module ; il distingue les observations des fonctions à construire.
