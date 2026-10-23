@@ -59,3 +59,42 @@
 .workspace .btn.danger,.workspace .btn.danger-outline{background:#f7f7f7!important;color:#943e32!important;border:1px solid #c8c8c8!important;box-shadow:none}
 @media(max-width:600px){.workspace .plan-viewport svg text{font-size:26px}.workspace .plan-viewport svg g>text:nth-of-type(2){transform:translateY(14px)}.workspace .project-plan-panel>.detail-body{padding:12px}.workspace .plan-editor{padding:12px}}
 @media print{.workspace .plan-viewport{background:#fff;box-shadow:none}.workspace .plan-editor{box-shadow:none}}
+
+/* Navigation de passation : accès directs Billdr, outils MG Pro conservés. */
+.workspace .sidebar nav{overflow-y:auto;min-height:0;flex:1;scrollbar-width:thin}
+.workspace .sidebar nav>button{flex-shrink:0;min-height:36px;padding:8px 12px;border-radius:8px}
+.workspace .sidebar-contacts{display:none}
+.notification-filters{align-items:end;margin:20px 0;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+
+.workspace [hidden]{display:none!important}
+
+/* Purchase register follows the familiar supplier workspace hierarchy. */
+.purchase-register{display:flex;flex-direction:column;gap:20px}
+.purchase-register>.module-section-heading{order:0}
+.purchase-register>.module-filters{order:1}
+.purchase-register>.portal-kpis{order:2;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.purchase-register>.vendor-tabs{order:3;border-bottom:1px solid var(--border,#e5e7eb);padding-bottom:0}
+.purchase-register>.vendor-tabs button{border-radius:0;padding:14px 18px;background:transparent}
+.purchase-register>.vendor-tabs button.active{border-bottom:3px solid var(--primary,#205540)}
+.purchase-register>.vendor-table,.purchase-register>.portal-empty{order:4}
+.purchase-register>.projects-pagination{order:5}
+.purchase-register>p.muted{order:6}
+.purchase-register>.portal-kpis>div{background:var(--card,#fff);border:1px solid var(--border,#e5e7eb);border-radius:12px;padding:20px}
+@media(max-width:760px){.purchase-register>.portal-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.purchase-register>.vendor-tabs{overflow-x:auto;flex-wrap:nowrap}.purchase-register>.vendor-tabs button{white-space:nowrap}}
+
+.purchase-register>.vendor-tabs{align-self:flex-start;background:#e5e7eb;border:0;border-radius:12px;padding:5px;gap:3px}
+.purchase-register>.vendor-tabs button{border:0;border-radius:9px;color:inherit;padding:12px 16px}
+.purchase-register>.vendor-tabs button.active{background:#fff;border:0;box-shadow:0 1px 5px #18202e20;font-weight:650}
+.purchase-register>.portal-kpis>div{border-left:5px solid #252a36}
+.purchase-register>.portal-kpis>div:nth-child(2){border-left-color:var(--primary,#205540)}
+.purchase-register>.portal-kpis>div:nth-child(3){border-left-color:#589b82}
+.purchase-register>.portal-kpis>div:nth-child(4){border-left-color:#b77c39}
+.purchase-register>.purchase-selection{order:4;display:flex;align-items:center;justify-content:space-between;color:#647080}
+
+.purchase-register>.purchase-toolbar{order:4;display:flex;gap:20px;align-items:end;justify-content:space-between}
+.purchase-register>.purchase-toolbar>label{min-width:260px;display:grid;gap:8px}
+.purchase-register>.purchase-toolbar select{padding:12px;border:1px solid #dfe4e9;border-radius:10px;background:#fff}
+
+.ledger-sort{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0;text-align:left;white-space:nowrap}
+.ledger-sort:focus-visible{outline:2px solid #205540;outline-offset:4px}
+.purchase-register tfoot td{font-weight:700;border-top:1px solid #dfe4e9;padding:22px 16px;background:#fafbfc}
