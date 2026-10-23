@@ -7,7 +7,7 @@ import {purchaseOrderStatuses,type BidResponse,type ProjectOperations,type Purch
 import {awardResponse,billBalance,billTotal,compareResponses,orderBilling,receiveOrder,reconciliation,refreshBillStatuses,validateBill,validateCredit,validatePayment,vendorBudget,UNCATEGORISED} from '@/lib/vendor-finance';
 
 type Commit=(next:ProjectOperations)=>Promise<void>|void;
-type Shared={operations:ProjectOperations;commit:Commit;phases:{id:string;title:string}[];suppliers:{name:string;email?:string}[]};
+type Shared={projectId?:string;operations:ProjectOperations;commit:Commit;phases:{id:string;title:string}[];suppliers:{name:string;email?:string}[]};
 const uid=()=>crypto.randomUUID();
 const today=()=>new Date().toISOString().slice(0,10);
 const views=['Réponses','Bons de commande','Factures fournisseur','Crédits','Paiements','Rapprochement'] as const;
@@ -25,10 +25,11 @@ function Errors({errors}:{errors:string[]}){return errors.length?<ul className="
 
 /** Supplier side of a project: answers, orders, reception, invoices, credits, payments and reconciliation. */
 export default function VendorFinance(props:Shared){
- const [view,setView]=useState<View>('Réponses');
+ const [view,setView]=useState<View>(()=>{try{const saved=props.projectId?sessionStorage.getItem('mgpro-vendor-tab-'+props.projectId):null;return views.includes(saved as View)?saved as View:'Réponses'}catch{return 'Réponses'}});
+ const changeView=(name:View)=>{setView(name);if(props.projectId)try{sessionStorage.setItem('mgpro-vendor-tab-'+props.projectId,name)}catch{}};
  const counts:Record<View,number>={'Réponses':props.operations.priceRequests.length,'Bons de commande':props.operations.purchaseOrders.length,'Factures fournisseur':props.operations.vendorBills.length,'Crédits':props.operations.vendorCredits.length,'Paiements':props.operations.vendorPayments.length,'Rapprochement':reconciliation(props.operations).unreconciledCount};
  return <section className="vendor-finance" aria-label="Chaîne fournisseur">
-  <div className="vendor-tabs" role="tablist" aria-label="Étapes fournisseur">{views.map(name=><button key={name} role="tab" aria-selected={view===name} className={view===name?'active':''} onClick={()=>setView(name)}>{name}<span>{counts[name]}</span></button>)}</div>
+  <div className="vendor-tabs" role="tablist" aria-label="Étapes fournisseur">{views.map(name=><button key={name} role="tab" aria-selected={view===name} className={view===name?'active':''} onClick={()=>changeView(name)}>{name}<span>{counts[name]}</span></button>)}</div>
   <div role="tabpanel" aria-label={view}>
    {view==='Réponses'&&<Responses {...props}/>}
    {view==='Bons de commande'&&<Orders {...props}/>}
