@@ -33,3 +33,9 @@ export function filterCatalogue(entries:CatalogueEntry[],tab:CatalogueTab,filter
  return entries.filter(x=>x.tab===tab&&(!q||[x.name,x.description,x.category,x.code,x.sku,x.brand,x.supplier].join(' ').toLocaleLowerCase('fr').includes(q))&&(!filters.category||x.category===filters.category)&&(!filters.brand||x.brand===filters.brand)&&(!filters.supplier||x.supplier===filters.supplier)&&(filters.min==null||catalogueUnitCost(x)>=filters.min)&&(filters.max==null||catalogueUnitCost(x)<=filters.max));
 }
 export function catalogueUnitCost(entry:CatalogueEntry){return entry.material+entry.labour||entry.price}
+export function catalogueCategoryNames(entry:CatalogueEntry,includeRounding=false):string[]{
+ const original=Array.isArray(entry.source?.categories)?entry.source.categories.map((category:{name?:unknown})=>String(category?.name||'')).filter(Boolean):[];
+ const current=entry.lines.filter(line=>includeRounding||!line.billdr_rounding).map(line=>String(line.category||'Sans catégorie'));
+ return [...new Set([...original,...current])];
+}
+export function catalogueTaskCount(entry:CatalogueEntry){return entry.lines.filter(line=>!line.billdr_category_fee&&!line.billdr_rounding).length}
