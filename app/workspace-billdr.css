@@ -62,5 +62,16 @@ html:has(.workspace),body:has(.workspace){overflow-x:hidden}
 .workspace .catalogue-register small{display:block;color:#777;margin-top:5px}
 .workspace .register-name{border:0;background:none;padding:0;text-align:left;font:inherit;font-weight:600;color:#222;cursor:pointer}
 .workspace .catalogue-register .btn{margin-bottom:8px}
+/* Content panels need their own inset; table panels retain edge-to-edge rows. */
+.workspace .team-centre>section.panel:not(.team-table-scroll),.workspace .directory-centre{padding:24px}
+.workspace .team-centre>section.panel>h2{margin:0 0 12px;line-height:1.4;font-size:21px;overflow-wrap:anywhere}
+.workspace .team-centre>section.panel>p{line-height:1.6;white-space:normal;overflow-wrap:anywhere}
+.workspace .module-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;min-width:0}
+.workspace .team-centre>nav{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0}
+.workspace .directory-centre .directory-name{white-space:normal;overflow-wrap:anywhere}
+.workspace .directory-centre .vendor-table{min-width:0;max-width:100%;overflow:auto}
+.workspace .directory-centre .vendor-table table{min-width:850px}
+.workspace .directory-centre .vendor-table th,.workspace .directory-centre .vendor-table td{height:auto;line-height:1.5;padding:16px;vertical-align:middle;white-space:normal}
+@media(max-width:760px){.workspace .team-centre>section.panel:not(.team-table-scroll),.workspace .directory-centre{padding:18px}.workspace .team-centre>nav>span:first-child{flex-basis:100%}.workspace .team-centre>section.panel>h2{font-size:20px}}
 @media(max-width:1150px){.workspace .catalogue-entries.cards{grid-template-columns:1fr}.workspace .catalogue-toolbar .module-actions{flex:1 1 100%}}
 @media(max-width:760px){.workspace .catalogue-nav.workspace-tabs{gap:20px;margin-bottom:16px}.workspace .catalogue-nav.workspace-tabs>button{font-size:13px}.workspace .catalogue-toolbar .module-actions{width:100%}.workspace .catalogue-toolbar .module-actions .btn{flex:1 1 auto}.workspace .catalogue-toolbar .catalogue-create{max-width:none;flex-basis:100%!important}.workspace .catalogue-card-open{padding:18px 30px 18px 14px;gap:12px}.workspace .catalogue-thumbnail{width:62px;height:62px}.workspace .catalogue-card-heading{flex-wrap:wrap;gap:6px}.workspace .catalogue-card-heading h3{font-size:16px}.workspace .catalogue-card-copy p{font-size:13px}.workspace .catalogue-card-meta{text-align:left}.workspace .catalogue-filters label{flex:1 1 100%}.workspace .module-section-heading{flex-wrap:wrap;gap:12px}}

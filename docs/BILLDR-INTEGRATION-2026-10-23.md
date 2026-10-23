@@ -75,3 +75,16 @@ Le SHA, les URLs et les résultats de vérification en ligne sont consignés dan
 - Styles limités à l’espace de travail blanc ; site public noir inchangé. Bob laissé de côté à la demande de l’utilisateur.
 - Vérifications : 106 tests, TypeScript et build de production réussis ; navigation de 16 modules, dix sous-onglets du catalogue, position des menus, recherche/filtres, création de dossier en démonstration et affichages ordinateur/mobile contrôlés dans le navigateur sans erreur JavaScript.
 - Ce lot n’affirme pas la parité complète de chaque outil Billdr. Les contrôles de persistance et droits avec de vrais comptes et la migration des données restent distincts.
+
+
+## Migration autorisée — premier lot Contacts
+
+L’utilisateur a demandé le transfert réel des données, dans l’ordre contacts / publication, gabarits et coûts / publication, puis autres modules. Il a précisé que les clients homonymes de Billdr représentent un même client et plusieurs projets.
+
+- 1 850 lignes clients exportées par Billdr : 1 120 clients consolidés, 730 répétitions regroupées. 1 119 créations et enrichissement d’une fiche MG Pro existante, sans écraser ses champs.
+- Conservation privée de chaque ligne source, de ses variantes de courriel et téléphone et de 579 références de projets pour le rattachement ultérieur. Aucune création de faux projet à partir d’un simple compteur.
+- 10 professionnels et 5 employés importés comme contacts sans accès ; administrateur source conservé dans les métadonnées, compte MG Pro existant inchangé.
+- Sauvegarde complète et réconciliation dans le dossier privé de migration, hors Git et hors déploiement. Aucun fichier de données personnelles ajouté au dépôt.
+- Tous les dossiers non clients préexistants sont strictement inchangés. Le transfert des projets et pièces jointes reste à faire. Les champs absents de l’export Billdr devront être complétés lors des lots suivants.
+- Chargement API désormais paginé par identifiant : aucune troncature silencieuse au plafond de lignes Supabase.
+- Cadres des sections Équipe et Contacts : marges intérieures et retours à la ligne corrigés. Les outils de visite, brouillons locaux, relevés, génération et envoi de devis sont conservés.

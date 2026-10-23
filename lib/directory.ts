@@ -4,11 +4,11 @@
  */
 export type DirectoryKind='client'|'professional'|'employee'|'administrator';
 export type DirectoryEntry={id:string;kind:DirectoryKind;name:string;email:string;phone:string;company:string;trade:string;address:string;archived:boolean;photo?:string;projects?:number;source:'record'|'directory'|'profile'};
-export type Professional={id:string;name:string;email:string;phone:string;company:string;trade:string;address:string;notes:string;archived:boolean};
+export type Professional={id:string;name:string;email:string;phone:string;company:string;trade:string;address:string;notes:string;archived:boolean;kind?:'professional'|'employee'|'administrator';source?:Record<string,unknown>};
 
 const text=(v:unknown,max=200)=>typeof v==='string'?v.trim().slice(0,max):'';
 export function professionalsFrom(value:unknown):Professional[]{
- return Array.isArray(value)?value.filter(x=>x&&typeof x==='object').map((x:any)=>({id:text(x.id,60)||crypto.randomUUID(),name:text(x.name),email:text(x.email).toLowerCase(),phone:text(x.phone,40),company:text(x.company),trade:text(x.trade,80),address:text(x.address,300),notes:text(x.notes,2000),archived:x.archived===true})):[];
+ return Array.isArray(value)?value.filter(x=>x&&typeof x==='object').map((x:any)=>({id:text(x.id,60)||crypto.randomUUID(),name:text(x.name),email:text(x.email).toLowerCase(),phone:text(x.phone,40),company:text(x.company),trade:text(x.trade,80),address:text(x.address,300),notes:text(x.notes,2000),archived:x.archived===true,...(['employee','administrator'].includes(x.kind)?{kind:x.kind}:{}),...(x.source&&typeof x.source==='object'?{source:structuredClone(x.source)}:{})})):[];
 }
 export const normalEmail=(v:string)=>v.trim().toLowerCase();
 export const normalPhone=(v:string)=>{const digits=v.replace(/\D/g,'');return digits.length===11&&digits.startsWith('1')?digits.slice(1):digits};
