@@ -43,3 +43,37 @@ Statuts : observé = écran consulté dans la référence ; vérifié = scénari
 La parité exhaustive et la recette de bout en bout ne sont pas terminées. Les actions d’envoi, signature, suppression, approbation et paiement ne sont pas exécutées dans le compte de référence pendant l’observation. Les 83 tests de référence passent ; cela ne constitue pas une recette de toutes les interfaces.
 
 Publication bloquée par l’accès en lecture seule au dépôt et l’absence du projet cible dans la connexion de déploiement disponible. Aucun déploiement de ce lot ni aucune migration des données n’a été effectué. La migration est explicitement différée après installation et validation.
+
+## Lot Routines — inspection et corrections du 23 octobre 2026
+
+Exigence utilisateur : préserver tous les outils propres à MG Pro et leurs fonctions avancées ; reproduire en détail les parcours communs Billdr. Aucun outil existant retiré dans ce lot.
+
+### Référence observée
+
+- Page Bob / Routines : onglets Chat/Routines, gestion, recherche titre, tags multisélection, automatisation ON/OFF, nouvelle routine, favoris et catalogue. Colonne droite : filtre routine, rapports datés et statut Terminé / Automatisé.
+- Carte : catégorie, titre, calendrier, dernière/prochaine exécution, bascule et menu Modifier / Dupliquer / Retirer des favoris.
+- Formulaire : titre obligatoire, instructions riches obligatoires (gras, italique, souligné, liste), tags, automatisation désactivée initialement. Activation : fréquence quotidienne, hebdomadaire, mensuelle, trimestrielle ou annuelle ; jour ; heure ; notifications courriel/SMS ; personnes multisélection. Aucun enregistrement effectué dans Billdr.
+- Catalogue : recherche titre, tags, créateurs, ajout aux favoris et cinq modèles observés : comptes clients/fournisseurs, résumé du journal de la semaine dernière, tâches en retard/du jour, pipeline de projets hebdomadaire et analyse du pipeline commercial.
+- Rapport financier de référence : AR/AP/net, ventilation client/projet/fournisseur, HT/TTC, échéances/retards, périodes et priorités. Les commandes ne doivent pas devenir des charges en doublon dans MG Pro.
+- Rapport chantier : avancement, retards/météo, sécurité, problèmes récurrents, matériaux non résolus, variations d’équipe/heures et actions par projet.
+- Rapport tâches : inachevées échues et du jour, regroupement par projet, assigné, ancienneté, priorité au-delà de sept jours.
+- Pipeline projets : indicateurs par statut, variations hebdomadaires, valeur incluant changements approuvés, dates et risques.
+- Pipeline ventes : six tendances mensuelles sur six mois, gestionnaires, devis envoyés/signés, occasions et stagnation à 30/21 jours.
+- Styles calculés observés : titre Routines Open Sans 24px/600 #111827 ; titre carte Open Sans 14px/600 ; contrôles 14px ; texte #191f2f, secondaire #868e9b ; action primaire #4959e4 sur blanc, rayon 8px. Relevé de cette page, pas validation globale ni mobile.
+
+### Changements MG Pro
+
+- Filtres combinés titre/tag/activation/favoris et réinitialisation.
+- Catalogue des cinq rapports MG Pro existants, création sans activation automatique par défaut.
+- Historique d’une ou de toutes les routines, tri décroissant, conservation des résultats existants.
+- Heure 0 conservée à la normalisation ; valeurs invalides bornées.
+- Échec de persistance : formulaire conservé avec erreur visible.
+- Libellés corrigés : une tâche serveur quotidienne existe déjà, mais elle ne garantit pas l’heure hebdomadaire demandée. Aucune promesse de notification ou d’exécution précise ajoutée.
+
+### Preuves et limites
+
+85 tests réussis, TypeScript réussi, build production réussi après isolation d’un ancien cache Turbopack illisible. Aucun déploiement ni migration.
+
+Toujours ouverts : éditeur riche/instructions personnalisées, fréquences complètes, fuseau explicite et exécution précise, notifications multi-destinataires, duplication, rapports détaillés ci-dessus, apparence identique et recette navigateur du nouveau code. Les cinq rapports calculés MG Pro ne sont pas équivalents aux cinq modèles IA Billdr. Les filtres de tags MG Pro sont simples, ceux observés dans Billdr sont multiples.
+
+Accès revérifiés : GitHub tokkimi/mgpro expose push=false ; connexion Vercel new2026, aucun projet mgpro retourné. Les blocages de publication subsistent.

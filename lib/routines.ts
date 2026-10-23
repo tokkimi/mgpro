@@ -4,7 +4,7 @@ import {ledgerCost,supplierLedger} from './vendor-finance';
 
 /*
  * Routines = saved reports computed from MG Pro's own data (no AI needed, no invented figures).
- * They run when someone clicks "Exécuter" or opens a due routine; there is no background scheduler yet.
+ * They run explicitly or through the configured daily cron; reading a report never executes it.
  */
 export const routineKinds=[
  {id:'receivables_payables',label:'Comptes clients et comptes fournisseurs'},
@@ -17,7 +17,7 @@ export type RoutineKind=typeof routineKinds[number]['id'];
 export type Routine={id:string;title:string;kind:RoutineKind;weekday:number;hour:number;active:boolean;favorite:boolean;tags:string[];lastRun:string;runs:{id:string;at:string;lines:string[]}[]};
 
 export function routinesFrom(value:unknown):Routine[]{
- return Array.isArray(value)?value.filter(x=>x&&typeof x==='object'&&routineKinds.some(k=>k.id===x.kind)).map((x:any)=>({id:String(x.id),title:String(x.title||'Routine').slice(0,120),kind:x.kind,weekday:Math.min(7,Math.max(1,Number(x.weekday)||1)),hour:Math.min(23,Math.max(0,Number(x.hour)||8)),active:x.active!==false,favorite:x.favorite===true,tags:Array.isArray(x.tags)?x.tags.map(String).slice(0,8):[],lastRun:String(x.lastRun||''),runs:Array.isArray(x.runs)?x.runs.slice(0,20).map((r:any)=>({id:String(r.id),at:String(r.at),lines:Array.isArray(r.lines)?r.lines.map(String):[]})):[]})):[];
+ return Array.isArray(value)?value.filter(x=>x&&typeof x==='object'&&routineKinds.some(k=>k.id===x.kind)).map((x:any)=>({id:String(x.id),title:String(x.title||'Routine').slice(0,120),kind:x.kind,weekday:Math.min(7,Math.max(1,Number(x.weekday)||1)),hour:Math.min(23,Math.max(0,Number.isFinite(Number(x.hour))&&x.hour!==null&&x.hour!==''?Math.trunc(Number(x.hour)):8)),active:x.active!==false,favorite:x.favorite===true,tags:Array.isArray(x.tags)?x.tags.map(String).slice(0,8):[],lastRun:String(x.lastRun||''),runs:Array.isArray(x.runs)?x.runs.slice(0,20).map((r:any)=>({id:String(r.id),at:String(r.at),lines:Array.isArray(r.lines)?r.lines.map(String):[]})):[]})):[];
 }
 /** Next weekly occurrence after `from` (local time). */
 export function nextRun(routine:Pick<Routine,'weekday'|'hour'>,from:Date){
@@ -43,4 +43,9 @@ export function runRoutine(kind:RoutineKind,records:RecordItem[],today:string):s
 /** Compact, non-confidential company summary given to the assistant as context (no personal notes). */
 export function assistantContext(records:RecordItem[],today:string,settings:Data){
  return [`Date : ${today}. Entreprise : ${settings.name||'Rénovations MG Pro'}.`,...routineKinds.flatMap(k=>[`## ${k.label}`,...runRoutine(k.id,records,today).slice(0,25)])].join('\n');
+}
+
+/** Read-only catalogue filters; favorite ordering never mutates the persisted list. */
+export function filterRoutines(routines:Routine[],query:string,tag:string,automation:'all'|'active'|'inactive',favoritesOnly:boolean){
+ return routines.filter(r=>r.title.toLocaleLowerCase('fr').includes(query.trim().toLocaleLowerCase('fr'))&&(!tag||r.tags.includes(tag))&&(automation==='all'||r.active===(automation==='active'))&&(!favoritesOnly||r.favorite)).sort((a,b)=>Number(b.favorite)-Number(a.favorite)||a.title.localeCompare(b.title,'fr'));
 }
