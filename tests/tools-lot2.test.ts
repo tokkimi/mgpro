@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import type {RecordItem} from '../lib/model';
-import {nextRun,runRoutine,routinesFrom,isDue} from '../lib/routines';
+import {filterRoutines,nextRun,runRoutine,routinesFrom,isDue} from '../lib/routines';
 import {newCandidates,taskCandidates} from '../lib/task-sources';
 import {folderContent,projectFiles,systemFolders} from '../lib/files';
 
@@ -38,4 +38,24 @@ test('system folders include contracts; generated documents cannot be moved; sha
  assert.equal(files.find(f=>f.id==='doc:q')!.movable,false);
  assert.deepEqual(folderContent(files,'Partagé avec le client').map(f=>f.id).sort(),['d1','doc:q','log:l']);
  assert.deepEqual(folderContent(files,'Soumissions').map(f=>f.id).sort(),['d1','doc:q']);
+});
+
+test('routine schedules preserve midnight and normalize invalid hours',()=>{
+ const make=(hour:unknown)=>routinesFrom([{id:'r',kind:'pipeline',hour}])[0];
+ assert.equal(make(0).hour,0);
+ assert.equal(make('0').hour,0);
+ assert.equal(make(undefined).hour,8);
+ assert.equal(make('invalid').hour,8);
+ assert.equal(make(99).hour,23);
+ assert.equal(make(-2).hour,0);
+ assert.equal(nextRun(make(0),new Date('2026-10-04T18:00:00')).getHours(),0);
+});
+
+test('routine filters combine tags, automation and favorites without losing history',()=>{
+ const rows=routinesFrom([{id:'a',title:'Finances',kind:'pipeline',tags:['Finance'],active:true,favorite:true,runs:[{id:'run',at:'2026-10-01',lines:['rapport']}]},{id:'b',title:'Chantier',kind:'active_projects',tags:['Terrain'],active:false}]);
+ assert.deepEqual(filterRoutines(rows,' FINANCES ','Finance','active',true).map(r=>r.id),['a']);
+ assert.deepEqual(filterRoutines(rows,'','','inactive',false).map(r=>r.id),['b']);
+ assert.equal(filterRoutines(rows,'','Terrain','active',false).length,0);
+ assert.equal(filterRoutines(rows,'','','all',false)[0].runs[0].lines[0],'rapport');
+ assert.deepEqual(rows.map(r=>r.id),['a','b']);
 });

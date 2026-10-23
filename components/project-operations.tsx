@@ -45,7 +45,7 @@ export default function ProjectOperations({record,demo,onSave,section='budget',o
   <div className="operations-layout">
    <div className="operations-main">
     {tab==='budget'&&<><Budget operations={operations} replace={replace}/><VendorBudgetTable operations={operations}/></>}
-    {tab==='orders'&&<><Orders operations={operations} replace={replace}/><VendorFinance operations={operations} commit={commit} phases={phases} suppliers={suppliers}/></>}
+    {tab==='orders'&&<><Orders operations={operations} replace={replace}/><VendorFinance key={record.id} projectId={record.id} operations={operations} commit={commit} phases={phases} suppliers={suppliers}/></>}
     {tab==='field'&&<Field operations={operations} replace={replace} onUpload={demo?undefined:onUpload} journalOnly={fieldMode==='journal'}/>}
    </div>
    {tab==='budget'&&<aside className="operations-rail">

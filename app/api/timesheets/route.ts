@@ -1,3 +1,4 @@
+import {teamRate,teamPreferences} from '@/lib/team';
 import {NextResponse} from 'next/server';
 import {z} from 'zod';
 import {identity,db} from '@/lib/supabase';
@@ -21,6 +22,9 @@ export async function POST(req:Request){
  const input=parsed.data;let hours:number;
  try{hours=shiftHours(input.start,input.end,input.breakMinutes)}catch(e){return NextResponse.json({error:(e as Error).message},{status:400})}
  if(input.date>new Date(Date.now()+86400000).toISOString().slice(0,10))return NextResponse.json({error:'Impossible de saisir des heures dans le futur.'},{status:400});
+ const settingsResult=await db().from('records').select('data').eq('kind','settings').order('updated_at',{ascending:false}).limit(1).maybeSingle();
+ if(settingsResult.error)return NextResponse.json({error:'Impossible de charger les taux de l’équipe.'},{status:503});
+ const preferences=teamPreferences(settingsResult.data?.data.team);
  for(let attempt=0;attempt<3;attempt++){
   const project=(await db().from('records').select('*').eq('id',input.projectId).eq('kind','project').maybeSingle()).data as RecordItem|null;
   if(!project||!(await visible(user,project)))return NextResponse.json({error:'Projet introuvable ou non assigné.'},{status:404});
@@ -29,7 +33,7 @@ export async function POST(req:Request){
   const overlap=operations.timesheets.some(s=>s.personId===user.id&&s.date===input.date&&s.start&&s.end&&toMin(input.start)<toMin(s.end)&&toMin(s.start)<toMin(input.end));
   if(overlap)return NextResponse.json({error:'Ce quart chevauche une saisie existante pour cette journée.'},{status:409});
   if(operations.timesheets.some(s=>s.date===input.date&&s.closed&&s.personId===user.id))return NextResponse.json({error:'Cette semaine est clôturée.'},{status:409});
-  const entry={id:crypto.randomUUID(),date:input.date,person:user.name,personId:user.id,hours,hourlyRate:0,status:'Soumise' as const,costCode:input.costCode,start:input.start,end:input.end,note:input.note};
+  const entry={id:crypto.randomUUID(),date:input.date,person:user.name,personId:user.id,hours,hourlyRate:teamRate(preferences,user.id,String(project.data.project_type||project.data.service||'')),status:'Soumise' as const,costCode:input.costCode,start:input.start,end:input.end,note:input.note};
   const data={...project.data,operations:{...operations,timesheets:[...operations.timesheets,entry]}};
   const {data:saved}=await db().from('records').update({data,version:project.version+1,updated_at:new Date().toISOString()}).eq('id',project.id).eq('version',project.version).select('id').maybeSingle();
   if(saved){await db().from('audit_log').insert({actor_id:user.id,action:'timesheet_submitted',record_id:project.id,details:{family:'timesheets'}});return NextResponse.json({ok:true,hours})}

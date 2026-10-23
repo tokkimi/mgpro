@@ -32,3 +32,19 @@ test('procurement details survive project save normalization and draft orders ar
  assert.equal(operationTotals(operations).committed,0);
  operations.purchaseOrders[0].status='Envoyé';assert.equal(operationTotals(operations).committed,1000);
 });
+
+test('catalogue filters combine category, brand, supplier and cost range without mutating entries',async()=>{
+ const {filterCatalogue}=await import('../lib/catalogue');
+ const entries=catalogueFrom([{id:'a',tab:'Produits',name:'Tuile',category:'Sol',brand:'A',supplier:'Local',material:10,labour:5,sku:'ABC'}, {id:'b',tab:'Produits',name:'Tuile',category:'Mur',brand:'A',supplier:'Local',price:8}]);
+ assert.deepEqual(filterCatalogue(entries,'Produits',{query:'abc',category:'Sol',brand:'A',supplier:'Local',min:15,max:15}).map(x=>x.id),['a']);
+ assert.equal(filterCatalogue(entries,'Produits',{max:14}).length,1);
+ assert.equal(filterCatalogue(entries,'Produits',{query:'introuvable'}).length,0);
+ assert.equal(entries.length,2);
+});
+test('extended catalogue fields survive export and imported legacy quantities default to one',()=>{
+ const entry=catalogueFrom([{id:'a',tab:'Codes de coût',name:'Pose',quantity:0,hourlyRate:95,division:'03',expenseAccount:'5000',incomeAccount:'4000',supplier:'Fournisseur',url:'https://example.com/produit',inventory:12,salePrice:150}])[0];
+ assert.deepEqual(importCatalogue(exportCatalogue([entry]))[0],entry);
+ assert.equal(catalogueLines(entry)[0].quantity,0);
+ assert.equal(catalogueFrom([{id:'old',tab:'Tâches'}])[0].quantity,1);
+ assert.equal(catalogueFrom([{id:'unsafe',tab:'Produits',url:'javascript:alert(1)'}])[0].url,'');
+});
