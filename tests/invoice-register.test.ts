@@ -17,3 +17,17 @@ test('invoice register export neutralizes formulas and preserves quotes',()=>{
  const csv=invoiceRegisterCsv(invoiceRegister([rec('i','invoice',{title:'=DANGEROUS',number:'"F1"',status:'Brouillon'})],filters,'2026-10-23'));
  assert.ok(csv.includes("'=DANGEROUS"));assert.ok(csv.includes('""F1""'));assert.ok(csv.startsWith('\ufeff'));
 });
+
+test('customer payments use explicit journals, excluding supplier payments, credits and issue entries',async()=>{
+ const {customerPayments,customerPaymentsCsv}=await import('../lib/invoice-register');
+ const invoice=rec('i','invoice',{number:'F-1',status:'Émise',paid:999});
+ const entry=(id:string,operation:string,source_id:string,amount:number)=>rec(id,'journal',{operation,source_id,date:'2026-10-20',reference:'=REF',entries:[{account:'1000 Banque',debit:amount,credit:0},{account:'1100 Clients',debit:0,credit:amount}]});
+ const records=[invoice,rec('c','client',{name:'Client'}),entry('pay1','payment','i',20.10),entry('pay2','payment','i',30.20),entry('issue','issue','i',100),entry('supplier','pay_expense','expense',100),entry('orphan','payment','missing',100)];
+ const filters={query:'',invoiceId:'',projectId:'',from:'',to:''};
+ const rows=customerPayments(records,filters);
+ assert.deepEqual(rows.map(r=>r.amount),[20.10,30.20]);
+ assert.equal(rows[0].client,'Client');
+ assert.equal(customerPayments(records,{...filters,from:'2026-10-21'}).length,0);
+ assert.equal(customerPayments(records,{...filters,invoiceId:'other'}).length,0);
+ assert.ok(customerPaymentsCsv(rows).includes("'=REF"));
+});
