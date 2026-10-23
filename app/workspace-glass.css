@@ -98,3 +98,6 @@
 .ledger-sort{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0;text-align:left;white-space:nowrap}
 .ledger-sort:focus-visible{outline:2px solid #205540;outline-offset:4px}
 .purchase-register tfoot td{font-weight:700;border-top:1px solid #dfe4e9;padding:22px 16px;background:#fafbfc}
+
+/* Gabarits & coûts: shared controls remain usable on narrow screens. */
+.catalogue-filters{align-items:end;flex-wrap:wrap;gap:12px}.catalogue-filters label{display:grid;gap:6px;min-width:130px;flex:1}.catalogue-filters input,.catalogue-filters select{max-width:100%;min-width:0}.catalogue-entry dl{display:grid;gap:6px;margin:10px 0}.catalogue-entry dl>div{display:flex;justify-content:space-between;gap:16px}.catalogue-entry dt{color:#64748b}.catalogue-entry dd{margin:0}.catalogue-table-scroll{overflow:auto}.catalogue-table-scroll table{border-collapse:collapse;width:100%;min-width:680px}.catalogue-table-scroll th,.catalogue-table-scroll td{padding:12px;text-align:left;border-bottom:1px solid #e2e8f0}.catalogue-content details{padding:14px 0;border-bottom:1px solid #e2e8f0}.catalogue-content summary{cursor:pointer;font-weight:600}.catalogue-content fieldset{display:flex;flex-wrap:wrap;gap:12px;border:1px solid #e2e8f0;padding:16px}.catalogue-content fieldset label{display:flex;align-items:center;gap:6px}
