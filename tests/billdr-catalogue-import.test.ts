@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {appendBilldrCatalogue,billdrCatalogueEntries,exportedNumber} from '../lib/billdr-catalogue-import';
+import {appendBilldrCatalogue,billdrCatalogueEntries,billdrTemplateEntry,exportedNumber} from '../lib/billdr-catalogue-import';
 import {catalogueFrom,catalogueLines,exportCatalogue,importCatalogue} from '../lib/catalogue';
 import {lineSale} from '../lib/pricing';
 
@@ -32,4 +32,19 @@ test('malformed source prices stop migration',()=>{
  assert.throws(()=>exportedNumber('-1'));
  assert.throws(()=>billdrCatalogueEntries({tasks:[{Nom:'A','Quantité':'NaN'}],categories:[],codes:[]}));
  assert.equal(exportedNumber(''),0);
+});
+
+test('template migration preserves untitled priced tasks, category fees and explicit source rounding',()=>{
+ const source={id:'source',name:'Test',description:'Détails',url:'https://app.billdr.co/templates/source/edit-v2',categories:[{id:'fee',index:0,name:'Gestion',displayedTotal:'$500'},{id:'work',index:3,name:'Travaux'}],tasks:[{sourceId:'line',index:5,title:'',description:'Consigne',quantity:'2',unit:'pi2',material:'$10',labour:'$15',markup:'10',costCode:'Code de coût',displayedTotal:'$55.00$27.50/pi2'}]};
+ const entry=billdrTemplateEntry(source,555.08);
+ assert.equal(entry.lines.length,3);
+ assert.equal(entry.lines[0].category,'Travaux');
+ assert.equal(entry.lines[0].notes,'Consigne');
+ assert.equal(entry.lines[1].price,500);
+ assert.equal(entry.lines[2].price,.08);
+ assert.equal(entry.source?.taskCount,1);
+ assert.equal(Math.round(entry.lines.reduce((sum,line)=>sum+lineSale(line),0)*100),55508);
+ assert.throws(()=>billdrTemplateEntry(source,560));
+ assert.throws(()=>billdrTemplateEntry(source,554.99));
+ assert.throws(()=>billdrTemplateEntry({...source,tasks:[{...source.tasks[0],material:'$11'}]},555.08));
 });
