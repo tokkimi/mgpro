@@ -59,3 +59,9 @@
 .workspace .btn.danger,.workspace .btn.danger-outline{background:#fff5f2!important;color:#943e32!important;border:1px solid #e4c1b9!important;box-shadow:none}
 @media(max-width:600px){.workspace .plan-viewport svg text{font-size:26px}.workspace .plan-viewport svg g>text:nth-of-type(2){transform:translateY(14px)}.workspace .project-plan-panel>.detail-body{padding:12px}.workspace .plan-editor{padding:12px}}
 @media print{.workspace .plan-viewport{background:#fff;box-shadow:none}.workspace .plan-editor{box-shadow:none}}
+
+/* Navigation de passation : accès directs Billdr, outils MG Pro conservés. */
+.workspace .sidebar nav{overflow-y:auto;min-height:0;flex:1;scrollbar-width:thin}
+.workspace .sidebar nav>button{flex-shrink:0;min-height:36px;padding:8px 12px;border-radius:8px}
+.workspace .sidebar-contacts{display:none}
+.notification-filters{align-items:end;margin:20px 0;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
