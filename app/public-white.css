@@ -1,10 +1,10 @@
 /* White public canvas; photographic overlays retain their own contrast. */
 body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
-.atelier-site{--ink:#20262b;--muted:#626a70;--forest:#20262b;--gold:#94752e;--bg:#fff;--line:#e6e8ea;background:#fff;color:#20262b}
+.atelier-site{--ink:#20262b;--muted:#626a70;--forest:#20262b;--gold:#62686e;--bg:#fff;--line:#e6e8ea;background:#fff;color:#20262b}
 .atelier-site main,.atelier-site main>section,.atelier-site .about-mgpro,.atelier-site .about-mgpro>section,.atelier-site .atelier-footer,.atelier-site .blog-index,.atelier-site .blog-article,.atelier-site .legal-page{background:#fff!important}
 .atelier-site :is(main,header,footer,dialog) :is(h1,h2,h3,h4,p,a,span,small,figcaption,summary,li,label,button,input,textarea,select,strong,b,time){color:inherit!important}
 .atelier-site :is(main,header,footer,dialog){color:#20262b}
-.atelier-site :is(main,header,footer,dialog) .section-kicker,.atelier-site main :is(h1,h2)>span:not(.gold-dot),.atelier-site .gold-dot{color:#94752e!important}
+.atelier-site :is(main,header,footer,dialog) .section-kicker,.atelier-site main :is(h1,h2)>span:not(.gold-dot),.atelier-site .gold-dot{color:#62686e!important}
 .atelier-site .atelier-header,body:has(.immersive-banner[data-active=true]) .atelier-site .atelier-header{background:#ffffffeb;border-bottom-color:#e6e8ea;box-shadow:0 4px 20px #00000005;backdrop-filter:blur(20px)}
 .atelier-site .atelier-header :is(nav a,.client-access,.language-switch,.header-quote){color:#20262b!important}
 .atelier-site :is(.glass-button,.atelier-text-link,.mg-liquid-button){color:inherit!important}
@@ -27,7 +27,7 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 .atelier-site .expertise-photo{display:block;aspect-ratio:4/3;overflow:hidden;border-radius:12px;background:#f3f4f5}
 .atelier-site .expertise-photo img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .45s ease}
 .atelier-site .expertise-photo-caption{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0 0;font-size:12px;line-height:1.45}
-.atelier-site .expertise-photo-caption svg{flex-shrink:0;color:#94752e}
+.atelier-site .expertise-photo-caption svg{flex-shrink:0;color:#62686e}
 @media(hover:hover){.atelier-site .expertise-photo-link:hover img{transform:scale(1.045)}}
 @media(max-width:1100px){.atelier-site .expertise-photo-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 14px}}
 @media(max-width:500px){.atelier-site .expertise-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 14px}.atelier-site .dock-topline{align-items:flex-start;gap:12px;flex-direction:column}.atelier-site .expertise-photo-caption{font-size:13px}.atelier-site .expertise-photo-section::before,.atelier-site .expertise-photo-section::after{display:none}}
@@ -37,3 +37,9 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 .atelier-site .plan-scroll-canvas{filter:invert(1)}
 .atelier-site .plan-original-ink{filter:grayscale(1)}
 .atelier-site .plan-handwriting g,.atelier-site .plan-handwriting-static g{stroke:#20262b}
+
+/* Neutral identity: preserve photograph colours, desaturate only brand assets. */
+.atelier-site .mg-public-logo,.mg-brand-intro .mg-public-logo{filter:grayscale(1)!important}
+.atelier-site :is(.expertise-photo-caption svg,.atelier-promises svg,.about-commitments svg,.approach-accordion summary>svg,.service-accordion summary svg,.contact-indicator){color:#62686e}
+.atelier-site .mg-wheel-ring text{fill:#ddd}
+.atelier-site :focus-visible{outline-color:#62686e}
