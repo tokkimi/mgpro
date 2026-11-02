@@ -52,3 +52,5 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 .atelier-site :is(.expertise-photo-caption svg,.atelier-promises svg,.about-commitments svg,.approach-accordion summary>svg,.service-accordion summary svg,.contact-indicator){color:#e07808}
 .atelier-site .mg-wheel-ring text{fill:#eb812a}
 .mg-intro-logo-sheen{display:none!important}
+
+.atelier-site .contact-glass-panel > a > svg,.atelier-site .contact-glass-panel > button > svg,.atelier-site .contact-indicator > svg{color:#e07808;stroke:#e07808}
