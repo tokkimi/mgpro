@@ -43,3 +43,4 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 .atelier-site :is(.expertise-photo-caption svg,.atelier-promises svg,.about-commitments svg,.approach-accordion summary>svg,.service-accordion summary svg,.contact-indicator){color:#62686e}
 .atelier-site .mg-wheel-ring text{fill:#ddd}
 .atelier-site :focus-visible{outline-color:#62686e}
+.atelier-site .atelier-header .atelier-brand img.mg-public-logo,.atelier-site .atelier-footer .atelier-brand img.mg-public-logo,.atelier-site .atelier-contact .contact-logo img.mg-public-logo,.atelier-site .site-mobile-menu-panel img.mg-public-logo,.mg-brand-intro .mg-intro-logo img.mg-public-logo{filter:grayscale(1)!important}
