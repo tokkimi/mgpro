@@ -47,8 +47,8 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 
 /* Orange accents drawn from the MG Pro mark. */
 .atelier-site .atelier-header .atelier-brand img.mg-public-logo,.atelier-site .atelier-footer .atelier-brand img.mg-public-logo,.atelier-site .atelier-contact .contact-logo img.mg-public-logo,.atelier-site .site-mobile-menu-panel img.mg-public-logo,.mg-brand-intro .mg-intro-logo img.mg-public-logo{filter:none!important}
-.atelier-site{--gold:#d6660a}
-.atelier-site :is(main,header,footer,dialog) .section-kicker,.atelier-site main :is(h1,h2)>span:not(.gold-dot),.atelier-site .gold-dot{color:#b84f00!important}
-.atelier-site :is(.expertise-photo-caption svg,.atelier-promises svg,.about-commitments svg,.approach-accordion summary>svg,.service-accordion summary svg,.contact-indicator){color:#c45700}
+.atelier-site{--gold:#eb8217}
+.atelier-site :is(main,header,footer,dialog) .section-kicker,.atelier-site main :is(h1,h2)>span:not(.gold-dot),.atelier-site .gold-dot{color:#d66a00!important}
+.atelier-site :is(.expertise-photo-caption svg,.atelier-promises svg,.about-commitments svg,.approach-accordion summary>svg,.service-accordion summary svg,.contact-indicator){color:#e07808}
 .atelier-site .mg-wheel-ring text{fill:#eb812a}
 .mg-intro-logo-sheen{display:none!important}
