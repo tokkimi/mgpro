@@ -74,3 +74,10 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 }
 
 .atelier-site .contact-glass-panel :is(a,button) small{color:#505960!important;opacity:1}
+
+/* Readable text on light glass panels, including panels over photographs. */
+.atelier-site .hero-scroll-sequence .hero-finance,
+.atelier-site .hero-scroll-sequence .hero-finance :is(span,p,b,svg),
+.atelier-site :is(.finance-offer,.expertise-glass-gallery,.blog-card,.contact-glass-panel,.request-dialog) :is(h1,h2,h3,h4,p,a,span,small,li,label,button,strong,b){color:#20262b!important}
+.atelier-site .hero-scroll-sequence .hero-finance svg{stroke:#20262b}
+.atelier-site :is(.finance-offer,.expertise-glass-gallery,.blog-card,.contact-glass-panel,.request-dialog) :is(input,textarea,select){color:#20262b!important}
