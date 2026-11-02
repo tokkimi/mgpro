@@ -59,3 +59,16 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 .atelier-site .atelier-contact{z-index:100}
 .atelier-site .contact-glass-panel{box-sizing:border-box;max-height:calc(100dvh - 115px);max-width:calc(100vw - 32px);overflow-y:auto;scrollbar-width:none}
 .atelier-site .contact-glass-panel::-webkit-scrollbar{display:none}
+
+@media (min-width: 801px) {
+ .atelier-site .contact-glass-trigger{width:200px;gap:8px;padding:5px 9px;border-radius:18px}
+ .atelier-site .contact-logo{width:36px!important;height:36px!important;flex:0 0 36px}
+ .atelier-site .contact-glass-trigger b{font-size:11px}
+ .atelier-site .contact-indicator{padding:4px}
+ .atelier-site .contact-glass-panel{width:280px;bottom:56px;padding:16px;border-radius:21px;max-height:calc(100dvh - 88px)}
+ .atelier-site .contact-glass-panel h2{font-size:16px}
+ .atelier-site .contact-glass-panel header{padding-bottom:10px}
+ .atelier-site .contact-glass-panel>a,.atelier-site .contact-glass-panel>button{padding:11px 0;gap:13px}
+ .atelier-site .contact-glass-panel span{font-size:13px}
+ .atelier-site .contact-glass-panel small{margin-top:3px}
+}
