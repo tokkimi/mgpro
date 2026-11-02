@@ -54,3 +54,8 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 .mg-intro-logo-sheen{display:none!important}
 
 .atelier-site .contact-glass-panel > a > svg,.atelier-site .contact-glass-panel > button > svg,.atelier-site .contact-indicator > svg{color:#e07808;stroke:#e07808}
+
+/* Keep contact options above the sticky header, including on short screens. */
+.atelier-site .atelier-contact{z-index:100}
+.atelier-site .contact-glass-panel{box-sizing:border-box;max-height:calc(100dvh - 115px);max-width:calc(100vw - 32px);overflow-y:auto;scrollbar-width:none}
+.atelier-site .contact-glass-panel::-webkit-scrollbar{display:none}
