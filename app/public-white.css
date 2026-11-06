@@ -161,6 +161,6 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 .atelier-site .atelier-header .atelier-brand img.mg-public-logo,.atelier-site .atelier-footer .atelier-brand img.mg-public-logo{filter:invert(1) hue-rotate(192deg) saturate(.85)!important}
 .atelier-site .atelier-header .header-quote.glass-button{width:auto!important;min-width:0!important;max-width:none!important;height:36px!important;min-height:36px!important;padding:8px 14px!important;gap:7px!important;font-size:11px!important;white-space:nowrap!important}
 /* Header links stay readable and show a warm metallic gold on interaction. */
-.atelier-site .atelier-header nav a:not(.site-menu-client){color:#fff!important}
+.atelier-site .atelier-header>nav>a{color:#fff!important}
 .atelier-site .atelier-header>nav>a:is(:hover,:focus-visible,[aria-current=page]){color:#d3a346!important}
 .atelier-site .atelier-header>nav>a::after{background:linear-gradient(90deg,#8c5d18,#f3d08a,#8c5d18)}
