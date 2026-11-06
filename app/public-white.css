@@ -47,13 +47,13 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 
 /* Orange accents drawn from the MG Pro mark. */
 .atelier-site .atelier-header .atelier-brand img.mg-public-logo,.atelier-site .atelier-footer .atelier-brand img.mg-public-logo,.atelier-site .atelier-contact .contact-logo img.mg-public-logo,.atelier-site .site-mobile-menu-panel img.mg-public-logo,.mg-brand-intro .mg-intro-logo img.mg-public-logo{filter:none!important}
-.atelier-site{--gold:#eb8217}
-.atelier-site :is(main,header,footer,dialog) .section-kicker,.atelier-site main :is(h1,h2)>span:not(.gold-dot),.atelier-site .gold-dot{color:#d66a00!important}
-.atelier-site :is(.expertise-photo-caption svg,.atelier-promises svg,.about-commitments svg,.approach-accordion summary>svg,.service-accordion summary svg,.contact-indicator){color:#e07808}
-.atelier-site .mg-wheel-ring text{fill:#eb812a}
+.atelier-site{--gold:#c48b17}
+.atelier-site :is(main,header,footer,dialog) .section-kicker,.atelier-site main :is(h1,h2)>span:not(.gold-dot),.atelier-site .gold-dot{color:#956400!important}
+.atelier-site :is(.expertise-photo-caption svg,.atelier-promises svg,.about-commitments svg,.approach-accordion summary>svg,.service-accordion summary svg,.contact-indicator){color:#ad790d}
+.atelier-site .mg-wheel-ring text{fill:#e5b649}
 .mg-intro-logo-sheen{display:none!important}
 
-.atelier-site .contact-glass-panel > a > svg,.atelier-site .contact-glass-panel > button > svg,.atelier-site .contact-indicator > svg{color:#e07808;stroke:#e07808}
+.atelier-site .contact-glass-panel > a > svg,.atelier-site .contact-glass-panel > button > svg,.atelier-site .contact-indicator > svg{color:#ad790d;stroke:#ad790d}
 
 /* Keep contact options above the sticky header, including on short screens. */
 .atelier-site .atelier-contact{z-index:100}
@@ -88,10 +88,10 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 .mg-brand-intro{background:#fff!important}
 .mg-brand-intro .mg-intro-logo img.mg-public-logo{background:transparent!important;border:0!important;border-radius:0!important;padding:0!important;box-shadow:none!important}
 .mg-brand-intro .mg-intro-flare{display:none}
-.mg-brand-intro .mg-intro-aura::before,.mg-brand-intro .mg-intro-aura::after{background:radial-gradient(ellipse,rgba(255,164,52,.28),rgba(255,215,147,.12) 38%,transparent 70%)}
+.mg-brand-intro .mg-intro-aura::before,.mg-brand-intro .mg-intro-aura::after{background:radial-gradient(ellipse,rgba(229,185,86,.28),rgba(245,221,165,.12) 38%,transparent 70%)}
 .mg-brand-intro .mg-intro-brand p{color:#353535}
 .mg-brand-intro .mg-intro-progress{background:#e9e9e9}
-.mg-brand-intro .mg-intro-progress span{background:linear-gradient(90deg,#cf690a,#ffad44);box-shadow:0 0 10px #ffac5366}
+.mg-brand-intro .mg-intro-progress span{background:linear-gradient(90deg,#9a6407,#f1c866);box-shadow:0 0 10px #eabf6566}
 
 /* Fine metallic details echo the official logo without enclosing content. */
 .atelier-site .section-kicker{display:flex;align-items:center;gap:12px}
@@ -100,3 +100,17 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 .atelier-site .dock-topline>span{display:flex;align-items:center;gap:10px}
 .atelier-site .immersive-banner-copy .section-kicker{justify-content:center}
 .atelier-site .immersive-banner-copy .section-kicker::after{content:'';width:32px;height:1px;background:linear-gradient(90deg,#b77918,#f2c768,transparent)}
+
+/* Metallic gold lettering and the paired lines of the MG Pro signature. */
+.atelier-site{--gold:#b5841d}
+.atelier-site :is(main,footer) :is(h1,h2){position:relative;font-family:Georgia,'Times New Roman',serif;font-weight:600;letter-spacing:.005em;color:#956400!important;text-shadow:0 1px 0 #ffe3a0,0 2px 4px #8a5c1d26;padding-inline:clamp(26px,3vw,48px)}
+.atelier-site :is(main,footer) :is(h1,h2)::before,.atelier-site :is(main,footer) :is(h1,h2)::after{content:'';position:absolute;top:.58em;width:clamp(18px,2.2vw,32px);height:2px;background:linear-gradient(90deg,transparent,#ab730c 28%,#ffe59e 52%,#a66c09 76%,transparent);box-shadow:0 1px 3px #b77f3350;pointer-events:none}
+.atelier-site :is(main,footer) :is(h1,h2)::before{left:0}
+.atelier-site :is(main,footer) :is(h1,h2)::after{right:0}
+.atelier-site :is(main,footer) :is(h1,h2)>span:not(.gold-dot){color:#956400!important}
+.atelier-site :is(main,footer) :is(h3,h4),.atelier-site .section-kicker{font-family:Georgia,'Times New Roman',serif;letter-spacing:.1em;font-weight:500}
+.atelier-site .section-kicker{color:#8b610b!important}
+.atelier-site .hero-scroll-sequence .hero-finance :is(span,p,b){color:#20262b!important}
+.atelier-site :is(.contact-glass-panel,.request-dialog) :is(h1,h2){color:#73500b!important}
+.atelier-site .immersive-banner-copy h2{color:#ffe3a0!important;text-shadow:0 2px 14px #000,0 1px 0 #fff4cf}
+@media(max-width:600px){.atelier-site :is(main,footer) :is(h1,h2){padding-inline:25px}.atelier-site :is(main,footer) :is(h1,h2)::before,.atelier-site :is(main,footer) :is(h1,h2)::after{width:18px}}
