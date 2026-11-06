@@ -173,3 +173,5 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 .atelier-site .atelier-header .atelier-brand img.mg-public-logo,.atelier-site .atelier-footer .atelier-brand img.mg-public-logo{filter:none!important}
 .atelier-site :is(.atelier-text-link,.glass-button,.mg-liquid-button){border-color:#d5b062;box-shadow:0 4px 18px #6d4a1a1a,inset 0 1px 0 #fff4cf,inset 0 -1px 2px #a778284d}
 .atelier-site :is(.atelier-text-link,.glass-button,.mg-liquid-button)::before{box-shadow:0 2px 12px #0002,inset 2px 2px 1px -2px #ffedb4,inset -2px -2px 1px -2px #a87826,inset 0 0 4px 1px #e8c77a55}
+.atelier-site .atelier-brand img.mg-public-logo,.atelier-site .atelier-contact .contact-logo img.mg-public-logo,.atelier-site .site-mobile-menu-panel img.mg-public-logo,.mg-brand-intro .mg-intro-logo img.mg-public-logo{filter:hue-rotate(5deg)!important}
+.atelier-site .atelier-header .atelier-brand img.mg-public-logo,.atelier-site .atelier-footer .atelier-brand img.mg-public-logo{filter:hue-rotate(5deg)!important}
