@@ -149,3 +149,9 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 .atelier-site>.atelier-header>nav>a:is(:hover,:focus-visible,[aria-current=page])::after{opacity:1;transform:none;animation:none!important}
 .atelier-site>.atelier-header .header-quote{font-size:11px;line-height:1.1;min-height:36px;padding:9px 14px;gap:10px;border-radius:20px;white-space:nowrap}
 .atelier-site>.atelier-header .header-quote svg{width:14px;height:14px}
+
+/* Gold reflection on glass controls; retain their existing shape and interaction. */
+.atelier-site .hero-scroll-sequence h1 .hero-gold-copy{color:#f0c777!important;text-shadow:0 1px 0 #fff1c1,0 2px 14px #0008}
+.atelier-site :is(.glass-button,.mg-liquid-button){border-color:#d5b062;box-shadow:0 4px 18px #6d4a1a1a,inset 0 1px 0 #fff4cf,inset 0 -1px 2px #a778284d}
+.atelier-site :is(.glass-button,.mg-liquid-button)::before{box-shadow:0 2px 12px #0002,inset 2px 2px 1px -2px #ffedb4,inset -2px -2px 1px -2px #a87826,inset 0 0 4px 1px #e8c77a55}
+.atelier-site .hero-scroll-sequence .hero-project-button{border:1px solid #e5c16b;box-shadow:0 4px 18px #0003,inset 0 1px 0 #fff1ba,inset 0 -1px 2px #b17f2e99}
