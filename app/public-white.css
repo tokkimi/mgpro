@@ -111,3 +111,12 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 .atelier-site .immersive-banner-copy h2{font-family:Georgia,'Times New Roman',serif;font-size:clamp(28px,3.5vw,54px);font-weight:400;color:#fff!important;text-shadow:0 2px 18px #0009}
 .atelier-site .hero-scroll-sequence h1,.atelier-site .hero-scroll-sequence h1>span:not(.gold-dot){color:#fff!important;text-shadow:0 2px 18px #0008}
 @media(max-width:600px){.atelier-site .section-kicker::before,.atelier-site .section-kicker::after{flex-basis:22px;width:22px}.atelier-site .immersive-banner-copy h2{font-size:clamp(26px,7vw,38px)}}
+
+/* The project questionnaire follows the light public theme. */
+.atelier-site .request-modal :is(input:not([type=checkbox]):not([type=file]),textarea,select),.atelier-site .request-modal .address-suggestions{background:#fff;color:#20262b!important;border-color:#d8dce0}
+.atelier-site .request-modal .service-choices button,.atelier-site .request-modal .btn,.atelier-site .request-modal .icon-button{background:#fff;color:#20262b!important;border-color:#d8dce0}
+.atelier-site .request-modal .service-choices button.chosen{background:#fff8e7;border-color:#b58932;color:#5d430e!important}
+.atelier-site .request-modal .btn.primary{background:#f3d083;border-color:#c49a47;color:#20262b!important}
+.atelier-site .request-modal .form-steps span.active{color:#76550e!important;border-color:#bc913c}
+.atelier-site .request-modal :is(.request-photo-drop,.request-summary){background:#fafafa;border-color:#e1e3e4}
+.atelier-site .request-modal .eyebrow{color:#8b610b!important}
