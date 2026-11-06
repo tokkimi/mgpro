@@ -120,3 +120,23 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 .atelier-site .request-modal .form-steps span.active{color:#76550e!important;border-color:#bc913c}
 .atelier-site .request-modal :is(.request-photo-drop,.request-summary){background:#fafafa;border-color:#e1e3e4}
 .atelier-site .request-modal .eyebrow{color:#8b610b!important}
+
+/* Black and gold public header and footer. */
+.atelier-site .atelier-header,body:has(.immersive-banner[data-active=true]) .atelier-site .atelier-header{background:rgba(13,13,13,.96)!important;border-bottom:0;box-shadow:none}
+.atelier-site .atelier-header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#181818 3%,#785014 24%,#d5a03d 46%,#ffe2a0 51%,#b6842b 58%,#171717 97%);pointer-events:none}
+.atelier-site .atelier-header>.atelier-brand{position:relative;padding-right:22px;margin-right:2px}
+.atelier-site .atelier-header>.atelier-brand::after{content:'';position:absolute;right:0;top:22%;height:56%;width:1px;background:linear-gradient(transparent,#d4a23b,transparent)}
+.atelier-site .atelier-header .atelier-brand img.mg-public-logo,.atelier-site .atelier-footer .atelier-brand img.mg-public-logo{filter:invert(1) hue-rotate(180deg)!important}
+.atelier-site .atelier-header nav a,.atelier-site .atelier-header .client-access,.atelier-site .atelier-header .language-switch{color:#f7f5f1!important}
+.atelier-site .atelier-header nav a[aria-current=page]{color:#e7bf6c!important}
+.atelier-site .atelier-header nav a[aria-current=page]::after{content:'';position:absolute;left:0;right:0;bottom:-6px;width:auto;height:1px;opacity:1;transform:none;background:linear-gradient(90deg,#9f7126,#f5d98b,#9f7126)}
+.atelier-site .atelier-header .header-quote{color:#241a0c!important;background:linear-gradient(135deg,#b4812d,#f5d68b 48%,#c0923c)!important;border:1px solid #e5c16b;box-shadow:inset 0 1px #fff7d6,0 3px 12px #0004}
+.atelier-site .atelier-header .site-mobile-menu-trigger{color:#edc774!important;background:transparent!important;border-color:#c39a4b!important}
+.atelier-site .atelier-header .site-mobile-menu-trigger svg{stroke:#edc774}
+.atelier-site .atelier-footer{background:#111!important;color:#f7f5f1!important;border-top:1px solid #9c762c}
+.atelier-site .atelier-footer :is(h3,p,a,button,span){color:#f7f5f1!important}
+.atelier-site .atelier-footer h3{color:#e8c579!important}
+.atelier-site .atelier-footer a:hover{color:#e8c579!important}
+.atelier-site .atelier-footer .footer-bottom{border-color:#d3a7534d}
+@media(max-width:600px){.atelier-site .atelier-header>.atelier-brand{padding-right:12px}.atelier-site .atelier-header>.atelier-brand::after{right:0}}
+.atelier-site main .glass-button,.atelier-site .site-mobile-menu-panel .glass-button{border-color:#c5a354;background:linear-gradient(135deg,#fffdf8cc,#f4e9c566,#fffdf8bb);box-shadow:inset 0 1px #fff,0 4px 16px #8a631415}
