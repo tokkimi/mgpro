@@ -159,3 +159,4 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 /* Cooler gold in the supplied mark, retaining the light lettering on dark surfaces. */
 .atelier-site .atelier-brand img.mg-public-logo,.atelier-site .atelier-contact .contact-logo img.mg-public-logo,.atelier-site .site-mobile-menu-panel img.mg-public-logo,.mg-brand-intro .mg-intro-logo img.mg-public-logo{filter:hue-rotate(12deg) saturate(.85)!important}
 .atelier-site .atelier-header .atelier-brand img.mg-public-logo,.atelier-site .atelier-footer .atelier-brand img.mg-public-logo{filter:invert(1) hue-rotate(192deg) saturate(.85)!important}
+.atelier-site .atelier-header .header-quote.glass-button{width:auto!important;min-width:0!important;max-width:none!important;height:36px!important;min-height:36px!important;padding:8px 14px!important;gap:7px!important;font-size:11px!important;white-space:nowrap!important}
