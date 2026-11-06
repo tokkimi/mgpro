@@ -101,16 +101,13 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 .atelier-site .immersive-banner-copy .section-kicker{justify-content:center}
 .atelier-site .immersive-banner-copy .section-kicker::after{content:'';width:32px;height:1px;background:linear-gradient(90deg,#b77918,#f2c768,transparent)}
 
-/* Metallic gold lettering and the paired lines of the MG Pro signature. */
+/* Hierarchy: small gold section labels, light-weight editorial headings. */
 .atelier-site{--gold:#b5841d}
-.atelier-site :is(main,footer) :is(h1,h2){position:relative;font-family:Georgia,'Times New Roman',serif;font-weight:600;letter-spacing:.005em;color:#956400!important;text-shadow:0 1px 0 #ffe3a0,0 2px 4px #8a5c1d26;padding-inline:clamp(26px,3vw,48px)}
-.atelier-site :is(main,footer) :is(h1,h2)::before,.atelier-site :is(main,footer) :is(h1,h2)::after{content:'';position:absolute;top:.58em;width:clamp(18px,2.2vw,32px);height:2px;background:linear-gradient(90deg,transparent,#ab730c 28%,#ffe59e 52%,#a66c09 76%,transparent);box-shadow:0 1px 3px #b77f3350;pointer-events:none}
-.atelier-site :is(main,footer) :is(h1,h2)::before{left:0}
-.atelier-site :is(main,footer) :is(h1,h2)::after{right:0}
-.atelier-site :is(main,footer) :is(h1,h2)>span:not(.gold-dot){color:#956400!important}
-.atelier-site :is(main,footer) :is(h3,h4),.atelier-site .section-kicker{font-family:Georgia,'Times New Roman',serif;letter-spacing:.1em;font-weight:500}
-.atelier-site .section-kicker{color:#8b610b!important}
-.atelier-site .hero-scroll-sequence .hero-finance :is(span,p,b){color:#20262b!important}
-.atelier-site :is(.contact-glass-panel,.request-dialog) :is(h1,h2){color:#73500b!important}
-.atelier-site .immersive-banner-copy h2{color:#ffe3a0!important;text-shadow:0 2px 14px #000,0 1px 0 #fff4cf}
-@media(max-width:600px){.atelier-site :is(main,footer) :is(h1,h2){padding-inline:25px}.atelier-site :is(main,footer) :is(h1,h2)::before,.atelier-site :is(main,footer) :is(h1,h2)::after{width:18px}}
+.atelier-site :is(main,footer) :is(h1,h2){font-family:Georgia,'Times New Roman',serif;font-weight:400;letter-spacing:.015em;color:#20262b!important;text-shadow:none;padding-inline:0}
+.atelier-site :is(main,footer) :is(h1,h2)>span:not(.gold-dot){color:#20262b!important}
+.atelier-site .section-kicker{display:flex;align-items:center;justify-content:flex-start;gap:12px;width:fit-content;max-width:100%;font-family:Georgia,'Times New Roman',serif;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:#8b610b!important}
+.atelier-site .section-kicker::before,.atelier-site .section-kicker::after{content:'';display:block;flex:0 0 32px;width:32px;height:2px;background:linear-gradient(90deg,transparent,#a96f0c 25%,#ffe19a 50%,#a96f0c 75%,transparent);box-shadow:0 1px 2px #a56c1530}
+.atelier-site .immersive-banner-copy .section-kicker{justify-content:center}
+.atelier-site .immersive-banner-copy h2{font-family:Georgia,'Times New Roman',serif;font-size:clamp(28px,3.5vw,54px);font-weight:400;color:#fff!important;text-shadow:0 2px 18px #0009}
+.atelier-site .hero-scroll-sequence h1,.atelier-site .hero-scroll-sequence h1>span:not(.gold-dot){color:#fff!important;text-shadow:0 2px 18px #0008}
+@media(max-width:600px){.atelier-site .section-kicker::before,.atelier-site .section-kicker::after{flex-basis:22px;width:22px}.atelier-site .immersive-banner-copy h2{font-size:clamp(26px,7vw,38px)}}
