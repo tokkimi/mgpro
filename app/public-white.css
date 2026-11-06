@@ -140,3 +140,12 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 .atelier-site .atelier-footer .footer-bottom{border-color:#d3a7534d}
 @media(max-width:600px){.atelier-site .atelier-header>.atelier-brand{padding-right:12px}.atelier-site .atelier-header>.atelier-brand::after{right:0}}
 .atelier-site main .glass-button,.atelier-site .site-mobile-menu-panel .glass-button{border-color:#c5a354;background:linear-gradient(135deg,#fffdf8cc,#f4e9c566,#fffdf8bb);box-shadow:inset 0 1px #fff,0 4px 16px #8a631415}
+
+/* Simple, legible navigation on the dark header. */
+.atelier-site>.atelier-header>nav>a{position:relative;isolation:auto;overflow:visible;border-radius:0;padding:8px 0;margin:0;color:#fff!important;transform:none!important;transition:color .2s ease}
+.atelier-site>.atelier-header>nav>a::before{content:none!important;display:none!important}
+.atelier-site>.atelier-header>nav>a::after{content:'';position:absolute;inset:auto 0 0;width:100%;height:1px;background:#dcb96f;opacity:0;transform:none;animation:none!important;pointer-events:none;z-index:auto}
+.atelier-site>.atelier-header>nav>a:is(:hover,:focus-visible,[aria-current=page]){color:#edc978!important;transform:none!important}
+.atelier-site>.atelier-header>nav>a:is(:hover,:focus-visible,[aria-current=page])::after{opacity:1;transform:none;animation:none!important}
+.atelier-site>.atelier-header .header-quote{font-size:11px;line-height:1.1;min-height:36px;padding:9px 14px;gap:10px;border-radius:20px;white-space:nowrap}
+.atelier-site>.atelier-header .header-quote svg{width:14px;height:14px}
