@@ -155,3 +155,7 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 .atelier-site :is(.glass-button,.mg-liquid-button){border-color:#cbb762;box-shadow:0 4px 18px #6d4a1a1a,inset 0 1px 0 #fff4cf,inset 0 -1px 2px #9684434d}
 .atelier-site :is(.glass-button,.mg-liquid-button)::before{box-shadow:0 2px 12px #0002,inset 2px 2px 1px -2px #ffedb4,inset -2px -2px 1px -2px #98843a,inset 0 0 4px 1px #d9c77d55}
 .atelier-site .hero-scroll-sequence .hero-project-button{border:1px solid #d5c16b;box-shadow:0 4px 18px #0003,inset 0 1px 0 #fff1ba,inset 0 -1px 2px #a5944599}
+
+/* Cooler gold in the supplied mark, retaining the light lettering on dark surfaces. */
+.atelier-site .atelier-brand img.mg-public-logo,.atelier-site .atelier-contact .contact-logo img.mg-public-logo,.atelier-site .site-mobile-menu-panel img.mg-public-logo,.mg-brand-intro .mg-intro-logo img.mg-public-logo{filter:hue-rotate(12deg) saturate(.85)!important}
+.atelier-site .atelier-header .atelier-brand img.mg-public-logo,.atelier-site .atelier-footer .atelier-brand img.mg-public-logo{filter:invert(1) hue-rotate(192deg) saturate(.85)!important}
