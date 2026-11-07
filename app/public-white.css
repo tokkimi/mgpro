@@ -175,3 +175,10 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 .atelier-site :is(.atelier-text-link,.glass-button,.mg-liquid-button)::before{box-shadow:0 2px 12px #0002,inset 2px 2px 1px -2px #ffedb4,inset -2px -2px 1px -2px #a87826,inset 0 0 4px 1px #e8c77a55}
 .atelier-site .atelier-brand img.mg-public-logo,.atelier-site .atelier-contact .contact-logo img.mg-public-logo,.atelier-site .site-mobile-menu-panel img.mg-public-logo,.mg-brand-intro .mg-intro-logo img.mg-public-logo{filter:hue-rotate(5deg)!important}
 .atelier-site .atelier-header .atelier-brand img.mg-public-logo,.atelier-site .atelier-footer .atelier-brand img.mg-public-logo{filter:hue-rotate(5deg)!important}
+
+/* Legibility and sizing corrections across public breakpoints. */
+.atelier-site .atelier-header .site-mobile-menu-panel .site-menu-language,.atelier-site .atelier-header .site-mobile-menu-panel .site-menu-language span,.atelier-site .atelier-header .site-mobile-menu-panel .site-menu-language a.language-switch{color:#20262b!important}
+.atelier-site .atelier-header .site-mobile-menu-panel .site-menu-language a.language-switch{border-color:#d0d3d4;background:#fff}
+.atelier-site .hero-scroll-sequence .atelier-hero-copy h1 span.hero-gold-copy:not(#hero-specificity){color:#e4c274!important}
+.atelier-site .hero-scroll-sequence .hero-project-button.glass-button{width:240px!important;max-width:100%!important;white-space:normal!important}
+@media(max-width:400px){.atelier-site .hero-scroll-sequence .hero-project-button.glass-button{width:min(240px,100%)!important}}
