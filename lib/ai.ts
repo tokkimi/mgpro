@@ -31,7 +31,7 @@ export function aiProvider(req?:Request):AiProvider|null{
 
 export function aiConfigured(req?:Request){return aiProvider(req)!==null;}
 
-export let lastModel='';
+export let lastModel='';export let lastStop='';
 // Models refused by the account (plan restrictions) are skipped for a while on this instance.
 const unavailable=new Map<string,number>();
 export class AiError extends Error{constructor(message:string,public status=502){super(message)}}
@@ -67,6 +67,7 @@ export async function aiText({req,system,messages,maxTokens=2000,tier='smart',ti
   throw new AiError(`Service IA indisponible (${res.status}).`,502);
  }
  const data=await res.json();
+ lastStop=String(data?.stop_reason||'');
  if(data?.stop_reason==='refusal')throw new AiError('L’IA a refusé de traiter cette demande.',422);
  return Array.isArray(data?.content)?data.content.filter((c:any)=>c.type==='text').map((c:any)=>c.text).join('\n'):'';
 }

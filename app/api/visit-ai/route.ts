@@ -2,7 +2,7 @@ import {NextResponse} from 'next/server';
 import {z} from 'zod';
 import {identity} from '@/lib/supabase';
 import {sameOrigin} from '@/lib/access';
-import {aiConfigured,aiProvider,aiText,lastModel,extractJson,AiError,type AiContent} from '@/lib/ai';
+import {aiConfigured,aiProvider,aiText,lastModel,lastStop,extractJson,AiError,type AiContent} from '@/lib/ai';
 import {MEASURE_SYSTEM,PLAN_SYSTEM,measureUserText,planUserText,normalizeMeasure,normalizePlan,autoPlan} from '@/lib/visit-ai';
 
 export const dynamic='force-dynamic';
@@ -40,7 +40,7 @@ export async function POST(req:Request){
  const fallback=autoPlan(input.rooms,input.style);
  if(!aiConfigured(req))return NextResponse.json({plan:fallback,source:'auto',note:'Plan disposé automatiquement (IA non configurée).'});
  try{
-  const text=await aiText({req,system:PLAN_SYSTEM,messages:[{role:'user',content:planUserText(input)}],maxTokens:8000,timeoutMs:80000});
+  const text=await aiText({req,system:PLAN_SYSTEM,messages:[{role:'user',content:planUserText(input)}],maxTokens:16000,timeoutMs:80000});
   const plan=normalizePlan(extractJson(text),input.rooms,input.style);
   if(plan)return NextResponse.json({plan,source:'model'},{headers:{'Cache-Control':'private, no-store'}});
   return NextResponse.json({plan:fallback,source:'auto',note:'Réponse IA inutilisable : plan disposé automatiquement à partir des mesures.'});
@@ -56,7 +56,7 @@ export async function GET(req:Request){
   // Operator health check: one tiny model call, no data involved.
   try{
    const url=new URL(req.url),test=url.searchParams.get('test');
-   if(test==='plan'){const rooms=[{name:'Cuisine',length:14,width:11,height:8,unit:'pi'},{name:'Salon',length:16,width:13,height:8,unit:'pi'},{name:'Salle de bain',length:8,width:6,height:8,unit:'pi'},{name:'Chambre',length:12,width:11,height:8,unit:'pi'}];const text=await aiText({req,system:PLAN_SYSTEM,messages:[{role:'user',content:planUserText({rooms,scope:'Ouvrir le mur entre cuisine et salon, ajouter un îlot, refaire la salle de bain avec douche en céramique.'})}],maxTokens:8000,timeoutMs:80000});const plan=normalizePlan(extractJson(text),rooms);return NextResponse.json({ok:!!plan,model:lastModel,rooms:plan?.rooms.map(r=>[r.name,r.x,r.y,r.length,r.width,r.furniture]),elements:plan?.elements.length,raw:plan?undefined:text.slice(0,800)})}
+   if(test==='plan'){const rooms=[{name:'Cuisine',length:14,width:11,height:8,unit:'pi'},{name:'Salon',length:16,width:13,height:8,unit:'pi'},{name:'Salle de bain',length:8,width:6,height:8,unit:'pi'},{name:'Chambre',length:12,width:11,height:8,unit:'pi'}];const text=await aiText({req,system:PLAN_SYSTEM,messages:[{role:'user',content:planUserText({rooms,scope:'Ouvrir le mur entre cuisine et salon, ajouter un îlot, refaire la salle de bain avec douche en céramique.'})}],maxTokens:16000,timeoutMs:80000});const plan=normalizePlan(extractJson(text),rooms);return NextResponse.json({ok:!!plan,model:lastModel,rooms:plan?.rooms.map(r=>[r.name,r.x,r.y,r.length,r.width,r.furniture]),elements:plan?.elements.length,stop:lastStop,len:text.length,tail:plan?undefined:text.slice(-600)})}
    if(test==='measure'){const img=url.searchParams.get('img')||'';const text=await aiText({req,system:MEASURE_SYSTEM,messages:[{role:'user',content:[{type:'image',source:{type:'url',url:img}},{type:'text',text:measureUserText({source:'photo',count:1})}]}],maxTokens:2000,timeoutMs:80000});return NextResponse.json({ok:true,model:lastModel,measure:normalizeMeasure(extractJson(text)),raw:text.slice(0,600)})}
    const text=await aiText({req,system:'Réponds uniquement OK.',messages:[{role:'user',content:'Test'}],maxTokens:300,tier:'fast',timeoutMs:20000});return NextResponse.json({ok:true,provider:aiProvider(req)?.kind,model:lastModel,answer:text.slice(0,20)})}
   catch(e){return NextResponse.json({ok:false,provider:aiProvider(req)?.kind||null,error:(e as Error).message},{status:200})}
