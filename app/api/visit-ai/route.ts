@@ -2,7 +2,7 @@ import {NextResponse} from 'next/server';
 import {z} from 'zod';
 import {identity} from '@/lib/supabase';
 import {sameOrigin} from '@/lib/access';
-import {aiConfigured,aiProvider,aiText,extractJson,AiError,type AiContent} from '@/lib/ai';
+import {aiConfigured,aiProvider,aiText,lastModel,extractJson,AiError,type AiContent} from '@/lib/ai';
 import {MEASURE_SYSTEM,PLAN_SYSTEM,measureUserText,planUserText,normalizeMeasure,normalizePlan,autoPlan} from '@/lib/visit-ai';
 
 export const dynamic='force-dynamic';
@@ -54,7 +54,7 @@ export async function GET(req:Request){
  const probe=new URL(req.url).searchParams.get('probe'),secret=process.env.AI_PROBE_SECRET;
  if(probe&&secret&&probe===secret){
   // Operator health check: one tiny model call, no data involved.
-  try{const text=await aiText({req,system:'Réponds uniquement OK.',messages:[{role:'user',content:'Test'}],maxTokens:5,tier:'fast',timeoutMs:20000});return NextResponse.json({ok:true,provider:aiProvider(req)?.kind,answer:text.slice(0,20)})}
+  try{const text=await aiText({req,system:'Réponds uniquement OK.',messages:[{role:'user',content:'Test'}],maxTokens:5,tier:'fast',timeoutMs:20000});return NextResponse.json({ok:true,provider:aiProvider(req)?.kind,model:lastModel,answer:text.slice(0,20)})}
   catch(e){return NextResponse.json({ok:false,provider:aiProvider(req)?.kind||null,error:(e as Error).message},{status:200})}
  }
  const user=await identity();
