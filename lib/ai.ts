@@ -8,6 +8,7 @@
 
 export type AiContent =
  | {type:'text';text:string}
+ | {type:'image';source:{type:'url';url:string}}
  | {type:'image';source:{type:'base64';media_type:'image/jpeg'|'image/png'|'image/webp';data:string}};
 export type AiMessage = {role:'user'|'assistant';content:string|AiContent[]};
 export type AiProvider = {kind:'anthropic'|'gateway';url:string;headers:Record<string,string>;models:(tier:'smart'|'fast')=>string[]};
@@ -31,6 +32,8 @@ export function aiProvider(req?:Request):AiProvider|null{
 export function aiConfigured(req?:Request){return aiProvider(req)!==null;}
 
 export let lastModel='';
+// Models refused by the account (plan restrictions) are skipped for a while on this instance.
+const unavailable=new Map<string,number>();
 export class AiError extends Error{constructor(message:string,public status=502){super(message)}}
 
 /** Calls Claude and returns the concatenated text answer. Throws AiError with a French message. */
@@ -39,7 +42,8 @@ export async function aiText({req,system,messages,maxTokens=2000,tier='smart',ti
  if(!provider)throw new AiError('IA non configurée sur ce déploiement.',503);
  let res:Response|null=null,lastBody='';
  const deadline=Date.now()+timeoutMs;
- for(const model of provider.models(tier)){
+ const candidates=provider.models(tier).filter(m=>(unavailable.get(m)||0)<Date.now());
+ for(const model of candidates.length?candidates:provider.models(tier)){
   const remaining=deadline-Date.now();if(remaining<3000)break;
   const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),remaining);
   try{
@@ -52,6 +56,7 @@ export async function aiText({req,system,messages,maxTokens=2000,tier='smart',ti
   // Model not available on this account / plan: try the next candidate.
   const restricted=/RestrictedModels|not_found|model_not_found|no_providers_available|does not have access|invalid model/i.test(lastBody)||res.status===404;
   if(!restricted)break;
+  unavailable.set(model,Date.now()+15*60_000);
  }
  if(!res)throw new AiError('Service IA indisponible.',502);
  if(!res.ok){

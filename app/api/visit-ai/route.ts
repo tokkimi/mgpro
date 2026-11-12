@@ -54,7 +54,11 @@ export async function GET(req:Request){
  const probe=new URL(req.url).searchParams.get('probe'),secret=process.env.AI_PROBE_SECRET;
  if(probe&&secret&&probe===secret){
   // Operator health check: one tiny model call, no data involved.
-  try{const text=await aiText({req,system:'Réponds uniquement OK.',messages:[{role:'user',content:'Test'}],maxTokens:5,tier:'fast',timeoutMs:20000});return NextResponse.json({ok:true,provider:aiProvider(req)?.kind,model:lastModel,answer:text.slice(0,20)})}
+  try{
+   const url=new URL(req.url),test=url.searchParams.get('test');
+   if(test==='plan'){const rooms=[{name:'Cuisine',length:14,width:11,height:8,unit:'pi'},{name:'Salon',length:16,width:13,height:8,unit:'pi'},{name:'Salle de bain',length:8,width:6,height:8,unit:'pi'},{name:'Chambre',length:12,width:11,height:8,unit:'pi'}];const text=await aiText({req,system:PLAN_SYSTEM,messages:[{role:'user',content:planUserText({rooms,scope:'Ouvrir le mur entre cuisine et salon, ajouter un îlot, refaire la salle de bain avec douche en céramique.'})}],maxTokens:8000,timeoutMs:80000});const plan=normalizePlan(extractJson(text),rooms);return NextResponse.json({ok:!!plan,model:lastModel,rooms:plan?.rooms.map(r=>[r.name,r.x,r.y,r.length,r.width,r.furniture]),elements:plan?.elements.length,raw:plan?undefined:text.slice(0,800)})}
+   if(test==='measure'){const img=url.searchParams.get('img')||'';const text=await aiText({req,system:MEASURE_SYSTEM,messages:[{role:'user',content:[{type:'image',source:{type:'url',url:img}},{type:'text',text:measureUserText({source:'photo',count:1})}]}],maxTokens:2000,timeoutMs:80000});return NextResponse.json({ok:true,model:lastModel,measure:normalizeMeasure(extractJson(text)),raw:text.slice(0,600)})}
+   const text=await aiText({req,system:'Réponds uniquement OK.',messages:[{role:'user',content:'Test'}],maxTokens:300,tier:'fast',timeoutMs:20000});return NextResponse.json({ok:true,provider:aiProvider(req)?.kind,model:lastModel,answer:text.slice(0,20)})}
   catch(e){return NextResponse.json({ok:false,provider:aiProvider(req)?.kind||null,error:(e as Error).message},{status:200})}
  }
  const user=await identity();
