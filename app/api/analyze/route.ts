@@ -21,7 +21,7 @@ export async function POST(req:Request){
  if(configured){
   try{
    const built=buildAnalysisMessages(transcript,context),messages=built.messages;const preferences=(await db().from('records').select('data').eq('kind','settings').limit(1).maybeSingle()).data?.data?.ai_preferences;const system=`${built.system}\n\n${aiInstructions(preferences)}`;
-   const textOut=await aiText({req,system,messages,maxTokens:2500,timeoutMs:45000});
+   const textOut=await aiText({req,system,messages,maxTokens:8000,timeoutMs:50000});
    const analysis=parseModelAnalysis(textOut);
    if(analysis)return NextResponse.json({analysis});
   }catch(e){console.error('analyze',(e as Error).message)}
