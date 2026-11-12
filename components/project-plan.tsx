@@ -4,6 +4,7 @@ import {useEffect,useRef,useState} from 'react';
 import {extensionTemplate,fromRooms,planSchema,type Plan} from '@/lib/plan';
 import {money,totals,type RecordItem,type Data,type Kind} from '@/lib/model';
 import PlanEditor from './plan-editor';
+import {PlanGenerator,planRequestFromVisit} from './visit-ai-tools';
 import PlanInvitations from './plan-invitations';
 import ProjectOperations from './project-operations';
 import {projectSettingsFrom} from '@/lib/settings-model';
@@ -25,6 +26,7 @@ export default function ProjectPlan({record,visits,documents,projectRecords,emai
  const [plan,setPlan]=useState<Plan|null>(record.data.plan||null);
  const [removedDocuments,setRemovedDocuments]=useState<string[]>([]);
  const [open,setOpen]=useState(false);
+ const [genKey,setGenKey]=useState(0);
  const [message,setMessage]=useState('');
  const [busy,setBusy]=useState(false);
  const [recovery,setRecovery]=useState<Plan|null>(null);
@@ -146,6 +148,7 @@ export default function ProjectPlan({record,visits,documents,projectRecords,emai
 
  const pdfs=documents.filter(document=>document.data.mime==='application/pdf'&&!removedDocuments.includes(document.id));
  const visitPlans=visits.filter(visit=>visit.data.plan);
+ const sourceVisit=[...visits].filter(visit=>(visit.data.rooms||[]).length||(visit.data.voice_notes||[]).length||visit.data.scope).sort((a,b)=>String(b.updated_at||b.created_at||'').localeCompare(String(a.updated_at||a.created_at||'')))[0];
  const usablePlan=!!plan&&planSchema.safeParse(plan).success;
  const openTasks=projectRows.filter(row=>row.kind==='task'&&row.data.status!=='Validée'),phases=projectRows.filter(row=>row.kind==='phase'&&!row.data.archived),nextVisit=visits.filter(visit=>String(visit.data.date||visit.data.start||'').slice(0,10)>=new Date().toISOString().slice(0,10)&&visit.data.status!=='Annulée').sort((a,b)=>String(a.data.date||a.data.start||'9999').localeCompare(String(b.data.date||b.data.start||'9999')))[0],progress=phases.length?Math.round(phases.reduce((sum,phase)=>sum+Math.max(0,Math.min(100,Number(phase.data.progress||0))),0)/phases.length):0;
  const fileFolders=[['Plans & relevés',documents.filter(document=>document.data.mime==='application/pdf').length],['Photos',documents.filter(document=>String(document.data.mime||'').startsWith('image/')).length],['Soumissions',projectRows.filter(row=>row.kind==='quote'&&!(row.data.change_order||row.data.document_type==='change_order')).length],['Ordres de changement',projectRows.filter(row=>row.kind==='quote'&&(row.data.change_order||row.data.document_type==='change_order')).length],['Contrats',projectRows.filter(row=>row.kind==='contract').length],['Factures',projectRows.filter(row=>row.kind==='invoice').length],['Dépenses',projectRows.filter(row=>row.kind==='expense').length]];
@@ -162,7 +165,8 @@ export default function ProjectPlan({record,visits,documents,projectRecords,emai
    {recovery&&<button className="btn secondary" onClick={()=>{setPlan(recovery);setSaved(false);setChanged(true);setRecovery(null);setOpen(true)}}>Reprendre les modifications non enregistrées</button>}
    {!plan&&<div className="button-row"><button className="btn primary" onClick={()=>{change(starterPlan());setOpen(true)}}>Créer le plan 2D</button>{pdfs.length>0&&<button className="btn secondary" onClick={()=>{change(extensionTemplate());setOpen(true)}}>Créer un relevé maison / agrandissement</button>}{visitPlans.map(visit=><button className="btn secondary" key={visit.id} onClick={()=>{change(structuredClone(visit.data.plan));setOpen(true)}}>Reprendre le plan : {visit.data.title}</button>)}</div>}
    {plan&&!usablePlan&&<div className="notice"><b>Ce plan n’a pas de mesures utilisables.</b><p>Il faut au moins une pièce avec longueur, largeur et hauteur. Créez une base propre puis adaptez les cotes à partir du PDF.</p><button className="btn primary" disabled={busy} onClick={()=>{change(starterPlan());setOpen(true)}}>Réinitialiser avec une pièce mesurée</button><button className="btn secondary" disabled={busy} onClick={()=>{change(extensionTemplate());setOpen(true)}}>Créer le relevé maison / agrandissement</button><button className="btn danger-outline" disabled={busy} onClick={resetPlan}>Supprimer ce plan</button></div>}
-   {plan&&usablePlan&&<><div className="button-row"><button className="btn primary" onClick={()=>setOpen(value=>!value)}>{open?'Fermer la visualisation':plan.validated?'Visualiser en 3D':'Ouvrir le plan 2D'}</button><button className="btn secondary" disabled={busy} onClick={persist}>Enregistrer maintenant</button><button className="btn danger-outline" disabled={busy} onClick={resetPlan}>Supprimer le plan 2D/3D</button></div>{open&&<PlanEditor value={plan} onChange={change} initialView="design" references={pdfs.map(document=>({id:document.id,name:document.data.name,href:`/api/documents?id=${document.id}`}))}/>} {saved&&plan.validated&&<PlanInvitations id={record.id} email={email} demo={demo}/>}</>}
+   {plan&&usablePlan&&<><div className="button-row"><button className="btn primary" onClick={()=>setOpen(value=>!value)}>{open?'Fermer la visualisation':plan.validated?'Visualiser en 3D':'Ouvrir le plan 2D'}</button><button className="btn secondary" disabled={busy} onClick={persist}>Enregistrer maintenant</button><button className="btn danger-outline" disabled={busy} onClick={resetPlan}>Supprimer le plan 2D/3D</button></div>{open&&<PlanEditor key={genKey} value={plan} onChange={change} initialView="design" references={pdfs.map(document=>({id:document.id,name:document.data.name,href:`/api/documents?id=${document.id}`}))}/>} {saved&&plan.validated&&<PlanInvitations id={record.id} email={email} demo={demo}/>}</>}
+   {sourceVisit&&<PlanGenerator request={planRequestFromVisit(sourceVisit.data)} demo={demo} disabled={busy} hasPlan={!!plan} label={`Générer le plan 2D / 3D avec l’IA (visite : ${sourceVisit.data.title||'relevé'})`} onPlan={(next,note)=>{change(next);setGenKey(k=>k+1);setOpen(true);setMessage(note)}}/>}
    {message&&<p role="status">{message}</p>}
   </div>
 

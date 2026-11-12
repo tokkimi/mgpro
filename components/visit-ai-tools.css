@@ -1,0 +1,8 @@
+.room-ai-measure{margin:.75rem 0;padding:.85rem;border:1px dashed rgba(127,127,127,.45);border-radius:12px;display:grid;gap:.6rem}
+.room-ai-head{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem;margin:0}.room-ai-head small{opacity:.7;width:100%}
+.room-ai-reference{display:grid;gap:.3rem;font-size:.85rem}
+.room-ai-status{display:flex;align-items:center;gap:.4rem;margin:0}
+.room-ai-previews{display:flex;gap:.35rem;overflow-x:auto}.room-ai-previews img{height:64px;width:auto;border-radius:6px;flex:none}
+.room-ai-result{display:grid;gap:.35rem;padding:.75rem;border-radius:10px;background:rgba(127,127,127,.1)}.room-ai-result p{margin:0}
+.room-ai-dims{font-size:1.05rem}
+.plan-ai-generator{display:grid;gap:.4rem;margin:.75rem 0}.plan-ai-generator .btn{justify-self:start}

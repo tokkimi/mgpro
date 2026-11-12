@@ -7,8 +7,10 @@ import {activeRecords} from '@/lib/client-trash';
 import {assistantContext} from '@/lib/routines';
 import {aiInstructions} from '@/lib/settings-model';
 import type {RecordItem} from '@/lib/model';
+import {aiProvider,aiText,AiError} from '@/lib/ai';
 
 export const dynamic='force-dynamic';
+export const maxDuration=60;
 const MODEL='claude-opus-5-5';
 const schema=z.object({messages:z.array(z.object({role:z.enum(['user','assistant']),content:z.string().min(1).max(6000)})).min(1).max(20)});
 
@@ -18,7 +20,8 @@ export async function POST(req:Request){
  const user=await identity();
  if(!user)return NextResponse.json({error:'Connexion requise.'},{status:401});
  if(user.role!=='admin')return NextResponse.json({error:'Accès refusé.'},{status:403});
- if(!process.env.ANTHROPIC_API_KEY)return NextResponse.json({error:'Assistant non configuré : la clé ANTHROPIC_API_KEY doit être ajoutée aux variables du projet Vercel, puis redéployée.',configured:false},{status:503});
+ const provider=aiProvider(req);
+ if(!provider)return NextResponse.json({error:'Assistant non configuré : aucun accès IA sur ce déploiement.',configured:false},{status:503});
  const parsed=schema.safeParse(await req.json().catch(()=>null));
  if(!parsed.success||parsed.data.messages[0].role!=='user'||parsed.data.messages.at(-1)!.role!=='user')return NextResponse.json({error:'Conversation invalide.'},{status:400});
  const {data,error}=await db().from('records').select('*').in('kind',['project','invoice','expense','quote','request','task','settings','client']);
@@ -27,6 +30,10 @@ export async function POST(req:Request){
  const settings=records.find(r=>r.kind==='settings')?.data||{};
  const today=new Date().toLocaleDateString('en-CA',{timeZone:'America/Montreal'});
  const system=`Tu es l’assistant de gestion de ${settings.name||'Rénovations MG Pro'}, entrepreneur en rénovation au Québec. Réponds en français, brièvement, uniquement à partir des données ci-dessous. Si une information n’y figure pas, dis-le. Tu ne peux rien modifier, envoyer ni créer : propose seulement des actions que l’utilisateur fera lui-même dans MG Pro. ${aiInstructions(settings.ai_preferences)}\n\nDonnées calculées :\n${assistantContext(records,today,settings)}`;
+ if(provider.kind==='gateway'){
+  try{const text=(await aiText({req,system,messages:parsed.data.messages,maxTokens:4000,timeoutMs:55000})).trim();return NextResponse.json({reply:text||'Aucune réponse.'},{headers:{'Cache-Control':'private, no-store'}})}
+  catch(e){const err=e as AiError;return NextResponse.json({error:err.message||'Service IA injoignable.'},{status:err.status||502})}
+ }
  try{
   const client=new Anthropic();
   const response=await client.beta.messages.create({model:MODEL,max_tokens:4000,output_config:{effort:'low'},betas:['server-side-fallback-2026-07-01'],fallbacks:'default',system,messages:parsed.data.messages});
