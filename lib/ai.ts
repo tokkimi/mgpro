@@ -41,10 +41,10 @@ export async function aiText({req,system,messages,maxTokens=2000,tier='smart',ti
  finally{clearTimeout(timer)}
  if(!res.ok){
   const body=await res.text().catch(()=>'');
+  console.error('ai error',provider.kind,res.status,body.slice(0,500));
   if(res.status===401||res.status===403)throw new AiError('Accès IA refusé (clé ou crédits AI Gateway à vérifier).',502);
   if(res.status===402)throw new AiError('Crédits IA épuisés sur le compte Vercel AI Gateway.',502);
   if(res.status===429)throw new AiError('Service IA saturé, réessayez dans un instant.',429);
-  console.error('ai error',res.status,body.slice(0,500));
   throw new AiError(`Service IA indisponible (${res.status}).`,502);
  }
  const data=await res.json();
