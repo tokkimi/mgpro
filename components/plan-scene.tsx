@@ -24,7 +24,8 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
  const [render,setRender]=useState<{busy:boolean;image?:string;error?:string}>({busy:false});
  const [mode,setMode]=useState<'model'|'visit'>('model');const [full,setFull]=useState(false);const [roomId,setRoomId]=useState('');
  const view=useRef<any>(null);const [panel,setPanel]=useState(false);
- const api=useRef<{visit:(id?:string)=>void;model:()=>void;hold:(dir:string,on:boolean)=>void;zoom:(f:number)=>void}|null>(null);
+ const realRef=useRef(true);const [real,setReal]=useState(true);const [quality,setQuality]=useState(-1);
+ const api=useRef<{real:(on:boolean)=>void;samples:()=>number;visit:(id?:string)=>void;model:()=>void;hold:(dir:string,on:boolean)=>void;zoom:(f:number)=>void}|null>(null);
  useEffect(()=>{let dispose=()=>{};let cancelled=false;(async()=>{try{
   const T=await import('three');
   const {OrbitControls}=await import('three/addons/controls/OrbitControls.js');
@@ -45,12 +46,13 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
 
   // ── materials ──
   const mats:any[]=[];const keep=<M,>(m:M)=>{mats.push(m);return m};
+  let ptMaterialsTimer:any=0;let pt:any=null;const texturesChanged=()=>{if(!pt)return;clearTimeout(ptMaterialsTimer);ptMaterialsTimer=setTimeout(()=>{try{pt?.updateMaterials()}catch{}},250)};
   const loader=new T.TextureLoader();const photoTex=new Map<string,any>();
   // Real scanned texture (ambientCG, CC0) for a catalogue finish; it replaces the procedural one once loaded.
   const photoMaps=(photo:Photo,finish:Finish,uw:number,uh:number,mat:any)=>{const tile=finish==='wood'?2:finish==='brick'?1.6:finish==='paint'?2.4:finish==='concrete'?2:1.2;
    const get=(map:'Color'|'NormalGL'|'Roughness')=>{const url=photoUrl(photo,1024,map);let base=photoTex.get(url);if(!base){base=loader.load(url,()=>{for(const u of base.userData.users||[])u();base.userData.users=[];});base.wrapS=base.wrapT=T.RepeatWrapping;base.anisotropy=8;if(map==='Color')base.colorSpace=T.SRGBColorSpace;base.userData.users=[];photoTex.set(url,base)}const t=base.clone();t.repeat.set(uw/tile,uh/tile);return {t,base}};
    const c=get('Color'),n=get('NormalGL'),r=get('Roughness');
-   const apply=()=>{if(!c.base.image)return;c.t.needsUpdate=true;mat.map=c.t;mat.color=new T.Color('#ffffff');if(n.base.image){n.t.needsUpdate=true;mat.normalMap=n.t}if(r.base.image){r.t.needsUpdate=true;mat.roughnessMap=r.t;mat.roughness=1}mat.needsUpdate=true};
+   const apply=()=>{if(!c.base.image)return;c.t.needsUpdate=true;mat.map=c.t;mat.color=new T.Color('#ffffff');if(n.base.image){n.t.needsUpdate=true;mat.normalMap=n.t}if(r.base.image){r.t.needsUpdate=true;mat.roughnessMap=r.t;mat.roughness=1}mat.needsUpdate=true;texturesChanged()};
    for(const x of [c,n,r]){if(x.base.image)apply();else x.base.userData.users.push(apply)}};
   const textured=(finish:Finish,color:string,uw:number,uh:number,opts:any={})=>{const made=finishTextures(T,finish,color,opts.seed??7);const map=made.map.clone(),normalMap=made.normalMap.clone();for(const t of [map,normalMap]){t.repeat.set(uw/made.size[0],uh/made.size[1]);t.needsUpdate=true}const {seed,photo,...rest}=opts;if(photo){const m=keep(new T.MeshPhysicalMaterial({map,normalMap,normalScale:new T.Vector2(.6,.6),roughness:.6,...rest}));photoMaps(photo,finish,uw,uh,m);return m}return keep(new T.MeshPhysicalMaterial({map,normalMap,normalScale:new T.Vector2(.6,.6),roughness:.6,...rest}))};
   const plain=(color:string,opts:any={})=>keep(new T.MeshPhysicalMaterial({color,roughness:.6,...opts}));
@@ -93,7 +95,7 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
 
   // ── fixtures ──
   let cur:{fronts?:Look;worktop?:Look;splash?:Look;taps?:any;vanity?:Look}={};
-  const topMat=(W:number,D:number)=>cur.worktop?textured(cur.worktop.finish as Finish,cur.worktop.color,W,D,{photo:cur.worktop.photo,roughness:cur.worktop.roughness,clearcoat:.5}):textured('quartz','#f1efea',W,D,{roughness:.15,clearcoat:.6});
+  const topMat=(W:number,D:number)=>cur.worktop?textured(cur.worktop.finish as Finish,cur.worktop.color,W,D,{photo:cur.worktop.photo,roughness:cur.worktop.roughness,clearcoat:.5}):textured('quartz','#f1efea',W,D,{photo:{a:'Marble012'},roughness:.15,clearcoat:.6});
   const frontMat=(front:string,w:number,h:number)=>{const look=[cur.fronts,cur.vanity].find(f=>f&&f.photo&&f.color===front);return look?textured(look.finish as Finish,front,w,h,{photo:look.photo,roughness:.35,clearcoat:.25}):plain(front,{roughness:.35,clearcoat:.25})};
   function cabinets(g:any,W:number,D:number,H=.88,front=cur.fronts?.color||'#e9e5dd',top=true){
    add(box(W,.1,D-.06),M.black,0,.05,-.03,g);
@@ -101,7 +103,7 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
    const n=Math.max(1,Math.round(W/.6));for(let i=0;i<n;i++){const x=-W/2+W/n*(i+.5);add(box(W/n-.006,H-.15,.006),frontMat(front,W/n,H-.15),x,.1+(H-.13)/2,D/2-.008,g);handle(g,x,H-.12,D/2+.01)}
    if(top)add(box(W+.02,.03,D+.03),topMat(W,D),0,H+.015,.005,g);
   }
-  function upper(g:any,W:number,D:number,front=cur.fronts?.color||'#e9e5dd'){add(box(W,.72,.34),plain(front,{roughness:.35,clearcoat:.25}),0,1.86,-D/2+.17,g);const n=Math.max(1,Math.round(W/.6));for(let i=0;i<n;i++)handle(g,-W/2+W/n*(i+.5),1.55,-D/2+.35,.12,true);add(box(W,.55,.01),cur.splash?textured(cur.splash.finish as Finish,cur.splash.color,W,.55,{photo:cur.splash.photo,roughness:cur.splash.roughness}):textured('wallTile','#f4f2ee',W,.55),0,1.18,-D/2+.005,g)}
+  function upper(g:any,W:number,D:number,front=cur.fronts?.color||'#e9e5dd'){add(box(W,.72,.34),plain(front,{roughness:.35,clearcoat:.25}),0,1.86,-D/2+.17,g);const n=Math.max(1,Math.round(W/.6));for(let i=0;i<n;i++)handle(g,-W/2+W/n*(i+.5),1.55,-D/2+.35,.12,true);add(box(W,.55,.01),cur.splash?textured(cur.splash.finish as Finish,cur.splash.color,W,.55,{photo:cur.splash.photo,roughness:cur.splash.roughness}):textured('wallTile','#f4f2ee',W,.55,{photo:{a:'Tiles133A'}}),0,1.18,-D/2+.005,g)}
   function faucet(g:any,x:number,y:number,z:number,tall=.32){add(cyl(.018,.022,tall,16),(cur.taps||M.chrome),x,y+tall/2,z,g);const arc=add(new T.TorusGeometry(.09,.013,10,24,Math.PI),(cur.taps||M.chrome),x,y+tall,z+.09,g);arc.rotation.y=Math.PI/2;arc.rotation.x=0}
   function sinkBasin(g:any,x:number,y:number,z:number,W=.6,D=.42){add(box(W,.012,D),M.steel,x,y,z,g);add(box(W-.04,.006,D-.04),plain('#9fa5a9',{metalness:.9,roughness:.25}),x,y-.002,z,g)}
   function toilet(g:any,D:number){
@@ -152,10 +154,10 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
    const x=r.x,z=r.y,l=r.length,d=r.width,H=r.height,t=.08;
    const fin:Record<string,FinishChoice>=(plan.finishes||{})[r.id]||{};
    const baseFinish:Finish=r.floorFinish==='tile'?'tile':r.floorFinish==='concrete'?'concrete':'wood';
-   const floorLook=lookOf(fin.floor,'floor',{finish:baseFinish as any,color:r.floorFinish==='tile'?(r.furniture==='bath'?'#cfc9be':'#c4bdb1'):r.floor,roughness:baseFinish==='wood'?.42:baseFinish==='tile'?.22:.35});
-   const wallLook=lookOf(fin.walls,'walls',{finish:r.wallFinish==='brick'?'brick':'paint',color:r.wall,roughness:.85});
-   const ceilLook=lookOf(fin.ceiling,'ceiling',{finish:'paint',color:'#fbfaf7',roughness:.9});
-   const bathLook=lookOf(fin.bathWalls,'bathWalls',{finish:'wallTile',color:'#eeece7',roughness:.2});
+   const floorLook=lookOf(fin.floor,'floor',{finish:baseFinish as any,color:r.floorFinish==='tile'?(r.furniture==='bath'?'#cfc9be':'#c4bdb1'):r.floor,roughness:baseFinish==='wood'?.42:baseFinish==='tile'?.22:.35,photo:baseFinish==='wood'?{a:'WoodFloor069'}:baseFinish==='tile'?{a:'Tiles027'}:{a:'Concrete048'}});
+   const wallLook=lookOf(fin.walls,'walls',{finish:r.wallFinish==='brick'?'brick':'paint',color:r.wall,roughness:.85,photo:r.wallFinish==='brick'?{a:'Bricks025'}:{a:'Plaster001',t:r.wall.toLowerCase()}});
+   const ceilLook=lookOf(fin.ceiling,'ceiling',{finish:'paint',color:'#fbfaf7',roughness:.9,photo:{a:'Plaster001',t:'#f7f6f2'}});
+   const bathLook=lookOf(fin.bathWalls,'bathWalls',{finish:'wallTile',color:'#eeece7',roughness:.2,photo:{a:'Tiles133A'}});
    const tapLook=fin.taps?lookOf(fin.taps,'taps',{finish:'paint',color:'#e9ecef',roughness:.1}):null;
    cur={fronts:fin.fronts?lookOf(fin.fronts,'fronts',{finish:'paint',color:'#e9e5dd',roughness:.4}):undefined,worktop:fin.worktop?lookOf(fin.worktop,'worktop',{finish:'quartz',color:'#f1efea',roughness:.15}):undefined,splash:fin.splash?lookOf(fin.splash,'splash',{finish:'wallTile',color:'#f4f2ee',roughness:.2}):undefined,vanity:fin.vanity?lookOf(fin.vanity,'vanity',{finish:'paint',color:'#9b7653',roughness:.4}):undefined,taps:tapLook?plain(tapLook.color,{metalness:1,roughness:tapLook.roughness,envMapIntensity:2}):undefined};
    floors.push(add(box(l,.02,d),textured(floorLook.finish as Finish,floorLook.color,l,d,{photo:floorLook.photo,roughness:floorLook.roughness,clearcoat:floorLook.finish==='concrete'?.3:.15,seed:Math.round(x*7+z*13)}),x+l/2,-.01,z+d/2,scene,false));{const c=add(box(l,.04,d),ceilLook.finish==='paint'&&!ceilLook.photo?plain(ceilLook.color,{roughness:.9}):textured(ceilLook.finish as Finish,ceilLook.color,l,d,{photo:ceilLook.photo}),x+l/2,H+.02,z+d/2,scene,false);c.visible=false;ceilings.push(c)}
@@ -215,10 +217,18 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
    const score=(c:number[])=>stuff.length?Math.min(...stuff.map(p=>Math.hypot(p[0]-c[0],p[1]-c[1]))):-Math.abs(c[1]-(r.y+r.width));
    const best=corners.sort((a,b)=>score(b)-score(a))[0];
    camera.position.set(best[0],eye,best[1]);yaw=Math.atan2(r.x+r.length/2-best[0],r.y+r.width/2-best[1]);pitch=-.12;goal=null;look()};
+  // Photoreal mode: progressive path tracing (real light bounces, soft shadows, reflections) whenever the view is still.
+  let grad:any=null;const rasterEnv=scene.environment;
+  const ptStart=async()=>{if(pt||!realRef.current)return;try{const {WebGLPathTracer,GradientEquirectTexture}=await import('three-gpu-pathtracer');if(cancelled)return;
+    pt=new WebGLPathTracer(renderer);pt.tiles.set(2,2);pt.bounces=5;pt.filterGlossyFactor=.5;pt.minSamples=2;pt.renderDelay=180;pt.fadeDuration=350;pt.dynamicLowRes=false;pt.renderScale=matchMedia('(pointer:coarse)').matches?.5:Math.min(1,1.25/Math.max(1,devicePixelRatio));
+    grad=new GradientEquirectTexture();grad.topColor.set('#fbf6ee');grad.bottomColor.set('#8c8577');grad.update();scene.environment=grad;(scene as any).environmentIntensity=.9;
+    pt.setScene(scene,camera);ptReady=true}catch(e){console.error(e);pt=null}};
+  const ptStop=()=>{ptReady=false;try{pt?.dispose()}catch{}pt=null;scene.environment=rasterEnv;(scene as any).environmentIntensity=.38};
+  let ptReady=false;const lastCam=new T.Matrix4();let lastFov=0;
   const setWalking=(on:boolean,id?:string)=>{walking=on;controls.enabled=!on;ceilings.forEach(c=>c.visible=on);for(const f of wallFades)for(const m of f.mat){m.opacity=1;m.depthWrite=true}
-   if(on){camera.fov=62;camera.near=.05;camera.updateProjectionMatrix();enterRoom(id)}else modelView()};
+   if(on){camera.fov=62;camera.near=.05;camera.updateProjectionMatrix();enterRoom(id);ptStop();void ptStart()}else{ptStop();modelView()}};
   const saved=view.current;if(saved?.walking){setWalking(true);camera.position.copy(saved.pos);yaw=saved.yaw;pitch=saved.pitch;camera.fov=saved.fov;camera.updateProjectionMatrix();look()}else if(saved){camera.position.copy(saved.pos);controls.target.copy(saved.target);controls.update()}
-  api.current={visit:id=>setWalking(true,id),model:()=>setWalking(false),hold:(dir,on)=>{if(on)held.add(dir);else held.delete(dir)},zoom:f=>{camera.fov=Math.min(80,Math.max(28,camera.fov*f));camera.updateProjectionMatrix()}};
+  api.current={real:(on:boolean)=>{realRef.current=on;if(on&&walking)void ptStart();else ptStop()},samples:()=>ptReady&&pt?Math.floor(pt.samples):-1,visit:id=>setWalking(true,id),model:()=>setWalking(false),hold:(dir,on)=>{if(on)held.add(dir);else held.delete(dir)},zoom:f=>{camera.fov=Math.min(80,Math.max(28,camera.fov*f));camera.updateProjectionMatrix()}};
   // Touch, mouse and keyboard in walk mode.
   const pointers=new Map<number,{x:number;y:number}>();let startDist=0,startFov=62,downAt=0,moved=0;const ray=new T.Raycaster();
   const onDown=(e:PointerEvent)=>{if(!walking)return;renderer.domElement.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});downAt=performance.now();moved=0;if(pointers.size===2){const [p,q]=[...pointers.values()];startDist=Math.hypot(p.x-q.x,p.y-q.y);startFov=camera.fov}};
@@ -231,7 +241,7 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
   const keys:Record<string,string>={ArrowUp:'f',KeyW:'f',ArrowDown:'b',KeyS:'b',ArrowLeft:'l',KeyA:'l',ArrowRight:'r',KeyD:'r'};
   const onKey=(e:KeyboardEvent)=>{if(!walking||!keys[e.code])return;e.preventDefault();if(e.type==='keydown')held.add(keys[e.code]);else held.delete(keys[e.code])};
   const cv=renderer.domElement;cv.addEventListener('pointerdown',onDown);cv.addEventListener('pointermove',onMove);cv.addEventListener('pointerup',onUp);cv.addEventListener('pointercancel',onUp);cv.addEventListener('wheel',onWheel,{passive:false});window.addEventListener('keydown',onKey);window.addEventListener('keyup',onKey);
-  let first=!saved;const resize=()=>{const a=el.clientWidth,b=el.clientHeight;renderer.setSize(a,b);camera.aspect=a/Math.max(1,b);camera.updateProjectionMatrix();if(!walking&&first)modelView();first=true};
+  let first=!saved;const resize=()=>{const a=el.clientWidth,b=el.clientHeight;renderer.setSize(a,b);camera.aspect=a/Math.max(1,b);camera.updateProjectionMatrix();if(pt)pt.updateCamera();if(!walking&&first)modelView();first=true};
   const observer=new ResizeObserver(resize);observer.observe(el);resize();
   let raf=0;const v=new T.Vector3();let last=performance.now();
   const draw=()=>{const now=performance.now(),dt=Math.min(.05,(now-last)/1000);last=now;
@@ -242,10 +252,12 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
     if(goal){camera.position.lerp(goal,Math.min(1,dt*3));if(camera.position.distanceTo(goal)<.03)goal=null;look()}
    }else{controls.update();
     if(!top&&!roof)for(const f of wallFades){v.copy(camera.position).sub(f.center).setY(0);const facing=v.normalize().dot(f.normal);const o=facing>.25?.12:1;for(const m of f.mat)if(Math.abs(m.opacity-o)>.01){m.opacity+=(o-m.opacity)*.25;m.depthWrite=m.opacity>.9}}}
-   renderer.render(scene,camera);raf=requestAnimationFrame(draw)};draw();
-  dispose=()=>{view.current={walking,pos:camera.position.clone(),target:controls.target.clone(),yaw,pitch,fov:camera.fov};cancelAnimationFrame(raf);cv.removeEventListener('pointerdown',onDown);cv.removeEventListener('pointermove',onMove);cv.removeEventListener('pointerup',onUp);cv.removeEventListener('pointercancel',onUp);cv.removeEventListener('wheel',onWheel);window.removeEventListener('keydown',onKey);window.removeEventListener('keyup',onKey);api.current=null;observer.disconnect();controls.dispose();scene.traverse((o:any)=>{if(o.isMesh)o.geometry.dispose()});mats.forEach(m=>{m.map?.dispose?.();m.normalMap?.dispose?.();m.dispose()});envTex.dispose();pmrem.dispose();clearTextureCache();renderer.dispose();renderer.domElement.remove()};
+   if(walking&&ptReady&&pt){camera.updateMatrixWorld();if(!lastCam.equals(camera.matrixWorld)||lastFov!==camera.fov){lastCam.copy(camera.matrixWorld);lastFov=camera.fov;pt.updateCamera()}pt.renderSample()}
+   else renderer.render(scene,camera);raf=requestAnimationFrame(draw)};draw();
+  dispose=()=>{ptStop();clearTimeout(ptMaterialsTimer);grad?.dispose?.();view.current={walking,pos:camera.position.clone(),target:controls.target.clone(),yaw,pitch,fov:camera.fov};cancelAnimationFrame(raf);cv.removeEventListener('pointerdown',onDown);cv.removeEventListener('pointermove',onMove);cv.removeEventListener('pointerup',onUp);cv.removeEventListener('pointercancel',onUp);cv.removeEventListener('wheel',onWheel);window.removeEventListener('keydown',onKey);window.removeEventListener('keyup',onKey);api.current=null;observer.disconnect();controls.dispose();scene.traverse((o:any)=>{if(o.isMesh)o.geometry.dispose()});mats.forEach(m=>{m.map?.dispose?.();m.normalMap?.dispose?.();m.dispose()});envTex.dispose();pmrem.dispose();clearTextureCache();renderer.dispose();renderer.domElement.remove()};
  }catch(e){console.error(e);setError('La 3D nécessite WebGL sur cet appareil. Le plan 2D reste disponible.')}})();return()=>{cancelled=true;dispose()}},[plan,roof,top]);
 
+ useEffect(()=>{if(mode!=='visit'){setQuality(-1);return}const t=setInterval(()=>setQuality(api.current?.samples()??-1),400);return()=>clearInterval(t)},[mode]);
  async function photoreal(){
   const canvas=host.current?.querySelector('canvas');if(!canvas)return;
   setRender({busy:true});
@@ -274,6 +286,7 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
    <div className="plan-scene-pad" aria-label="Déplacement">
     <button type="button" aria-label="Avancer" className="up" {...hold('f')}>▲</button><button type="button" aria-label="Gauche" className="left" {...hold('l')}>◀</button><button type="button" aria-label="Reculer" className="down" {...hold('b')}>▼</button><button type="button" aria-label="Droite" className="right" {...hold('r')}>▶</button>
    </div>
+   <div className="plan-scene-real"><button type="button" aria-pressed={real} onClick={()=>{const on=!real;setReal(on);api.current?.real(on)}}>{real?'✨ Rendu réaliste : activé':'✨ Rendu réaliste : désactivé'}</button>{real&&quality>=0&&<span>{quality<24?`Arrêtez-vous : la lumière réelle se calcule… ${Math.min(99,Math.round(quality/24*100))} %`:'Rendu réaliste ✓'}</span>}</div>
    <div className="plan-scene-zoom"><button type="button" aria-label="Zoomer" {...hold('in')}>＋</button><button type="button" aria-label="Dézoomer" {...hold('out')}>－</button></div>
   </>}
 
