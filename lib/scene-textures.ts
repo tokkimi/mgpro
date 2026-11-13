@@ -66,7 +66,7 @@ function concrete(T:T3,base:string,seed:number):Made{
 }
 function plaster(T:T3,base:string,seed:number):Made{
  const W=512,H=512,r=rng(seed);const [c,ctx]=canvas(W,H);ctx.fillStyle=base;ctx.fillRect(0,0,W,H);
- for(let k=0;k<60;k++){{const v=r()>.5?255:0;ctx.fillStyle=`rgba(${v},${v},${v},.012)`;}ctx.beginPath();ctx.ellipse(r()*W,r()*H,30+r()*120,30+r()*120,0,0,Math.PI*2);ctx.fill()}
+ for(let k=0;k<25;k++){{const v=r()>.5?255:0;ctx.fillStyle=`rgba(${v},${v},${v},.005)`;}ctx.beginPath();ctx.ellipse(r()*W,r()*H,30+r()*120,30+r()*120,0,0,Math.PI*2);ctx.fill()}
  const [hc,hx]=canvas(256,256);hx.fillStyle='#808080';hx.fillRect(0,0,256,256);noise(hx,256,256,r,9000,.18);
  return {map:tex(T,c),normalMap:normalFrom(T,hc,.35),size:[2,2]};
 }

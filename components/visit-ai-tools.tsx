@@ -5,6 +5,7 @@ import {Camera,Loader2,Ruler,Sparkles,Video,Check,X,Images,ShieldCheck,AlertTria
 import type {Plan} from '@/lib/plan';
 import {autoPlan,checkPlan,SIDE_LABEL,type Check as PlanCheckItem,type MeasureResult,type QuoteDraft,type Review} from '@/lib/visit-ai';
 import './visit-ai-tools.css';
+import {describeFinishes} from '@/lib/finishes';
 
 type Data=Record<string,any>;
 type Measure=MeasureResult;
@@ -194,7 +195,7 @@ export function LayoutPreview({rooms}:{rooms:Data[]}){
 /** Builds the payload shared by plan, review and quote requests. */
 export function planRequestFromVisit(d:Data){
  const notes=[...(d.voice_notes||[]).map((v:Data)=>v.transcript),d.notes,d.notebook?.text].filter(Boolean).join('\n');
- return {action:'plan',rooms:(d.rooms||[]).map((r:Data,i:number)=>({id:r.id||`piece-${i+1}`,name:r.name,length:Number(r.length)||0,width:Number(r.width)||0,height:Number(r.height)||0,unit:r.unit==='m'?'m':'pi',notes:r.notes||'',features:r.features,position:r.position||null})),scope:d.scope||undefined,constraints:d.constraints||undefined,materials:d.materials||undefined,notes:notes||undefined};
+ return {action:'plan',rooms:(d.rooms||[]).map((r:Data,i:number)=>({id:r.id||`piece-${i+1}`,name:r.name,length:Number(r.length)||0,width:Number(r.width)||0,height:Number(r.height)||0,unit:r.unit==='m'?'m':'pi',notes:r.notes||'',features:r.features,position:r.position||null})),scope:d.scope||undefined,constraints:d.constraints||undefined,materials:[d.materials,d.plan?.finishes?`Finitions choisies dans le catalogue MG Pro (prix à confirmer) : ${describeFinishes(d.plan.finishes,d.plan.rooms)}`:''].filter(Boolean).join('\n')||undefined,notes:notes||undefined};
 }
 
 /** One button: Claude draws the 2D plan (and therefore the 3D model) from the visit. */

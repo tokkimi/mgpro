@@ -3,6 +3,8 @@ import {useEffect,useRef,useState} from 'react';
 import type {Plan,PlanRoom,PlanElement} from '@/lib/plan';
 import {bounds} from '@/lib/plan';
 import {finishTextures,clearTextureCache,type Finish} from '@/lib/scene-textures';
+import {lookOf,describeFinishes,type Look,type FinishChoice} from '@/lib/finishes';
+import FinishPanel from './finish-panel';
 
 type Edge='north'|'south'|'west'|'east';
 type Opening={from:number;to:number;kind:'door'|'window';bottom:number;top:number;shared:boolean};
@@ -13,13 +15,15 @@ export function describePlan(plan:Plan){
  const style:Record<string,string>={nature:'chaleureuse et naturelle (bois clair, lin, tons sable)',contemporary:'contemporaine épurée (blanc, gris clair, noir mat)',classic:'classique douce (moulures, tons crème, bois moyen)',industrial:'industrielle (béton, métal noir, brique)'};
  const rooms=plan.rooms.filter(r=>r.phase!=='remove').map(r=>`${r.name} (${r.length.toFixed(1)} × ${r.width.toFixed(1)} m) : sol ${finish[r.floorFinish]||'parquet'}, murs ${r.wallFinish==='brick'?'en brique apparente':`peints couleur ${r.wall}`}`).join(' ; ');
  const items=plan.elements.filter(e=>e.phase!=='remove'&&!['note','door','window','wall'].includes(e.kind)).map(e=>e.label).slice(0,25).join(', ');
- return `Ambiance ${style[plan.style]||style.nature}. Pièces : ${rooms}.${items?` Équipements : ${items}.`:''}`;
+ const fin=describeFinishes(plan.finishes,plan.rooms);
+ return `Ambiance ${style[plan.style]||style.nature}. Pièces : ${rooms}.${items?` Équipements : ${items}.`:''}${fin?` Finitions choisies (à respecter) : ${fin}.`:''}`;
 }
 
-export default function PlanScene({plan,roof=false,top=false}:{plan:Plan;roof?:boolean;top?:boolean}){
+export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Plan;roof?:boolean;top?:boolean;onChange?:(plan:Plan)=>void}){
  const host=useRef<HTMLDivElement>(null);const [error,setError]=useState('');
  const [render,setRender]=useState<{busy:boolean;image?:string;error?:string}>({busy:false});
  const [mode,setMode]=useState<'model'|'visit'>('model');const [full,setFull]=useState(false);const [roomId,setRoomId]=useState('');
+ const view=useRef<any>(null);const [panel,setPanel]=useState(false);
  const api=useRef<{visit:(id?:string)=>void;model:()=>void;hold:(dir:string,on:boolean)=>void;zoom:(f:number)=>void}|null>(null);
  useEffect(()=>{let dispose=()=>{};let cancelled=false;(async()=>{try{
   const T=await import('three');
@@ -81,14 +85,16 @@ export default function PlanScene({plan,roof=false,top=false}:{plan:Plan;roof?:b
   const handle=(g:any,x:number,y:number,z:number,len=.14,vertical=false)=>{const m=add(cyl(.006,.006,len,10),M.chrome,x,y,z,g);if(!vertical)m.rotation.z=Math.PI/2};
 
   // ── fixtures ──
-  function cabinets(g:any,W:number,D:number,H=.88,front='#e9e5dd',top=true){
+  let cur:{fronts?:Look;worktop?:Look;splash?:Look;taps?:any;vanity?:Look}={};
+  const topMat=(W:number,D:number)=>cur.worktop?textured(cur.worktop.finish as Finish,cur.worktop.color,W,D,{roughness:cur.worktop.roughness,clearcoat:.5}):textured('quartz','#f1efea',W,D,{roughness:.15,clearcoat:.6});
+  function cabinets(g:any,W:number,D:number,H=.88,front=cur.fronts?.color||'#e9e5dd',top=true){
    add(box(W,.1,D-.06),M.black,0,.05,-.03,g);
    add(box(W,H-.13,D-.02),plain(front,{roughness:.4,clearcoat:.2}),0,.1+(H-.13)/2,-.01,g);
    const n=Math.max(1,Math.round(W/.6));for(let i=0;i<n;i++){const x=-W/2+W/n*(i+.5);add(box(W/n-.006,H-.15,.006),plain(front,{roughness:.35,clearcoat:.25}),x,.1+(H-.13)/2,D/2-.008,g);handle(g,x,H-.12,D/2+.01)}
-   if(top)add(box(W+.02,.03,D+.03),textured('quartz','#f1efea',W,D,{roughness:.15,clearcoat:.6}),0,H+.015,.005,g);
+   if(top)add(box(W+.02,.03,D+.03),topMat(W,D),0,H+.015,.005,g);
   }
-  function upper(g:any,W:number,D:number,front='#e9e5dd'){add(box(W,.72,.34),plain(front,{roughness:.35,clearcoat:.25}),0,1.86,-D/2+.17,g);const n=Math.max(1,Math.round(W/.6));for(let i=0;i<n;i++)handle(g,-W/2+W/n*(i+.5),1.55,-D/2+.35,.12,true);add(box(W,.55,.01),textured('wallTile','#f4f2ee',W,.55),0,1.18,-D/2+.005,g)}
-  function faucet(g:any,x:number,y:number,z:number,tall=.32){add(cyl(.018,.022,tall,16),M.chrome,x,y+tall/2,z,g);const arc=add(new T.TorusGeometry(.09,.013,10,24,Math.PI),M.chrome,x,y+tall,z+.09,g);arc.rotation.y=Math.PI/2;arc.rotation.x=0}
+  function upper(g:any,W:number,D:number,front=cur.fronts?.color||'#e9e5dd'){add(box(W,.72,.34),plain(front,{roughness:.35,clearcoat:.25}),0,1.86,-D/2+.17,g);const n=Math.max(1,Math.round(W/.6));for(let i=0;i<n;i++)handle(g,-W/2+W/n*(i+.5),1.55,-D/2+.35,.12,true);add(box(W,.55,.01),cur.splash?textured(cur.splash.finish as Finish,cur.splash.color,W,.55,{roughness:cur.splash.roughness}):textured('wallTile','#f4f2ee',W,.55),0,1.18,-D/2+.005,g)}
+  function faucet(g:any,x:number,y:number,z:number,tall=.32){add(cyl(.018,.022,tall,16),(cur.taps||M.chrome),x,y+tall/2,z,g);const arc=add(new T.TorusGeometry(.09,.013,10,24,Math.PI),(cur.taps||M.chrome),x,y+tall,z+.09,g);arc.rotation.y=Math.PI/2;arc.rotation.x=0}
   function sinkBasin(g:any,x:number,y:number,z:number,W=.6,D=.42){add(box(W,.012,D),M.steel,x,y,z,g);add(box(W-.04,.006,D-.04),plain('#9fa5a9',{metalness:.9,roughness:.25}),x,y-.002,z,g)}
   function toilet(g:any,D:number){
    const pts=[0,.02,.12,.18,.2,.19,.17].map((r,i)=>new T.Vector2(r,i*.065));const bowl=add(new T.LatheGeometry(pts,32),M.ceramic,0,0,-D/2+.42,g);bowl.scale.set(1,1,1.3);
@@ -101,7 +107,7 @@ export default function PlanScene({plan,roof=false,top=false}:{plan:Plan;roof?:b
    add(box(.02,1.95,.02),M.chrome,W/2-.01,1.0,D/2-.01,g);add(cyl(.012,.012,1.1),M.chrome,0,1.55,-D/2+.04,g);add(cyl(.12,.12,.012,32),M.chrome,0,2.07,-D/2+.18,g);add(box(.015,.015,.15),M.chrome,0,2.09,-D/2+.11,g);
   }
   function bathtub(g:any,W:number,D:number){add(rbox(W,.56,D,.06),M.ceramic,0,.28,0,g);add(rbox(W-.14,.04,D-.14,.05),plain('#edf1f2',{roughness:.08}),0,.545,0,g);add(rbox(W-.18,.02,D-.18,.04),M.water,0,.48,0,g);faucet(g,0,.56,-D/2+.06,.16)}
-  function vanity(g:any,W:number,D:number){cabinets(g,W,D,.84,'#9b7653',false);add(box(W+.02,.03,D+.02),textured('quartz','#f3f1ec',W,D,{roughness:.12,clearcoat:.7}),0,.855,0,g);const basin=add(new T.SphereGeometry(.2,32,16,0,Math.PI*2,Math.PI/2,Math.PI/2),M.ceramic,0,.98,.02,g);basin.rotation.x=Math.PI;basin.scale.set(1,.6,.8);faucet(g,0,.87,-D/2+.08,.25);add(box(Math.min(W*.9,1.1),.85,.01),M.mirror,0,1.6,-D/2+.012,g)}
+  function vanity(g:any,W:number,D:number){cabinets(g,W,D,.84,cur.vanity?.color||'#9b7653',false);add(box(W+.02,.03,D+.02),topMat(W,D),0,.855,0,g);const basin=add(new T.SphereGeometry(.2,32,16,0,Math.PI*2,Math.PI/2,Math.PI/2),M.ceramic,0,.98,.02,g);basin.rotation.x=Math.PI;basin.scale.set(1,.6,.8);faucet(g,0,.87,-D/2+.08,.25);add(box(Math.min(W*.9,1.1),.85,.01),M.mirror,0,1.6,-D/2+.012,g)}
   function stove(g:any,W:number,D:number){add(box(W,.9,D-.02),M.steel,0,.45,-.01,g);add(box(W-.02,.01,D-.06),M.black,0,.905,-.02,g);for(const [a,b] of [[-.15,-.12],[.15,-.12],[-.15,.12],[.15,.12]]){const ring=add(new T.TorusGeometry(.07,.006,8,32),plain('#3a3a3a',{roughness:.3}),a*W/.6,.912,b,g);ring.rotation.x=Math.PI/2}add(box(W-.1,.4,.01),M.black,0,.42,D/2-.015,g);handle(g,0,.68,D/2+.01,W-.15)}
   function fridge(g:any,W:number,D:number){add(rbox(W,1.82,D-.02,.02),M.steel,0,.91,-.01,g);add(box(W+.002,.006,D),plain('#6f7376',{metalness:.8}),0,1.2,-.01,g);handle(g,W/2-.07,1.5,D/2+.02,.5,true);handle(g,W/2-.07,.7,D/2+.02,.5,true)}
   function washer(g:any,W:number,D:number){add(rbox(W,.85,D-.02,.02),M.white,0,.425,-.01,g);const ring=add(new T.TorusGeometry(.17,.025,12,40),M.chrome,0,.45,D/2,g);add(new T.CircleGeometry(.16,32),plain('#3b4246',{roughness:.05,metalness:.3}),0,.45,D/2-.005,g)}
@@ -136,9 +142,15 @@ export default function PlanScene({plan,roof=false,top=false}:{plan:Plan;roof?:b
   // ── rooms ──
   for(const r of live){
    const x=r.x,z=r.y,l=r.length,d=r.width,H=r.height,t=.08;
-   const floorFinish:Finish=r.floorFinish==='tile'?'tile':r.floorFinish==='concrete'?'concrete':'wood';
-   const floorColor=r.floorFinish==='tile'?(r.furniture==='bath'?'#cfc9be':'#c4bdb1'):r.floor;
-   floors.push(add(box(l,.02,d),textured(floorFinish,floorColor,l,d,{roughness:floorFinish==='wood'?.42:floorFinish==='tile'?.22:.35,clearcoat:floorFinish==='concrete'?.3:.15,seed:Math.round(x*7+z*13)}),x+l/2,-.01,z+d/2,scene,false));{const c=add(box(l,.04,d),ceilingMat,x+l/2,H+.02,z+d/2,scene,false);c.visible=false;ceilings.push(c)}
+   const fin:Record<string,FinishChoice>=(plan.finishes||{})[r.id]||{};
+   const baseFinish:Finish=r.floorFinish==='tile'?'tile':r.floorFinish==='concrete'?'concrete':'wood';
+   const floorLook=lookOf(fin.floor,'floor',{finish:baseFinish as any,color:r.floorFinish==='tile'?(r.furniture==='bath'?'#cfc9be':'#c4bdb1'):r.floor,roughness:baseFinish==='wood'?.42:baseFinish==='tile'?.22:.35});
+   const wallLook=lookOf(fin.walls,'walls',{finish:r.wallFinish==='brick'?'brick':'paint',color:r.wall,roughness:.85});
+   const ceilLook=lookOf(fin.ceiling,'ceiling',{finish:'paint',color:'#fbfaf7',roughness:.9});
+   const bathLook=lookOf(fin.bathWalls,'bathWalls',{finish:'wallTile',color:'#eeece7',roughness:.2});
+   const tapLook=fin.taps?lookOf(fin.taps,'taps',{finish:'paint',color:'#e9ecef',roughness:.1}):null;
+   cur={fronts:fin.fronts?lookOf(fin.fronts,'fronts',{finish:'paint',color:'#e9e5dd',roughness:.4}):undefined,worktop:fin.worktop?lookOf(fin.worktop,'worktop',{finish:'quartz',color:'#f1efea',roughness:.15}):undefined,splash:fin.splash?lookOf(fin.splash,'splash',{finish:'wallTile',color:'#f4f2ee',roughness:.2}):undefined,vanity:fin.vanity?lookOf(fin.vanity,'vanity',{finish:'paint',color:'#9b7653',roughness:.4}):undefined,taps:tapLook?plain(tapLook.color,{metalness:1,roughness:tapLook.roughness,envMapIntensity:2}):undefined};
+   floors.push(add(box(l,.02,d),textured(floorLook.finish as Finish,floorLook.color,l,d,{roughness:floorLook.roughness,clearcoat:floorLook.finish==='concrete'?.3:.15,seed:Math.round(x*7+z*13)}),x+l/2,-.01,z+d/2,scene,false));{const c=add(box(l,.04,d),ceilLook.finish==='paint'?plain(ceilLook.color,{roughness:.9}):textured(ceilLook.finish as Finish,ceilLook.color,l,d),x+l/2,H+.02,z+d/2,scene,false);c.visible=false;ceilings.push(c)}
    if(roof)add(box(l+.2,.15,d+.2),plain('#444a45'),x+l/2,H,z+d/2);
    // Openings on each edge.
    const roomEls=elements.filter(e=>(e.kind==='door'||e.kind==='window')&&inRoom(e,r));
@@ -154,8 +166,8 @@ export default function PlanScene({plan,roof=false,top=false}:{plan:Plan;roof?:b
     const wall=new T.Group();scene.add(wall);
     // Local frame: x along the edge (0..len), wall inside the room, inner face towards +z.
     if(edge==='north'){wall.position.set(x,0,z+t/2)}else if(edge==='south'){wall.position.set(x+l,0,z+d-t/2);wall.rotation.y=Math.PI}else if(edge==='west'){wall.position.set(x+t/2,0,z+d);wall.rotation.y=Math.PI/2}else{wall.position.set(x+l-t/2,0,z);wall.rotation.y=-Math.PI/2}
-    const paint=r.wallFinish==='brick'?textured('brick','#9b5a42',len,H):textured('paint',r.wall,len,H,{roughness:.85,seed:3});paint.transparent=true;
-    const tileMat=bath?textured('wallTile','#eeece7',len,1.2,{roughness:.2,clearcoat:.5}):null;if(tileMat)tileMat.transparent=true;
+    const paint=textured(wallLook.finish as Finish,wallLook.color,len,H,{roughness:wallLook.roughness,seed:3});paint.transparent=true;
+    const tileMat=bath?textured(bathLook.finish as Finish,bathLook.color,len,1.2,{roughness:bathLook.roughness,clearcoat:.5}):null;if(tileMat)tileMat.transparent=true;
     const piece=(a:number,b:number,y0:number,y1:number)=>{if(b-a<.01||y1-y0<.01)return;if(tileMat&&y0<1.2){const top=Math.min(1.2,y1);add(box(b-a,top-y0,t),tileMat,(a+b)/2,(y0+top)/2,0,wall);if(y1>1.2)add(box(b-a,y1-1.2,t),paint,(a+b)/2,(1.2+y1)/2,0,wall)}else add(box(b-a,y1-y0,t),paint,(a+b)/2,(y0+y1)/2,0,wall)};
     let cursor=0;
     for(const o of ops){if(o.to<=cursor)continue;piece(cursor,o.from,0,H);piece(o.from,o.to,0,o.bottom);piece(o.from,o.to,o.top,H);
@@ -197,6 +209,7 @@ export default function PlanScene({plan,roof=false,top=false}:{plan:Plan;roof?:b
    camera.position.set(best[0],eye,best[1]);yaw=Math.atan2(r.x+r.length/2-best[0],r.y+r.width/2-best[1]);pitch=-.12;goal=null;look()};
   const setWalking=(on:boolean,id?:string)=>{walking=on;controls.enabled=!on;ceilings.forEach(c=>c.visible=on);for(const f of wallFades)for(const m of f.mat){m.opacity=1;m.depthWrite=true}
    if(on){camera.fov=62;camera.near=.05;camera.updateProjectionMatrix();enterRoom(id)}else modelView()};
+  const saved=view.current;if(saved?.walking){setWalking(true);camera.position.copy(saved.pos);yaw=saved.yaw;pitch=saved.pitch;camera.fov=saved.fov;camera.updateProjectionMatrix();look()}else if(saved){camera.position.copy(saved.pos);controls.target.copy(saved.target);controls.update()}
   api.current={visit:id=>setWalking(true,id),model:()=>setWalking(false),hold:(dir,on)=>{if(on)held.add(dir);else held.delete(dir)},zoom:f=>{camera.fov=Math.min(80,Math.max(28,camera.fov*f));camera.updateProjectionMatrix()}};
   // Touch, mouse and keyboard in walk mode.
   const pointers=new Map<number,{x:number;y:number}>();let startDist=0,startFov=62,downAt=0,moved=0;const ray=new T.Raycaster();
@@ -210,7 +223,7 @@ export default function PlanScene({plan,roof=false,top=false}:{plan:Plan;roof?:b
   const keys:Record<string,string>={ArrowUp:'f',KeyW:'f',ArrowDown:'b',KeyS:'b',ArrowLeft:'l',KeyA:'l',ArrowRight:'r',KeyD:'r'};
   const onKey=(e:KeyboardEvent)=>{if(!walking||!keys[e.code])return;e.preventDefault();if(e.type==='keydown')held.add(keys[e.code]);else held.delete(keys[e.code])};
   const cv=renderer.domElement;cv.addEventListener('pointerdown',onDown);cv.addEventListener('pointermove',onMove);cv.addEventListener('pointerup',onUp);cv.addEventListener('pointercancel',onUp);cv.addEventListener('wheel',onWheel,{passive:false});window.addEventListener('keydown',onKey);window.addEventListener('keyup',onKey);
-  const resize=()=>{const a=el.clientWidth,b=el.clientHeight;renderer.setSize(a,b);camera.aspect=a/Math.max(1,b);camera.updateProjectionMatrix();if(!walking)modelView()};
+  let first=!saved;const resize=()=>{const a=el.clientWidth,b=el.clientHeight;renderer.setSize(a,b);camera.aspect=a/Math.max(1,b);camera.updateProjectionMatrix();if(!walking&&first)modelView();first=true};
   const observer=new ResizeObserver(resize);observer.observe(el);resize();
   let raf=0;const v=new T.Vector3();let last=performance.now();
   const draw=()=>{const now=performance.now(),dt=Math.min(.05,(now-last)/1000);last=now;
@@ -222,7 +235,7 @@ export default function PlanScene({plan,roof=false,top=false}:{plan:Plan;roof?:b
    }else{controls.update();
     if(!top&&!roof)for(const f of wallFades){v.copy(camera.position).sub(f.center).setY(0);const facing=v.normalize().dot(f.normal);const o=facing>.25?.12:1;for(const m of f.mat)if(Math.abs(m.opacity-o)>.01){m.opacity+=(o-m.opacity)*.25;m.depthWrite=m.opacity>.9}}}
    renderer.render(scene,camera);raf=requestAnimationFrame(draw)};draw();
-  dispose=()=>{cancelAnimationFrame(raf);cv.removeEventListener('pointerdown',onDown);cv.removeEventListener('pointermove',onMove);cv.removeEventListener('pointerup',onUp);cv.removeEventListener('pointercancel',onUp);cv.removeEventListener('wheel',onWheel);window.removeEventListener('keydown',onKey);window.removeEventListener('keyup',onKey);api.current=null;observer.disconnect();controls.dispose();scene.traverse((o:any)=>{if(o.isMesh)o.geometry.dispose()});mats.forEach(m=>{m.map?.dispose?.();m.normalMap?.dispose?.();m.dispose()});envTex.dispose();pmrem.dispose();clearTextureCache();renderer.dispose();renderer.domElement.remove()};
+  dispose=()=>{view.current={walking,pos:camera.position.clone(),target:controls.target.clone(),yaw,pitch,fov:camera.fov};cancelAnimationFrame(raf);cv.removeEventListener('pointerdown',onDown);cv.removeEventListener('pointermove',onMove);cv.removeEventListener('pointerup',onUp);cv.removeEventListener('pointercancel',onUp);cv.removeEventListener('wheel',onWheel);window.removeEventListener('keydown',onKey);window.removeEventListener('keyup',onKey);api.current=null;observer.disconnect();controls.dispose();scene.traverse((o:any)=>{if(o.isMesh)o.geometry.dispose()});mats.forEach(m=>{m.map?.dispose?.();m.normalMap?.dispose?.();m.dispose()});envTex.dispose();pmrem.dispose();clearTextureCache();renderer.dispose();renderer.domElement.remove()};
  }catch(e){console.error(e);setError('La 3D nécessite WebGL sur cet appareil. Le plan 2D reste disponible.')}})();return()=>{cancelled=true;dispose()}},[plan,roof,top]);
 
  async function photoreal(){
@@ -245,6 +258,7 @@ export default function PlanScene({plan,roof=false,top=false}:{plan:Plan;roof?:b
     <button type="button" className="btn secondary" onClick={()=>{setMode('model');api.current?.model()}}>← Maquette</button>
     <div className="plan-scene-rooms">{rooms.map(r=><button type="button" key={r.id} className={roomId===r.id?'active':''} onClick={()=>{setRoomId(r.id);api.current?.visit(r.id)}}>{r.name}</button>)}</div>
    </>}
+   {onChange&&<button type="button" className="btn secondary" onClick={()=>setPanel(p=>!p)}>🎨 Finitions</button>}
    <button type="button" className="btn secondary plan-scene-full" aria-label={full?'Quitter le plein écran':'Plein écran'} onClick={()=>void toggleFull()}>{full?'✕':'⤢'}</button>
   </div>
   {mode==='visit'&&<>
@@ -259,6 +273,7 @@ export default function PlanScene({plan,roof=false,top=false}:{plan:Plan;roof?:b
    <button type="button" className="btn primary" disabled={render.busy} onClick={()=>void photoreal()}>{render.busy?'Photo réaliste en cours… (20 à 60 s)':mode==='visit'?'✦ Photo réaliste IA de cette vue':'✦ Rendu photoréaliste IA'}</button>
    <button type="button" className="btn secondary" onClick={()=>{const canvas=host.current?.querySelector('canvas');if(!canvas)return;const a=document.createElement('a');a.download='mgpro-maquette-3d.png';a.href=canvas.toDataURL('image/png');a.click()}}>Télécharger la vue</button>
   </div>
+  {panel&&onChange&&<FinishPanel plan={plan} roomId={roomId} onRoom={setRoomId} onChange={onChange} onClose={()=>setPanel(false)}/>}
   {render.error&&<p className="plan-scene-error" role="alert">{render.error}</p>}
   {render.image&&<div className="plan-scene-render" role="dialog" aria-label="Rendu photoréaliste"><img src={render.image} alt="Rendu photoréaliste de la vue 3D"/><div className="button-row"><a className="btn primary" href={render.image} download="mgpro-rendu-photorealiste.png">Télécharger le rendu</a><button type="button" className="btn secondary" onClick={()=>setRender({busy:false})}>Revenir à la 3D</button></div></div>}
  </div>;
