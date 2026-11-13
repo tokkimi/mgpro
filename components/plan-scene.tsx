@@ -19,6 +19,8 @@ export function describePlan(plan:Plan){
 export default function PlanScene({plan,roof=false,top=false}:{plan:Plan;roof?:boolean;top?:boolean}){
  const host=useRef<HTMLDivElement>(null);const [error,setError]=useState('');
  const [render,setRender]=useState<{busy:boolean;image?:string;error?:string}>({busy:false});
+ const [mode,setMode]=useState<'model'|'visit'>('model');const [full,setFull]=useState(false);const [roomId,setRoomId]=useState('');
+ const api=useRef<{visit:(id?:string)=>void;model:()=>void;hold:(dir:string,on:boolean)=>void;zoom:(f:number)=>void}|null>(null);
  useEffect(()=>{let dispose=()=>{};let cancelled=false;(async()=>{try{
   const T=await import('three');
   const {OrbitControls}=await import('three/addons/controls/OrbitControls.js');
@@ -43,14 +45,14 @@ export default function PlanScene({plan,roof=false,top=false}:{plan:Plan;roof?:b
   const plain=(color:string,opts:any={})=>keep(new T.MeshPhysicalMaterial({color,roughness:.6,...opts}));
   const M={
    ceramic:plain('#fbfbf9',{roughness:.12,clearcoat:1,clearcoatRoughness:.05}),
-   chrome:plain('#e9ecef',{metalness:1,roughness:.12}),
+   chrome:plain('#e9ecef',{metalness:1,roughness:.1,envMapIntensity:2.2}),
    steel:plain('#c9cdd0',{metalness:.9,roughness:.32}),
    black:plain('#141414',{roughness:.25,clearcoat:.8}),
    blackMetal:plain('#1c1c1c',{metalness:.7,roughness:.4}),
    white:plain('#f6f5f1',{roughness:.45}),
    satin:plain('#f2f0ea',{roughness:.35,clearcoat:.3}),
    glass:plain('#ffffff',{transmission:.96,roughness:.03,thickness:.01,ior:1.5,transparent:true,opacity:1,metalness:0}),
-   mirror:plain('#ffffff',{metalness:1,roughness:.02}),
+   mirror:plain('#dfe6ea',{metalness:.95,roughness:.04,envMapIntensity:2.5}),
    water:plain('#dfe9ee',{roughness:.05,transmission:.5,transparent:true}),
    lampShade:plain('#fff3dc',{roughness:.8,emissive:new T.Color('#ffdca8'),emissiveIntensity:.6}),
   };
@@ -68,7 +70,7 @@ export default function PlanScene({plan,roof=false,top=false}:{plan:Plan;roof?:b
   const roomOf=(e:PlanElement)=>live.find(r=>inRoom(e,r));
   const shared=(r:PlanRoom,edge:Edge)=>live.some(o=>o!==r&&(edge==='north'?Math.abs(o.y+o.width-r.y)<.08&&o.x<r.x+r.length&&o.x+o.length>r.x:edge==='south'?Math.abs(o.y-(r.y+r.width))<.08&&o.x<r.x+r.length&&o.x+o.length>r.x:edge==='west'?Math.abs(o.x+o.length-r.x)<.08&&o.y<r.y+r.width&&o.y+o.width>r.y:Math.abs(o.x-(r.x+r.length))<.08&&o.y<r.y+r.width&&o.y+o.width>r.y));
   const nearestEdge=(e:PlanElement,r:PlanRoom):Edge=>{const cx=e.x+e.length/2,cy=e.y+e.width/2;const d={north:cy-r.y,south:r.y+r.width-cy,west:cx-r.x,east:r.x+r.length-cx};return (Object.keys(d) as Edge[]).sort((a,b)=>d[a]-d[b])[0]};
-  const wallFades:{mesh:any;mat:any;normal:any;center:any}[]=[];
+  const wallFades:{mesh:any;mat:any;normal:any;center:any}[]=[];const floors:any[]=[];const ceilings:any[]=[];const ceilingMat=plain('#fbfaf7',{roughness:.9});
   let lights=0;
 
   /** Group in a local frame: x along the wall, +z towards the room, y up; placed on the element footprint. */
@@ -136,7 +138,7 @@ export default function PlanScene({plan,roof=false,top=false}:{plan:Plan;roof?:b
    const x=r.x,z=r.y,l=r.length,d=r.width,H=r.height,t=.08;
    const floorFinish:Finish=r.floorFinish==='tile'?'tile':r.floorFinish==='concrete'?'concrete':'wood';
    const floorColor=r.floorFinish==='tile'?(r.furniture==='bath'?'#cfc9be':'#c4bdb1'):r.floor;
-   add(box(l,.02,d),textured(floorFinish,floorColor,l,d,{roughness:floorFinish==='wood'?.42:floorFinish==='tile'?.22:.35,clearcoat:floorFinish==='concrete'?.3:.15,seed:Math.round(x*7+z*13)}),x+l/2,-.01,z+d/2,scene,false);
+   floors.push(add(box(l,.02,d),textured(floorFinish,floorColor,l,d,{roughness:floorFinish==='wood'?.42:floorFinish==='tile'?.22:.35,clearcoat:floorFinish==='concrete'?.3:.15,seed:Math.round(x*7+z*13)}),x+l/2,-.01,z+d/2,scene,false));{const c=add(box(l,.04,d),ceilingMat,x+l/2,H+.02,z+d/2,scene,false);c.visible=false;ceilings.push(c)}
    if(roof)add(box(l+.2,.15,d+.2),plain('#444a45'),x+l/2,H,z+d/2);
    // Openings on each edge.
    const roomEls=elements.filter(e=>(e.kind==='door'||e.kind==='window')&&inRoom(e,r));
@@ -180,13 +182,47 @@ export default function PlanScene({plan,roof=false,top=false}:{plan:Plan;roof?:b
    if(lights<10&&!top){const p=new T.PointLight('#ffd9a8',Math.min(16,l*d*.9),0,2);p.position.set(x+l/2,H-.15,z+d/2);scene.add(p);lights++}
   }
 
-  const resize=()=>{const a=el.clientWidth,b=el.clientHeight;renderer.setSize(a,b);camera.aspect=a/Math.max(1,b);const distance=size*1.35/Math.min(1,camera.aspect);camera.position.set(w/2+(top?0:distance*.7),top?distance*1.7:distance*.95,h/2+(top?.01:distance));camera.updateProjectionMatrix()};
+  // ── modes: model (orbit) and realistic walk-through at eye height ──
+  let walking=false;let yaw=0,pitch=0;const eye=1.6;const target=new T.Vector3();let goal:any=null;const held=new Set<string>();
+  const doors=elements.filter(e=>e.kind==='door').map(e=>new T.Vector2(e.x+e.length/2,e.y+e.width/2));
+  const allowed=(px:number,pz:number)=>live.some(r=>px>r.x+.25&&px<r.x+r.length-.25&&pz>r.y+.25&&pz<r.y+r.width-.25)||(live.some(r=>px>r.x-.05&&px<r.x+r.length+.05&&pz>r.y-.05&&pz<r.y+r.width+.05)&&doors.some(d=>Math.hypot(d.x-px,d.y-pz)<.7));
+  const modelView=()=>{const a=el.clientWidth,b=el.clientHeight;camera.aspect=a/Math.max(1,b);camera.fov=35;const distance=size*1.35/Math.min(1,camera.aspect);camera.position.set(w/2+(top?0:distance*.7),top?distance*1.7:distance*.95,h/2+(top?.01:distance));controls.target.set(w/2,.6,h/2);camera.updateProjectionMatrix();controls.update()};
+  const look=()=>{target.set(camera.position.x+Math.sin(yaw)*Math.cos(pitch),camera.position.y+Math.sin(pitch),camera.position.z+Math.cos(yaw)*Math.cos(pitch));camera.lookAt(target)};
+  const enterRoom=(id?:string)=>{const r=live.find(q=>q.id===id)||live.find(q=>q.furniture!=='none')||live[0];if(!r)return;
+   // Stand in the corner farthest from fixtures and look across the room.
+   const inset=Math.min(.5,r.length*.2,r.width*.2);const corners=[[r.x+inset,r.y+inset],[r.x+r.length-inset,r.y+inset],[r.x+inset,r.y+r.width-inset],[r.x+r.length-inset,r.y+r.width-inset]];
+   const stuff=elements.filter(e=>!['door','window','note'].includes(e.kind)&&inRoom(e,r)).map(e=>[e.x+e.length/2,e.y+e.width/2]);
+   const score=(c:number[])=>stuff.length?Math.min(...stuff.map(p=>Math.hypot(p[0]-c[0],p[1]-c[1]))):-Math.abs(c[1]-(r.y+r.width));
+   const best=corners.sort((a,b)=>score(b)-score(a))[0];
+   camera.position.set(best[0],eye,best[1]);yaw=Math.atan2(r.x+r.length/2-best[0],r.y+r.width/2-best[1]);pitch=-.12;goal=null;look()};
+  const setWalking=(on:boolean,id?:string)=>{walking=on;controls.enabled=!on;ceilings.forEach(c=>c.visible=on);for(const f of wallFades)for(const m of f.mat){m.opacity=1;m.depthWrite=true}
+   if(on){camera.fov=62;camera.near=.05;camera.updateProjectionMatrix();enterRoom(id)}else modelView()};
+  api.current={visit:id=>setWalking(true,id),model:()=>setWalking(false),hold:(dir,on)=>{if(on)held.add(dir);else held.delete(dir)},zoom:f=>{camera.fov=Math.min(80,Math.max(28,camera.fov*f));camera.updateProjectionMatrix()}};
+  // Touch, mouse and keyboard in walk mode.
+  const pointers=new Map<number,{x:number;y:number}>();let startDist=0,startFov=62,downAt=0,moved=0;const ray=new T.Raycaster();
+  const onDown=(e:PointerEvent)=>{if(!walking)return;renderer.domElement.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});downAt=performance.now();moved=0;if(pointers.size===2){const [p,q]=[...pointers.values()];startDist=Math.hypot(p.x-q.x,p.y-q.y);startFov=camera.fov}};
+  const onMove=(e:PointerEvent)=>{if(!walking||!pointers.has(e.pointerId))return;const prev=pointers.get(e.pointerId)!;const dx=e.clientX-prev.x,dy=e.clientY-prev.y;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});moved+=Math.abs(dx)+Math.abs(dy);
+   if(pointers.size===1){yaw-=dx*.005;pitch=Math.max(-1.2,Math.min(1.2,pitch-dy*.004));look()}
+   else if(pointers.size===2){const [p,q]=[...pointers.values()];const dist=Math.hypot(p.x-q.x,p.y-q.y);if(startDist>0){camera.fov=Math.min(80,Math.max(28,startFov*startDist/dist));camera.updateProjectionMatrix()}}};
+  const onUp=(e:PointerEvent)=>{if(!walking)return;const wasTap=pointers.size===1&&moved<8&&performance.now()-downAt<350;pointers.delete(e.pointerId);if(pointers.size<2)startDist=0;
+   if(wasTap){const rect=renderer.domElement.getBoundingClientRect();ray.setFromCamera(new T.Vector2((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1),camera);const hit=ray.intersectObjects(floors,false)[0];if(hit)goal=new T.Vector3(hit.point.x,eye,hit.point.z)}};
+  const onWheel=(e:WheelEvent)=>{if(!walking)return;e.preventDefault();camera.fov=Math.min(80,Math.max(28,camera.fov*(e.deltaY>0?1.06:.94)));camera.updateProjectionMatrix()};
+  const keys:Record<string,string>={ArrowUp:'f',KeyW:'f',ArrowDown:'b',KeyS:'b',ArrowLeft:'l',KeyA:'l',ArrowRight:'r',KeyD:'r'};
+  const onKey=(e:KeyboardEvent)=>{if(!walking||!keys[e.code])return;e.preventDefault();if(e.type==='keydown')held.add(keys[e.code]);else held.delete(keys[e.code])};
+  const cv=renderer.domElement;cv.addEventListener('pointerdown',onDown);cv.addEventListener('pointermove',onMove);cv.addEventListener('pointerup',onUp);cv.addEventListener('pointercancel',onUp);cv.addEventListener('wheel',onWheel,{passive:false});window.addEventListener('keydown',onKey);window.addEventListener('keyup',onKey);
+  const resize=()=>{const a=el.clientWidth,b=el.clientHeight;renderer.setSize(a,b);camera.aspect=a/Math.max(1,b);camera.updateProjectionMatrix();if(!walking)modelView()};
   const observer=new ResizeObserver(resize);observer.observe(el);resize();
-  let raf=0;const v=new T.Vector3();
-  const draw=()=>{controls.update();
-   if(!top&&!roof)for(const f of wallFades){v.copy(camera.position).sub(f.center).setY(0);const facing=v.normalize().dot(f.normal);const o=facing>.25?.12:1;for(const m of f.mat)if(Math.abs(m.opacity-o)>.01){m.opacity+=(o-m.opacity)*.25;m.depthWrite=m.opacity>.9}}
+  let raf=0;const v=new T.Vector3();let last=performance.now();
+  const draw=()=>{const now=performance.now(),dt=Math.min(.05,(now-last)/1000);last=now;
+   if(walking){
+    if(held.has('in'))api.current?.zoom(.985);if(held.has('out'))api.current?.zoom(1.015);
+    const f=(held.has('f')?1:0)-(held.has('b')?1:0),s=(held.has('r')?1:0)-(held.has('l')?1:0);
+    if(f||s){goal=null;const step=1.5*dt;const nx=camera.position.x+(Math.sin(yaw)*f-Math.cos(yaw)*s)*step,nz=camera.position.z+(Math.cos(yaw)*f+Math.sin(yaw)*s)*step;if(allowed(nx,nz))camera.position.set(nx,eye,nz);else if(allowed(nx,camera.position.z))camera.position.x=nx;else if(allowed(camera.position.x,nz))camera.position.z=nz;look()}
+    if(goal){camera.position.lerp(goal,Math.min(1,dt*3));if(camera.position.distanceTo(goal)<.03)goal=null;look()}
+   }else{controls.update();
+    if(!top&&!roof)for(const f of wallFades){v.copy(camera.position).sub(f.center).setY(0);const facing=v.normalize().dot(f.normal);const o=facing>.25?.12:1;for(const m of f.mat)if(Math.abs(m.opacity-o)>.01){m.opacity+=(o-m.opacity)*.25;m.depthWrite=m.opacity>.9}}}
    renderer.render(scene,camera);raf=requestAnimationFrame(draw)};draw();
-  dispose=()=>{cancelAnimationFrame(raf);observer.disconnect();controls.dispose();scene.traverse((o:any)=>{if(o.isMesh)o.geometry.dispose()});mats.forEach(m=>{m.map?.dispose?.();m.normalMap?.dispose?.();m.dispose()});envTex.dispose();pmrem.dispose();clearTextureCache();renderer.dispose();renderer.domElement.remove()};
+  dispose=()=>{cancelAnimationFrame(raf);cv.removeEventListener('pointerdown',onDown);cv.removeEventListener('pointermove',onMove);cv.removeEventListener('pointerup',onUp);cv.removeEventListener('pointercancel',onUp);cv.removeEventListener('wheel',onWheel);window.removeEventListener('keydown',onKey);window.removeEventListener('keyup',onKey);api.current=null;observer.disconnect();controls.dispose();scene.traverse((o:any)=>{if(o.isMesh)o.geometry.dispose()});mats.forEach(m=>{m.map?.dispose?.();m.normalMap?.dispose?.();m.dispose()});envTex.dispose();pmrem.dispose();clearTextureCache();renderer.dispose();renderer.domElement.remove()};
  }catch(e){console.error(e);setError('La 3D nécessite WebGL sur cet appareil. Le plan 2D reste disponible.')}})();return()=>{cancelled=true;dispose()}},[plan,roof,top]);
 
  async function photoreal(){
@@ -200,9 +236,27 @@ export default function PlanScene({plan,roof=false,top=false}:{plan:Plan;roof?:b
   }catch(e){setRender({busy:false,error:(e as Error).message})}
  }
 
- return <div className="plan-scene" ref={host} aria-label="Maquette 3D interactive">{error&&<p role="alert">{error}</p>}
+  const rooms=plan.rooms.filter(r=>r.phase!=='remove');
+ const toggleFull=async()=>{const el=host.current;if(!el)return;if(!full){setFull(true);try{await el.requestFullscreen?.()}catch{}}else{setFull(false);try{if(document.fullscreenElement)await document.exitFullscreen()}catch{}}};
+ const hold=(dir:string)=>({onPointerDown:(e:any)=>{e.preventDefault();api.current?.hold(dir,true)},onPointerUp:()=>api.current?.hold(dir,false),onPointerLeave:()=>api.current?.hold(dir,false),onPointerCancel:()=>api.current?.hold(dir,false),onContextMenu:(e:any)=>e.preventDefault()});
+ return <div className={`plan-scene ${mode==='visit'?'is-visit':''} ${full?'is-full':''}`} ref={host} aria-label="Maquette 3D interactive">{error&&<p role="alert">{error}</p>}
+  <div className="plan-scene-top">
+   {mode==='model'?<button type="button" className="btn primary" onClick={()=>{setMode('visit');api.current?.visit(roomId||undefined)}}>👁 Visite réaliste</button>:<>
+    <button type="button" className="btn secondary" onClick={()=>{setMode('model');api.current?.model()}}>← Maquette</button>
+    <div className="plan-scene-rooms">{rooms.map(r=><button type="button" key={r.id} className={roomId===r.id?'active':''} onClick={()=>{setRoomId(r.id);api.current?.visit(r.id)}}>{r.name}</button>)}</div>
+   </>}
+   <button type="button" className="btn secondary plan-scene-full" aria-label={full?'Quitter le plein écran':'Plein écran'} onClick={()=>void toggleFull()}>{full?'✕':'⤢'}</button>
+  </div>
+  {mode==='visit'&&<>
+   <p className="plan-scene-hint">Glissez pour regarder · pincez ou molette pour zoomer · touchez le sol pour avancer{typeof window!=='undefined'&&matchMedia('(pointer:fine)').matches?' · flèches du clavier pour marcher':''}</p>
+   <div className="plan-scene-pad" aria-label="Déplacement">
+    <button type="button" aria-label="Avancer" className="up" {...hold('f')}>▲</button><button type="button" aria-label="Gauche" className="left" {...hold('l')}>◀</button><button type="button" aria-label="Reculer" className="down" {...hold('b')}>▼</button><button type="button" aria-label="Droite" className="right" {...hold('r')}>▶</button>
+   </div>
+   <div className="plan-scene-zoom"><button type="button" aria-label="Zoomer" {...hold('in')}>＋</button><button type="button" aria-label="Dézoomer" {...hold('out')}>－</button></div>
+  </>}
+
   <div className="plan-scene-actions">
-   <button type="button" className="btn primary" disabled={render.busy} onClick={()=>void photoreal()}>{render.busy?'Rendu photoréaliste en cours… (20 à 60 s)':'✦ Rendu photoréaliste IA'}</button>
+   <button type="button" className="btn primary" disabled={render.busy} onClick={()=>void photoreal()}>{render.busy?'Photo réaliste en cours… (20 à 60 s)':mode==='visit'?'✦ Photo réaliste IA de cette vue':'✦ Rendu photoréaliste IA'}</button>
    <button type="button" className="btn secondary" onClick={()=>{const canvas=host.current?.querySelector('canvas');if(!canvas)return;const a=document.createElement('a');a.download='mgpro-maquette-3d.png';a.href=canvas.toDataURL('image/png');a.click()}}>Télécharger la vue</button>
   </div>
   {render.error&&<p className="plan-scene-error" role="alert">{render.error}</p>}

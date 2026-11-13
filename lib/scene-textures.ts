@@ -44,14 +44,14 @@ function tiles(T:T3,base:string,seed:number,tw=.6,th=.6,grout='#d9d6cf',polish=f
  const cols=2,rows=2,cw=W/cols,ch=H/rows,g=Math.max(3,W*.006);
  ctx.fillStyle=grout;ctx.fillRect(0,0,W,H);
  for(let i=0;i<cols;i++)for(let j=0;j<rows;j++){ctx.fillStyle=shade(base,1,r,.07);ctx.fillRect(i*cw+g/2,j*ch+g/2,cw-g,ch-g);
-  for(let k=0;k<(polish?6:14);k++){ctx.fillStyle=`rgba(${r()>.5?255:60},${r()>.5?255:60},${r()>.5?255:60},${.025+r()*.04})`;ctx.beginPath();ctx.ellipse(i*cw+r()*cw,j*ch+r()*ch,20+r()*90,10+r()*40,r()*3,0,Math.PI*2);ctx.fill()}}
+  for(let k=0;k<(polish?6:14);k++){{const v=r()>.5?255:70;ctx.fillStyle=`rgba(${v},${v},${v},${.02+r()*.035})`;}ctx.beginPath();ctx.ellipse(i*cw+r()*cw,j*ch+r()*ch,20+r()*90,10+r()*40,r()*3,0,Math.PI*2);ctx.fill()}}
  for(let i=0;i<=cols;i++){hx.fillStyle='#202020';hx.fillRect(i*cw-g/2,0,g,H)}for(let j=0;j<=rows;j++){hx.fillStyle='#202020';hx.fillRect(0,j*ch-g/2,W,g)}
  noise(ctx,W,H,r,5000,.03);
  return {map:tex(T,c),normalMap:normalFrom(T,hc,1.6),size:[tw*cols,th*rows]};
 }
 function stone(T:T3,base:string,seed:number,veins:number,veinColor:string):Made{
  const W=1024,H=1024,r=rng(seed);const [c,ctx]=canvas(W,H);ctx.fillStyle=base;ctx.fillRect(0,0,W,H);
- for(let k=0;k<40;k++){ctx.fillStyle=`rgba(${r()>.5?255:120},${r()>.5?255:120},${r()>.5?255:120},.035)`;ctx.beginPath();ctx.ellipse(r()*W,r()*H,60+r()*260,30+r()*140,r()*3,0,Math.PI*2);ctx.fill()}
+ for(let k=0;k<40;k++){{const v=r()>.5?255:120;ctx.fillStyle=`rgba(${v},${v},${v},.035)`;}ctx.beginPath();ctx.ellipse(r()*W,r()*H,60+r()*260,30+r()*140,r()*3,0,Math.PI*2);ctx.fill()}
  for(let v=0;v<veins;v++){ctx.strokeStyle=veinColor;ctx.globalAlpha=.12+r()*.3;ctx.lineWidth=.7+r()*2.6;ctx.beginPath();let x=r()*W,y=0;ctx.moveTo(x,y);while(y<H){x+=(r()-.5)*70;y+=20+r()*40;ctx.lineTo(x,y)}ctx.stroke()}
  ctx.globalAlpha=1;noise(ctx,W,H,r,14000,.05);
  const [hc,hx]=canvas(64,64);hx.fillStyle='#808080';hx.fillRect(0,0,64,64);
@@ -59,14 +59,14 @@ function stone(T:T3,base:string,seed:number,veins:number,veinColor:string):Made{
 }
 function concrete(T:T3,base:string,seed:number):Made{
  const W=1024,H=1024,r=rng(seed);const [c,ctx]=canvas(W,H);ctx.fillStyle=base;ctx.fillRect(0,0,W,H);
- for(let k=0;k<160;k++){ctx.fillStyle=`rgba(${r()>.5?255:30},${r()>.5?255:30},${r()>.5?255:30},${.02+r()*.03})`;ctx.beginPath();ctx.ellipse(r()*W,r()*H,20+r()*160,20+r()*120,r()*3,0,Math.PI*2);ctx.fill()}
+ for(let k=0;k<160;k++){{const v=r()>.5?255:30;ctx.fillStyle=`rgba(${v},${v},${v},${.02+r()*.03})`;}ctx.beginPath();ctx.ellipse(r()*W,r()*H,20+r()*160,20+r()*120,r()*3,0,Math.PI*2);ctx.fill()}
  noise(ctx,W,H,r,30000,.06);
  const [hc,hx]=canvas(256,256);hx.fillStyle='#808080';hx.fillRect(0,0,256,256);noise(hx,256,256,r,4000,.25);
  return {map:tex(T,c),normalMap:normalFrom(T,hc,.8),size:[2.4,2.4]};
 }
 function plaster(T:T3,base:string,seed:number):Made{
  const W=512,H=512,r=rng(seed);const [c,ctx]=canvas(W,H);ctx.fillStyle=base;ctx.fillRect(0,0,W,H);
- for(let k=0;k<60;k++){ctx.fillStyle=`rgba(${r()>.5?255:0},${r()>.5?255:0},${r()>.5?255:0},.012)`;ctx.beginPath();ctx.ellipse(r()*W,r()*H,30+r()*120,30+r()*120,0,0,Math.PI*2);ctx.fill()}
+ for(let k=0;k<60;k++){{const v=r()>.5?255:0;ctx.fillStyle=`rgba(${v},${v},${v},.012)`;}ctx.beginPath();ctx.ellipse(r()*W,r()*H,30+r()*120,30+r()*120,0,0,Math.PI*2);ctx.fill()}
  const [hc,hx]=canvas(256,256);hx.fillStyle='#808080';hx.fillRect(0,0,256,256);noise(hx,256,256,r,9000,.18);
  return {map:tex(T,c),normalMap:normalFrom(T,hc,.35),size:[2,2]};
 }
