@@ -11,13 +11,13 @@ export type AiContent =
  | {type:'image';source:{type:'url';url:string}}
  | {type:'image';source:{type:'base64';media_type:'image/jpeg'|'image/png'|'image/webp';data:string}};
 export type AiMessage = {role:'user'|'assistant';content:string|AiContent[]};
-export type AiProvider = {kind:'anthropic'|'gateway';url:string;headers:Record<string,string>;models:(tier:'smart'|'fast')=>string[]};
+export type AiProvider = {kind:'anthropic'|'gateway';url:string;headers:Record<string,string>;models:(tier:'best'|'smart'|'fast')=>string[]};
 
 // Ordered candidates: when a model is not available on the account (e.g. AI Gateway free tier),
 // the next one is tried. AI_MODEL overrides the first choice.
 const MODELS = {
- anthropic:{smart:['claude-sonnet-5-5','claude-sonnet-4-5'],fast:['claude-haiku-5-5','claude-haiku-4-5']},
- gateway:{smart:['anthropic/claude-sonnet-5.5','anthropic/claude-sonnet-5','anthropic/claude-sonnet-4.6','anthropic/claude-sonnet-4.5','anthropic/claude-haiku-4.5','google/gemini-2.5-flash','openai/gpt-5-mini'],fast:['anthropic/claude-haiku-5.5','anthropic/claude-haiku-4.5','google/gemini-2.5-flash','openai/gpt-5-mini']}
+ anthropic:{best:['claude-opus-5-5','claude-sonnet-5-5','claude-sonnet-4-5'],smart:['claude-sonnet-5-5','claude-sonnet-4-5'],fast:['claude-haiku-5-5','claude-haiku-4-5']},
+ gateway:{best:['anthropic/claude-opus-4.6','anthropic/claude-sonnet-5.5','anthropic/claude-sonnet-5','google/gemini-2.5-pro','google/gemini-2.5-flash'],smart:['anthropic/claude-sonnet-5.5','anthropic/claude-sonnet-5','anthropic/claude-sonnet-4.6','anthropic/claude-sonnet-4.5','anthropic/claude-haiku-4.5','google/gemini-2.5-flash','openai/gpt-5-mini'],fast:['anthropic/claude-haiku-5.5','anthropic/claude-haiku-4.5','google/gemini-2.5-flash','openai/gpt-5-mini']}
 };
 const withOverride=(list:readonly string[])=>{const o=process.env.AI_MODEL?.trim();return o?[o,...list.filter(m=>m!==o)]:[...list]};
 
@@ -37,7 +37,7 @@ const unavailable=new Map<string,number>();
 export class AiError extends Error{constructor(message:string,public status=502){super(message)}}
 
 /** Calls Claude and returns the concatenated text answer. Throws AiError with a French message. */
-export async function aiText({req,system,messages,maxTokens=2000,tier='smart',timeoutMs=55000}:{req?:Request;system:string;messages:AiMessage[];maxTokens?:number;tier?:'smart'|'fast';timeoutMs?:number}):Promise<string>{
+export async function aiText({req,system,messages,maxTokens=2000,tier='smart',timeoutMs=55000}:{req?:Request;system:string;messages:AiMessage[];maxTokens?:number;tier?:'best'|'smart'|'fast';timeoutMs?:number}):Promise<string>{
  const provider=aiProvider(req);
  if(!provider)throw new AiError('IA non configurée sur ce déploiement.',503);
  let res:Response|null=null,lastBody='';
