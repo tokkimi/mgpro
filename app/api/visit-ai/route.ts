@@ -83,9 +83,9 @@ export async function GET(req:Request){
    if(test==='plan'){
     const rooms=[{id:'cuisine',name:'Cuisine',length:14,width:11,height:8,unit:'pi'},{id:'salon',name:'Salon',length:16,width:13,height:8,unit:'pi',position:{ref:'cuisine',side:'right' as const,align:'start' as const,door:true}},{id:'sdb',name:'Salle de bain',length:8,width:6,height:8,unit:'pi',position:{ref:'cuisine',side:'below' as const,align:'start' as const,door:false}},{id:'chambre',name:'Chambre',length:12,width:11,height:8,unit:'pi',position:{ref:'salon',side:'below' as const,align:'end' as const,door:true}}];
     const ctx={rooms,scope:'Ouvrir le mur entre cuisine et salon, ajouter un îlot, refaire la salle de bain avec douche en céramique.'};
+    if(url.searchParams.get('quote')){const plan=autoPlan(rooms);const q=await aiText({req,system:QUOTE_SYSTEM,messages:[{role:'user',content:quoteUserText({...ctx,plan})}],maxTokens:16000,timeoutMs:110000});const quote=normalizeQuote(extractJson(q));return json({ok:!!quote,model:lastModel,lines:quote?.lines.length,total:quote?.lines.reduce((s,l)=>s+l.quantity*l.price,0),sample:quote?.lines.slice(0,6),exclusions:quote?.exclusions.slice(0,3)})}
     const text=await aiText({req,system:PLAN_SYSTEM,messages:[{role:'user',content:planUserText(ctx)}],maxTokens:16000,timeoutMs:110000});
     const plan=normalizePlan(extractJson(text),rooms);
-    if(url.searchParams.get('quote')&&plan){const q=await aiText({req,system:QUOTE_SYSTEM,messages:[{role:'user',content:quoteUserText({...ctx,plan})}],maxTokens:16000,timeoutMs:110000});const quote=normalizeQuote(extractJson(q));return json({ok:!!quote,model:lastModel,lines:quote?.lines.length,total:quote?.lines.reduce((s,l)=>s+l.quantity*l.price,0),sample:quote?.lines.slice(0,6),exclusions:quote?.exclusions.slice(0,3)})}
     return json({ok:!!plan,model:lastModel,stop:lastStop,rooms:plan?.rooms.map(r=>[r.name,r.x,r.y,r.length,r.width]),elements:plan?.elements.map(e=>`${e.kind}:${e.label}`),checks:plan?checkPlan(plan,rooms):null});
    }
    const text=await aiText({req,system:'Réponds uniquement OK.',messages:[{role:'user',content:'Test'}],maxTokens:300,tier:'fast',timeoutMs:20000});
