@@ -123,10 +123,15 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
   function washer(g:any,W:number,D:number){add(rbox(W,.85,D-.02,.02),M.white,0,.425,-.01,g);const ring=add(new T.TorusGeometry(.17,.025,12,40),M.chrome,0,.45,D/2,g);add(new T.CircleGeometry(.16,32),plain('#3b4246',{roughness:.05,metalness:.3}),0,.45,D/2-.005,g)}
   function stool(x:number,z:number,parent:any){add(cyl(.17,.17,.05,24),plain('#3b3a37',{roughness:.6}),x,.66,z,parent);add(cyl(.02,.02,.62,10),M.blackMetal,x,.33,z,parent);add(cyl(.18,.18,.015,24),M.blackMetal,x,.008,z,parent)}
   function sofa(r:PlanRoom){const W=Math.min(2.3,r.length*.6),D=.95;const {g}=anchored({x:r.x+r.length/2-W/2,y:r.y+r.width-D-.15,length:W,width:D},'south');const fab='#cfc7b8';
-   add(rbox(W,.42,D,.05),textured('fabric',fab,W,D),0,.21,0,g);add(rbox(W,.45,.22,.06),textured('fabric',fab,W,.45),0,.62,-D/2+.11,g);for(const s of [-1,1])add(rbox(.2,.62,D,.06),textured('fabric',fab,.2,.62),s*(W/2-.1),.31,0,g);
-   const n=Math.max(2,Math.round((W-.4)/.7));for(let i=0;i<n;i++)add(rbox((W-.4)/n-.02,.14,D-.3,.06),textured('fabric','#ddd6c8',.6,.6),-W/2+.2+(W-.4)/n*(i+.5),.49,.06,g);
-   add(rbox(1.1,.38,.6,.03),textured('oakVeneer','#a07a52',1.1,.6),0,.19,1.05,g);const rug=add(box(Math.min(r.length*.75,2.8),.008,Math.min(r.width*.6,2)),textured('rug','#c2b8a6',2,2),0,.004,.8,g,false);rug.receiveShadow=true;
+   const cloth={photo:{a:'Carpet001',t:'#cfc7b8'}};add(rbox(W,.42,D,.05),textured('fabric',fab,W,D,cloth),0,.21,0,g);add(rbox(W,.45,.22,.06),textured('fabric',fab,W,.45,cloth),0,.62,-D/2+.11,g);for(const s of [-1,1])add(rbox(.2,.62,D,.06),textured('fabric',fab,.2,.62,cloth),s*(W/2-.1),.31,0,g);
+   const n=Math.max(2,Math.round((W-.4)/.7));for(let i=0;i<n;i++)add(rbox((W-.4)/n-.02,.14,D-.3,.06),textured('fabric','#ddd6c8',.6,.6,{photo:{a:'Carpet001',t:'#ddd6c8'}}),-W/2+.2+(W-.4)/n*(i+.5),.49,.06,g);
+   add(rbox(1.1,.38,.6,.03),textured('oakVeneer','#a07a52',1.1,.6,{photo:{a:'WoodFloor051'}}),0,.19,1.05,g);const rug=add(box(Math.min(r.length*.75,2.8),.008,Math.min(r.width*.6,2)),textured('rug','#c2b8a6',2,2,{photo:{a:'Carpet016'}}),0,.004,.8,g,false);rug.receiveShadow=true;
    add(cyl(.015,.015,1.5),M.blackMetal,W/2+.35,.75,-D/2+.1,g);add(cyl(.16,.2,.25,24),M.lampShade,W/2+.35,1.55,-D/2+.1,g)}
+  // Decor: potted plant and framed artwork, so rooms feel lived-in.
+  function plant(px:number,pz:number,hgt=1.1){const g=new T.Group();g.position.set(px,0,pz);scene.add(g);add(cyl(.17,.13,.36,28),textured('concrete','#b9b2a6',.6,.4,{photo:{a:'Concrete048'}}),0,.18,0,g);add(cyl(.15,.15,.02,24),plain('#3b2e22',{roughness:1}),0,.35,0,g);
+   const leaf=plain('#3f6b35',{roughness:.55,clearcoat:.3,side:T.DoubleSide});for(let i=0;i<14;i++){const a=i*2.39,rr=.08+((i*37)%10)/60,y=.45+((i*53)%10)/10*(hgt-.5);const m=add(new T.SphereGeometry(.13,12,8),leaf,Math.cos(a)*rr,y,Math.sin(a)*rr,g);m.scale.set(.35,1.2,.08);m.rotation.set(.4*Math.cos(a),a,.5*Math.sin(a))}
+   add(cyl(.012,.012,hgt-.4),plain('#4a5a32'),0,.35+(hgt-.4)/2,0,g)}
+  function art(g:any,cx:number,cy:number,cz:number,W=.9,H=.65,photo={a:'Travertine009'}){add(box(W+.06,H+.06,.03),plain('#1c1c1c',{roughness:.4}),cx,cy,cz,g);add(box(W,H,.01),textured('paint','#d8cbb4',W,H,{photo,roughness:.8}),cx,cy,cz+.02,g)}
   function bed(r:PlanRoom){const W=Math.min(1.6,r.length*.6),L=Math.min(2.1,r.width*.7);const {g}=anchored({x:r.x+r.length/2-W/2,y:r.y+.08,length:W,width:L},'north');
    add(rbox(W+.08,.3,L+.05,.03),textured('oakVeneer','#8a6a4a',W,L),0,.15,0,g);add(rbox(W+.1,1.0,.08,.03),textured('fabric','#b9ad98',W,1),0,.6,-L/2-.02,g);add(rbox(W,.22,L-.05,.05),M.white,0,.4,0,g);
    add(rbox(W+.02,.08,L*.68,.04),textured('fabric','#e8e2d6',W,L),0,.53,L*.16,g);for(const s of [-1,1])add(rbox(W/2-.08,.14,.4,.07),M.satin,s*W/4,.58,-L/2+.3,g);
@@ -196,8 +201,8 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
    const own=elements.filter(e=>!['door','window','note'].includes(e.kind)&&roomOf(e)===r);
    for(const e of own)fixture(e,r);
    const has=(re:RegExp,kinds:string[]=[])=>own.some(e=>kinds.includes(e.kind)||re.test((e.label||'').toLowerCase()));
-   if(r.furniture==='living'&&!has(/canap|sofa/))sofa(r);
-   if(r.furniture==='bedroom'&&!has(/lit\b/))bed(r);
+   if(r.furniture==='living'&&!has(/canap|sofa/)){sofa(r);plant(x+.45,z+.45,1.3);const wa=anchored({x:x+l/2-.5,y:z+d-.06,length:1,width:.05},'south');art(wa.g,0,1.55,0,1.1,.75)}
+   if(r.furniture==='bedroom'&&!has(/lit\b/)){bed(r);plant(x+l-.4,z+d-.4,1);const wa=anchored({x:x+l/2-.45,y:z+t,length:.9,width:.05},'north');art(wa.g,0,1.55,0,.9,.6,{a:'Marble005'})}
    if(r.furniture==='kitchen'&&!has(/./,['counter','island'])){const run={x:x+.15,y:z+t,length:Math.max(1.2,l-.3),width:.64};const {g,W,D}=anchored(run,'north');cabinets(g,W,D);upper(g,W,D);sinkBasin(g,0,.915,.02);faucet(g,0,.91,-D/2+.08);const f=anchored({x:x+l-.15-.8,y:z+t,length:.8,width:.7},'north');fridge(f.g,.8,.7);if(l>3.4&&d>3.2){const isl=anchored({x:x+l/2-.9,y:z+d/2-.2,length:1.8,width:.95},'north');cabinets(isl.g,1.8,.7);add(box(1.84,.03,.99),textured('quartz','#f1efea',1.8,.95,{roughness:.12}),0,.9,.12,isl.g);for(const s of [-.5,0,.5])stool(s,.85,isl.g)}}
    if(r.furniture==='bath'&&!has(/toilette|wc|douche|baignoire|lavabo|vanit/)){toilet(anchored({x:x+.2,y:z+t,length:.42,width:.72},'north').g,.72);const v=anchored({x:x+.75,y:z+t,length:Math.min(.9,l-1.2),width:.5},'north');vanity(v.g,v.W,v.D);if(d>1.6){const s=anchored({x:x+l-1.0-.02,y:z+d-1.0-.02,length:1.0,width:1.0},'south');shower(s.g,1,1)}}
    // Ceiling light per room (warm, soft).
@@ -218,17 +223,17 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
    const best=corners.sort((a,b)=>score(b)-score(a))[0];
    camera.position.set(best[0],eye,best[1]);yaw=Math.atan2(r.x+r.length/2-best[0],r.y+r.width/2-best[1]);pitch=-.12;goal=null;look()};
   // Photoreal mode: progressive path tracing (real light bounces, soft shadows, reflections) whenever the view is still.
-  let grad:any=null;let denoise:any=null;const rasterEnv=scene.environment;
+  let grad:any=null;let denoise:any=null;let ptBg:any=null;const rasterEnv=scene.environment;
   const ptStart=async()=>{if(pt||!realRef.current)return;try{const {WebGLPathTracer,GradientEquirectTexture,DenoiseMaterial}=await import('three-gpu-pathtracer');const {FullScreenQuad}=await import('three/addons/postprocessing/Pass.js');if(cancelled)return;
     pt=new WebGLPathTracer(renderer);pt.tiles.set(1,1);pt.bounces=4;pt.filterGlossyFactor=1;pt.minSamples=3;pt.renderDelay=180;pt.fadeDuration=350;pt.dynamicLowRes=false;pt.renderScale=matchMedia('(pointer:coarse)').matches?.5:Math.min(1,1.25/Math.max(1,devicePixelRatio));
     grad=new GradientEquirectTexture();grad.topColor.set('#fbf6ee');grad.bottomColor.set('#8c8577');grad.update();scene.environment=grad;(scene as any).environmentIntensity=1.25;
     // Daylight from above (soft studio light) converges fast and looks like a real photo; small lamps would only add noise.
-    renderer.toneMappingExposure=.8;ceilings.forEach(c=>c.visible=false);scene.traverse((o:any)=>{if(o.isPointLight){o.userData.base??=o.intensity;o.intensity=0}});
+    renderer.toneMappingExposure=.8;ceilings.forEach(c=>c.visible=false);ptBg=scene.background;scene.background=new T.Color('#f3efe8');scene.traverse((o:any)=>{if(o.isPointLight){o.userData.base??=o.intensity;o.intensity=0}});
     // Edge-preserving denoise while samples accumulate, fading out as the image converges.
     denoise=new FullScreenQuad(new DenoiseMaterial({transparent:true,premultipliedAlpha:renderer.getContextAttributes().premultipliedAlpha}));
     pt.renderToCanvasCallback=(target:any,r:any,quad:any)=>{const m=denoise.material;m.map=target.texture;m.opacity=quad.material.opacity;m.sigma=Math.max(1.5,5-pt.samples*.05);m.threshold=Math.max(.06,.35-pt.samples*.004);m.kSigma=1;const ac=r.autoClear;r.autoClear=false;denoise.render(r);r.autoClear=ac};
     pt.setScene(scene,camera);ptReady=true}catch(e){console.error(e);pt=null}};
-  const ptStop=()=>{ptReady=false;try{pt?.dispose();denoise?.dispose()}catch{}pt=null;denoise=null;scene.environment=rasterEnv;(scene as any).environmentIntensity=.38;renderer.toneMappingExposure=.92;ceilings.forEach(c=>c.visible=walking);scene.traverse((o:any)=>{if(o.isPointLight&&o.userData.base!=null)o.intensity=o.userData.base})};
+  const ptStop=()=>{ptReady=false;if(ptBg){scene.background=ptBg;ptBg=null}try{pt?.dispose();denoise?.dispose()}catch{}pt=null;denoise=null;scene.environment=rasterEnv;(scene as any).environmentIntensity=.38;renderer.toneMappingExposure=.92;ceilings.forEach(c=>c.visible=walking);scene.traverse((o:any)=>{if(o.isPointLight&&o.userData.base!=null)o.intensity=o.userData.base})};
   let ptReady=false;const lastCam=new T.Matrix4();let lastFov=0;
   const setWalking=(on:boolean,id?:string)=>{walking=on;controls.enabled=!on;ceilings.forEach(c=>c.visible=on);for(const f of wallFades)for(const m of f.mat){m.opacity=1;m.depthWrite=true}
    if(on){camera.fov=62;camera.near=.05;camera.updateProjectionMatrix();enterRoom(id);ptStop();void ptStart()}else{ptStop();modelView()}};
