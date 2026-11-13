@@ -218,12 +218,16 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
    const best=corners.sort((a,b)=>score(b)-score(a))[0];
    camera.position.set(best[0],eye,best[1]);yaw=Math.atan2(r.x+r.length/2-best[0],r.y+r.width/2-best[1]);pitch=-.12;goal=null;look()};
   // Photoreal mode: progressive path tracing (real light bounces, soft shadows, reflections) whenever the view is still.
-  let grad:any=null;const rasterEnv=scene.environment;
-  const ptStart=async()=>{if(pt||!realRef.current)return;try{const {WebGLPathTracer,GradientEquirectTexture}=await import('three-gpu-pathtracer');if(cancelled)return;
+  let grad:any=null;let denoise:any=null;const rasterEnv=scene.environment;
+  const ptStart=async()=>{if(pt||!realRef.current)return;try{const {WebGLPathTracer,GradientEquirectTexture,DenoiseMaterial}=await import('three-gpu-pathtracer');const {FullScreenQuad}=await import('three/addons/postprocessing/Pass.js');if(cancelled)return;
     pt=new WebGLPathTracer(renderer);pt.tiles.set(2,2);pt.bounces=5;pt.filterGlossyFactor=.5;pt.minSamples=2;pt.renderDelay=180;pt.fadeDuration=350;pt.dynamicLowRes=false;pt.renderScale=matchMedia('(pointer:coarse)').matches?.5:Math.min(1,1.25/Math.max(1,devicePixelRatio));
-    grad=new GradientEquirectTexture();grad.topColor.set('#fbf6ee');grad.bottomColor.set('#8c8577');grad.update();scene.environment=grad;(scene as any).environmentIntensity=.9;
+    grad=new GradientEquirectTexture();grad.topColor.set('#fbf6ee');grad.bottomColor.set('#8c8577');grad.update();scene.environment=grad;(scene as any).environmentIntensity=.55;
+    renderer.toneMappingExposure=.62;scene.traverse((o:any)=>{if(o.isPointLight){o.userData.base??=o.intensity;o.intensity=o.userData.base*.35}});
+    // Edge-preserving denoise while samples accumulate, fading out as the image converges.
+    denoise=new FullScreenQuad(new DenoiseMaterial({transparent:true,premultipliedAlpha:renderer.getContextAttributes().premultipliedAlpha}));
+    pt.renderToCanvasCallback=(target:any,r:any,quad:any)=>{const m=denoise.material;m.map=target.texture;m.opacity=quad.material.opacity;m.sigma=Math.max(1.2,5-pt.samples*.06);m.threshold=.035;m.kSigma=1;const ac=r.autoClear;r.autoClear=false;denoise.render(r);r.autoClear=ac};
     pt.setScene(scene,camera);ptReady=true}catch(e){console.error(e);pt=null}};
-  const ptStop=()=>{ptReady=false;try{pt?.dispose()}catch{}pt=null;scene.environment=rasterEnv;(scene as any).environmentIntensity=.38};
+  const ptStop=()=>{ptReady=false;try{pt?.dispose();denoise?.dispose()}catch{}pt=null;denoise=null;scene.environment=rasterEnv;(scene as any).environmentIntensity=.38;renderer.toneMappingExposure=.92;scene.traverse((o:any)=>{if(o.isPointLight&&o.userData.base!=null)o.intensity=o.userData.base})};
   let ptReady=false;const lastCam=new T.Matrix4();let lastFov=0;
   const setWalking=(on:boolean,id?:string)=>{walking=on;controls.enabled=!on;ceilings.forEach(c=>c.visible=on);for(const f of wallFades)for(const m of f.mat){m.opacity=1;m.depthWrite=true}
    if(on){camera.fov=62;camera.near=.05;camera.updateProjectionMatrix();enterRoom(id);ptStop();void ptStart()}else{ptStop();modelView()}};
@@ -286,7 +290,7 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
    <div className="plan-scene-pad" aria-label="Déplacement">
     <button type="button" aria-label="Avancer" className="up" {...hold('f')}>▲</button><button type="button" aria-label="Gauche" className="left" {...hold('l')}>◀</button><button type="button" aria-label="Reculer" className="down" {...hold('b')}>▼</button><button type="button" aria-label="Droite" className="right" {...hold('r')}>▶</button>
    </div>
-   <div className="plan-scene-real"><button type="button" aria-pressed={real} onClick={()=>{const on=!real;setReal(on);api.current?.real(on)}}>{real?'✨ Rendu réaliste : activé':'✨ Rendu réaliste : désactivé'}</button>{real&&quality>=0&&<span>{quality<24?`Arrêtez-vous : la lumière réelle se calcule… ${Math.min(99,Math.round(quality/24*100))} %`:'Rendu réaliste ✓'}</span>}</div>
+   <div className="plan-scene-real"><button type="button" aria-pressed={real} onClick={()=>{const on=!real;setReal(on);api.current?.real(on)}}>{real?'✨ Rendu réaliste : activé':'✨ Rendu réaliste : désactivé'}</button>{real&&quality>=0&&<span>{quality<60?`Arrêtez-vous : la lumière réelle se calcule… ${Math.min(99,Math.round(quality/60*100))} %`:'Rendu réaliste ✓'}</span>}</div>
    <div className="plan-scene-zoom"><button type="button" aria-label="Zoomer" {...hold('in')}>＋</button><button type="button" aria-label="Dézoomer" {...hold('out')}>－</button></div>
   </>}
 
