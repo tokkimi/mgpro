@@ -60,3 +60,9 @@ test('quote lines without price are dropped and geometry is computed',()=>{
  assert.ok(g[0].wall_sqft_net<352&&g[0].wall_sqft_net>300);
  assert.equal(layoutFromPositions([]).placed.size,0);
 });
+
+import {quoteUserText} from '../lib/visit-ai';
+test('the quote follows the unit system of the visit',()=>{
+ assert.match(quoteUserText({rooms:[{name:'Cuisine',length:4,width:3,height:2.5,unit:'m'}]}),/MÉTRIQUE[\s\S]*"floor_m2": 12/);
+ assert.match(quoteUserText({rooms:[{name:'Cuisine',length:12,width:10,height:8,unit:'pi'}]}),/IMPÉRIAL[\s\S]*"floor_sqft": 120/);
+});

@@ -264,7 +264,7 @@ export type CatalogueItem={name:string;category?:string;unit?:string;price?:numb
 export const QUOTE_SYSTEM=`Tu es estimateur senior pour Rénovations MG Pro (Laval, Montréal, Rive-Nord), en 2026. Tu chiffres une soumission complète et réaliste à partir de la visite.
 Règles :
 - Couvre toutes les étapes du chantier décrit : protection et préparation, démolition et évacuation des rebuts (conteneur), structure/charpente si nécessaire, plomberie, électricité, ventilation, isolation, gypse/tirage de joints, revêtements de sol, céramique, armoires/comptoirs, peinture, finition, nettoyage final, gestion de projet. N’ajoute pas de poste sans lien avec les travaux.
-- Quantités calculées à partir des cotes fournies (surfaces de plancher, surfaces de murs nettes, périmètres, nombre d’ouvertures). Unités : pi², pi lin., unité, heure, forfait. Arrondis au pi² supérieur, ajoute 10 % de perte pour céramique et plancher.
+- Quantités calculées à partir des cotes fournies (surfaces de plancher, surfaces de murs nettes, périmètres, nombre d’ouvertures), dans le système d’unités demandé par l’utilisateur. Ajoute 10 % de perte pour céramique et plancher.
 - Prix unitaires de vente avant taxes (TPS/TVQ non incluses), main-d’œuvre et matériaux compris, en dollars canadiens. Utilise EN PRIORITÉ les prix du catalogue de l’entreprise fourni (basis "catalogue"). Sinon, prix réalistes du marché du Grand Montréal en 2026, gamme intermédiaire (basis "estimation"). Aucune ligne à 0 $.
 - Descriptions claires pour le client (ce qui est fait, matériau, finition).
 - category : la pièce ou le corps de métier (ex. « Cuisine — Démolition »).
@@ -280,9 +280,10 @@ export function geometry(rooms:InRoom[],plan?:Plan|null){
 }
 
 export function quoteUserText(input:{rooms:InRoom[];plan?:Plan|null;scope?:string;constraints?:string;materials?:string;notes?:string;catalogue?:CatalogueItem[]}){
- const geo=geometry(input.rooms,input.plan);
+ const metric=input.rooms.length>0&&input.rooms.filter(r=>r.unit==='m').length>=input.rooms.length/2;
+ const geo=geometry(input.rooms,input.plan).map(g=>metric?{name:g.name,length_m:g.length_m,width_m:g.width_m,height_m:g.height_m,floor_m2:r2(g.length_m*g.width_m),perimeter_m:r2(2*(g.length_m+g.width_m)),wall_m2_net:r2(g.wall_sqft_net*FT*FT),ceiling_m2:r2(g.length_m*g.width_m),doors:g.doors,windows:g.windows,elements:g.elements,notes:g.notes}:g);
  const catalogue=(input.catalogue||[]).filter(c=>c.name&&(Number(c.price)||Number(c.material)||Number(c.labour))).slice(0,200).map(c=>`- ${c.category?c.category+' / ':''}${c.name} : ${Number(c.price)||r2((Number(c.material)||0)+(Number(c.labour)||0))} $ / ${c.unit||'unité'}${c.description?` (${c.description.slice(0,80)})`:''}`).join('\n');
- return [`Pièces et métrés :\n${JSON.stringify(geo,null,1)}`,input.scope?`Travaux demandés : ${input.scope}`:'',input.constraints?`Contraintes : ${input.constraints}`:'',input.materials?`Matériaux et finitions souhaités : ${input.materials}`:'',input.notes?`Notes de visite :\n${input.notes.slice(0,12000)}`:'',catalogue?`Catalogue de prix de l’entreprise (prioritaire) :\n${catalogue}`:'Pas de catalogue de prix : utilise les prix du marché.','Chiffre la soumission et donne le JSON demandé.'].filter(Boolean).join('\n\n');
+ return [metric?'Système d’unités : MÉTRIQUE. Quantités en m², ml (mètre linéaire), unité, heure, forfait ; prix unitaires par m² ou ml.':'Système d’unités : IMPÉRIAL. Quantités en pi², pi lin., unité, heure, forfait ; prix unitaires par pi² ou pi lin.',`Pièces et métrés :\n${JSON.stringify(geo,null,1)}`,input.scope?`Travaux demandés : ${input.scope}`:'',input.constraints?`Contraintes : ${input.constraints}`:'',input.materials?`Matériaux et finitions souhaités : ${input.materials}`:'',input.notes?`Notes de visite :\n${input.notes.slice(0,12000)}`:'',catalogue?`Catalogue de prix de l’entreprise (prioritaire) :\n${catalogue}`:'Pas de catalogue de prix : utilise les prix du marché.','Chiffre la soumission et donne le JSON demandé.'].filter(Boolean).join('\n\n');
 }
 
 export function normalizeQuote(raw:any):QuoteDraft|null{

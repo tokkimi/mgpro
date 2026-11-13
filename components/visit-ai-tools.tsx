@@ -286,3 +286,24 @@ export function syncRoomsFromPlan(plan:Plan,rooms:Data[]):Data[]{
   return {...(prev||{id:r.id,notes:'',materials:{}}),name:r.name,unit,...(same?{}:{length:conv(r.length),width:conv(r.width),height:conv(r.height)})};
  });
 }
+
+const UNIT_KEY='mgpro-unit';
+/** Unit used for new rooms: the last one chosen on this device (feet by default). */
+export function preferredUnit():'pi'|'m'{try{return localStorage.getItem(UNIT_KEY)==='m'?'m':'pi'}catch{return 'pi'}}
+const convert=(v:unknown,from:string,to:string)=>{const n=Number(v);if(!Number.isFinite(n)||!n||from===to)return v;return to==='m'?Math.round(n*.3048*100)/100:Math.round(n/.3048*10)/10};
+/** Changes a room's unit and converts its sizes (14 pi becomes 4.27 m, not 14 m). */
+export function convertRoomUnit(room:Data,unit:string):Data{
+ const from=room.unit==='m'?'m':'pi',to=unit==='m'?'m':'pi';if(from===to)return room;
+ try{localStorage.setItem(UNIT_KEY,to)}catch{}
+ return {...room,unit:to,length:convert(room.length,from,to),width:convert(room.width,from,to),height:convert(room.height,from,to),...(room.position?{position:{...room.position,offset:convert(room.position.offset,from,to)||0}}:{})};
+}
+/** Visit-wide switch between feet (Québec) and metres (France), converting every room. */
+export function UnitSwitch({rooms,onRooms}:{rooms:Data[];onRooms:(rooms:Data[])=>void}){
+ const metric=rooms.length>0&&rooms.every(r=>r.unit==='m');
+ const choose=(unit:'pi'|'m')=>{try{localStorage.setItem(UNIT_KEY,unit)}catch{}onRooms(rooms.map(r=>convertRoomUnit(r,unit)))};
+ return <div className="unit-switch" role="group" aria-label="Unités de mesure">
+  <span>Unités</span>
+  <button type="button" className={!metric?'active':''} aria-pressed={!metric} onClick={()=>choose('pi')}>Pieds · pi²</button>
+  <button type="button" className={metric?'active':''} aria-pressed={metric} onClick={()=>choose('m')}>Mètres · m²</button>
+ </div>;
+}
