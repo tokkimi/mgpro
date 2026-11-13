@@ -52,15 +52,21 @@ const R=[
  [/bardage bois|bois vertical|bois horizontal|ossature bois|clt|lambris|lames verticales|tasseaux|cannele/,['Wood Siding','Planks','Wood'],['wood','siding','planks','facade'],['old','damaged','painted']],
  [/fibre ciment|hpl|panneau sandwich|panneau fibre/,['Facade','Concrete'],['facade','panel','modern'],[]],
  [/crepi|enduit|stuc|chaux|tadelakt|platre|ite enduit|mur enduit|effet sable|argile|minerale/,['Plaster','Painted Plaster','Facade'],['plaster','wall','rough','stucco'],['damaged','dirty','old']],
- [/gres cerame|carrelage|ceramique|dalle gres/,['Tiles'],['tiles','floor','clean','modern','large'],['old','dirty','mosaic']],
  [/vitrage|verre|polycarbonate|depoli|lanterneau/,['Plastic','Tiles'],['glass','translucent'],[],'#bcd4dc'],
- [/stratifie|vinyle chene|parquet|chene|noyer|frene|hetre|teck|pin\b|bois|mdf|panneau 3d|plancher bois/,['Wood Floor','Wood','Planks'],['wood','floor','parquet','oak','clean'],['old','damaged','dirty','painted']],
+ [/stratifie|vinyle chene|parquet|chene|noyer|frene|hetre|teck|pin\b|bois|mdf|panneau 3d|plancher bois/,['Wood Floor','Wood','Planks'],['wood','floor','planks','oak','clean'],['old','damaged','dirty','painted','herringbone','chevron','basketweave','pattern','mosaic']],
+ [/gres cerame|carrelage|ceramique|dalle gres/,['Tiles'],['tiles','floor','clean','modern','large'],['old','dirty','mosaic']],
  [/peinture|mat|satin|brillant|lessivable|anti|faux plafond|plafond tendu|dalles acoustiques|isole|blanc|gris|noir|bleu|vert|greige|taupe|terracotta|anthracite|sable|couleur/,['Painted Plaster','Plaster','Paint'],['white','smooth','painted','wall','clean'],['damaged','dirty','old','cracked'],'color'],
 ];
 const WOODTONE=[[/blanchi|clair|frene|erable|bouleau|pin|hetre|meleze/,['light','white','beige']],[/fume|fonce|noyer|wenge|teck|ipe|cumaru/,['dark','brown']],[/huile|naturel|verni|chene/,['brown','natural','oak']]];
-const scored=(q,salt)=>{
- const cands=acg.map(a=>{let s=0;const tags=new Set(a.tags);if(q.cats.includes(a.cat))s+=10-q.cats.indexOf(a.cat);for(const t of q.tags)if(tags.has(t))s+=2;for(const t of q.avoid)if(tags.has(t))s-=4;if(a.method==='PBRPhotogrammetry'||a.method==='PBRApproximated')s+=.5;return {a,s}}).filter(x=>x.s>=8).sort((x,y)=>y.s-x.s);
- if(!cands.length)return null;const top=cands.filter(x=>x.s>=cands[0].s-2).slice(0,6);let h=0;for(const ch of salt)h=(h*31+ch.charCodeAt(0))>>>0;return top[h%top.length].a.id;
+const TARGET=[[/chene blanchi|blanchi|frene|erable|bouleau|pin\b|bois clair|chene clair/,'#d6c09c'],[/chene fume|fume|wenge|bois fonce|chene fonce|vinyle chene fonce/,'#5e4330'],[/noyer/,'#5a3e2c'],[/teck|ipe|cumaru/,'#7c5132'],[/hetre|meleze|bambou/,'#c39a68'],[/chene huile|huile/,'#9f6f45'],[/chene|bois|parquet|stratifie|lame bois|thermotraite/,'#b0845a'],[/travertin/,'#d9c9a8'],[/marbre noir|granit noir|quartz noir|ardoise|ceramique foncee/,'#2c2c2e'],[/marbre|quartz blanc|calacatta|ceramique claire|quartzite/,'#e7e5e0'],[/granit clair|quartz gris/,'#b8b6b2'],[/beton|microciment|ciment/,'#a09e99'],[/terre cuite|tomette|tuile terre cuite|terracotta/,'#b5603d'],[/brique rouge|brique$/,'#9b4a35'],[/brique blanche/,'#e3e0d9'],[/pierre calcaire|calcaire|pierre reconstituee/,'#d3c6ab'],[/pierre bleue/,'#5d6366'],[/zinc|anthracite/,'#5f6366'],[/gazon|vegetal/,'#4f7a32']];
+const hex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+const usedIn={};
+const scored=(q,salt,target,sub)=>{
+ const cands=acg.map(a=>{let s=0;const tags=new Set(a.tags);if(q.cats.includes(a.cat))s+=10-q.cats.indexOf(a.cat);for(const t of q.tags)if(tags.has(t))s+=2;for(const t of q.avoid)if(tags.has(t))s-=4;if(a.method==='PBRPhotogrammetry'||a.method==='PBRApproximated')s+=.5;return {a,s}}).filter(x=>x.s>=8);
+ for(const c of cands){if(target&&c.a.avg)c.s-=dist(hex(target),c.a.avg)/14;c.s-=3*((usedIn[sub]||{})[c.a.id]||0)}
+ cands.sort((x,y)=>y.s-x.s);
+ if(!cands.length)return null;const id=cands[0].a.id;(usedIn[sub]=usedIn[sub]||{})[id]=((usedIn[sub]||{})[id]||0)+1;return id;
 };
 const out={};let miss=[];
 for(const [cat,sub,name] of uniq){
@@ -73,7 +79,8 @@ for(const [cat,sub,name] of uniq){
  const wood=/wood|planks|parquet/.test(tags.join(' '))&&WOODTONE.find(([re])=>re.test(nn));if(wood)t.push(...wood[1]);
  if(tintMode==='color'||(tintMode==='colorIfNamed'&&col))tint=col?.[1];
  else if(typeof tintMode==='string'&&tintMode.startsWith('#'))tint=tintMode;
- const id=scored({cats,tags:t,avoid},`${sub}${name}`);
+ const target=tint?undefined:(TARGET.find(([re])=>re.test(nn))||[])[1];
+ const id=scored({cats,tags:t,avoid},`${sub}${name}`,target,sub);
  if(!id){miss.push(`${cat}|${sub}|${name}`);continue}
  out[`${cat}|${sub}|${name}`]=tint?{a:id,t:tint}:{a:id};
 }

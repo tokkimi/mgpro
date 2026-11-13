@@ -26,7 +26,10 @@ export async function GET(req:Request,{params}:{params:Promise<{asset:string}>})
   const files=unzipSync(await pack(asset),{filter:f=>f.name.endsWith(`_${map}.jpg`)});
   const file=Object.values(files)[0];
   if(!file)return new Response('Carte absente',{status:404});
-  let img=sharp(Buffer.from(file)).resize(size,size,{fit:'cover'});
+  // Catalogue swatches show a close-up (centre of the sample, like a showroom chip); 3D maps keep the full tile.
+  const src=sharp(Buffer.from(file));const meta=await src.metadata();const W=meta.width||1024,H=meta.height||1024;
+  const zoom=size<=720&&url.searchParams.get('full')!=='1'?.5:1;const cw=Math.round(W*zoom),ch=Math.round(H*zoom);
+  let img=(zoom<1?src.extract({left:Math.round((W-cw)/2),top:Math.round((H-ch)/2),width:cw,height:ch}):src).resize(size,size,{fit:'cover'});
   if(tint&&map==='Color'){
    // Keep the real plaster/paint relief, recoloured: greyscale normalised around the target colour.
    const grey=await img.greyscale().normalise({lower:2,upper:98}).linear(.35,166).toBuffer();
