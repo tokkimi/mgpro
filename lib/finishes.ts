@@ -1,5 +1,6 @@
 // Finishes chosen per room from the MG Pro catalogue (2060 references, to source),
 // and how each one is rendered in the 3D model.
+import photos from './material-photos.json';
 export type FinishChoice={id:string;name:string;variant?:string;sub?:string};
 export type CatalogueRow=[id:string,cat:string,sub:string,name:string,variant:string,application:string,unit:string];
 export type SurfaceKey='floor'|'walls'|'ceiling'|'fronts'|'worktop'|'splash'|'bathWalls'|'taps'|'vanity';
@@ -20,10 +21,27 @@ const COLORS:[RegExp,string][]=[
 const WOODS:[RegExp,string][]=[[/blanchi/,'#d8c6a8'],[/fumé|fume/,'#6e5038'],[/noyer/,'#5e4030'],[/huilé|huile/,'#a87a4c'],[/verni/,'#b58450'],[/frêne|frene|érable|erable|bouleau/,'#d2b48c'],[/hêtre|hetre/,'#c99a6a'],[/bambou/,'#c8a96a'],[/teck/,'#9c6b3c'],[/chêne|chene|bois|parquet|lames|bâtons|batons|hongrie|bateau/,'#b8895a']];
 export const colorOf=(name:string,fallback:string)=>{const n=name.toLowerCase();return COLORS.find(([re])=>re.test(n))?.[1]||fallback};
 
-export type Look={finish:'wood'|'tile'|'concrete'|'paint'|'brick'|'quartz'|'marble'|'wallTile'|'fabric';color:string;roughness:number;metal?:boolean};
+export type Photo={a:string;t?:string};
+export type Look={finish:'wood'|'tile'|'concrete'|'paint'|'brick'|'quartz'|'marble'|'wallTile'|'fabric';color:string;roughness:number;metal?:boolean;photo?:Photo};
+
+// Real photo-scanned textures (ambientCG, CC0) matched to each catalogue designation, plus MG Pro's own choices.
+const photoBase=photos as Record<string,Photo>;
+let photoOverrides:Record<string,Photo>={};
+export const photoKey=(cat:string,sub:string,name:string)=>`${cat}|${sub}|${name}`;
+export function setPhotoOverrides(value:unknown){photoOverrides=value&&typeof value==='object'&&!Array.isArray(value)?Object.fromEntries(Object.entries(value as Record<string,any>).filter(([k,v])=>k.split('|').length===3&&v&&/^[A-Za-z]{2,30}\d{3}[A-Z]?$/.test(v.a)).map(([k,v])=>[k,{a:String(v.a),...(/^#[0-9a-f]{6}$/i.test(v.t)?{t:v.t}:{})}])):{}}
+/** Photo for a catalogue designation; the sub-category + name pair is enough to find it from a 3D finish choice. */
+export function photoFor(sub:string|undefined,name:string,cat?:string):Photo|undefined{
+ if(cat){const k=photoKey(cat,sub||'',name);return photoOverrides[k]||photoBase[k]}
+ const end=`|${sub||''}|${name}`;for(const src of [photoOverrides,photoBase])for(const k in src)if(k.endsWith(end))return src[k];
+ return undefined;
+}
+export const photoUrl=(p:Photo,size=320,map:'Color'|'NormalGL'|'Roughness'='Color')=>`/api/material-photo/${p.a}?map=${map}&s=${size}${p.t&&map==='Color'?`&t=${p.t.slice(1)}`:''}`;
 
 /** Turns a catalogue designation into a 3D appearance (procedural, indicative until real PBR assets are sourced). */
 export function lookOf(choice:FinishChoice|undefined,surface:SurfaceKey,fallback:Look):Look{
+ const look=baseLook(choice,surface,fallback);const photo=choice&&surface!=='taps'?photoFor(choice.sub,choice.name):undefined;return photo?{...look,photo}:look;
+}
+function baseLook(choice:FinishChoice|undefined,surface:SurfaceKey,fallback:Look):Look{
  if(!choice)return fallback;
  const n=`${choice.name} ${choice.sub||''}`.toLowerCase(),v=(choice.variant||'').toLowerCase();
  const rough=v==='mat'?.85:v==='satiné'||v==='satine'?.5:v==='premium'?.35:fallback.roughness;

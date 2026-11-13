@@ -40,3 +40,17 @@ test('finishes chosen on the plan come first in the quote catalogue',()=>{
  assert.match(out[0].name,/^\[CHOISI Cuisine — sol\]/);
  assert.equal(out[0].price,130);
 });
+
+test('surface references get a real scanned photo, objects do not',async()=>{
+ const {photoOfRow,photoUrl}=await import('../lib/material-library');
+ const {photoFor,setPhotoOverrides}=await import('../lib/finishes');
+ const surfaces=rows.filter(r=>r[6]==='m²'&&!r[0].startsWith('EXT-'));
+ const withPhoto=surfaces.filter(r=>photoOfRow(r));
+ assert.ok(withPhoto.length/surfaces.length>.95,`${withPhoto.length}/${surfaces.length}`);
+ const parquet=rows.find(r=>r[2]==='Parquets')!;
+ assert.match(photoUrl(photoOfRow(parquet)!,256),/^\/api\/material-photo\/[A-Za-z]+\d{3}[A-Z]?\?map=Color&s=256/);
+ assert.ok(photoFor('Parquets',parquet[3]));
+ setPhotoOverrides({[`${parquet[1]}|${parquet[2]}|${parquet[3]}`]:{a:'WoodFloor001',t:'#aabbcc'}});
+ assert.equal(photoOfRow(parquet)!.a,'WoodFloor001');
+ setPhotoOverrides({});
+});

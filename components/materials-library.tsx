@@ -1,7 +1,7 @@
 'use client';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {AppWindow,Armchair,Bath,Blinds,Box,Car,ChevronDown,ChevronRight,DoorOpen,Download,Fence,House,Lightbulb,Loader2,Plug,Refrigerator,Search,ShowerHead,Sparkles,Sun,Toilet,TreePine,Upload,Waves,Droplets,Footprints,X} from 'lucide-react';
-import {groupsOf,iconOf,isPriced,isSurface,label,loadMaterials,matches,pricesFromCsv,pricesToCsv,swatchStyle,unitPrice,type Group,type IconKey,type MaterialPrice,type MaterialPrices,type MaterialRow} from '@/lib/material-library';
+import {groupsOf,photoOfRow,photoUrl,photoKey,iconOf,isPriced,isSurface,label,loadMaterials,matches,pricesFromCsv,pricesToCsv,swatchStyle,unitPrice,type Group,type IconKey,type MaterialPrice,type MaterialPrices,type MaterialRow,type Photo} from '@/lib/material-library';
 import {money} from '@/lib/model';
 import './materials-library.css';
 
@@ -10,9 +10,9 @@ const UNIVERSES=[{key:'interieur',title:'Intérieur'},{key:'exterieur',title:'Ex
 const fmt=(n:number)=>n.toLocaleString('fr-CA');
 
 function Tile({row,price,onOpen}:{row:MaterialRow;price?:MaterialPrice;onOpen:()=>void}){
- const surface=isSurface(row);const Icon=ICONS[iconOf(row)];
+ const surface=isSurface(row);const Icon=ICONS[iconOf(row)];const photo=photoOfRow(row);
  return <button type="button" className={`mat-tile${isPriced(price)?' priced':''}`} onClick={onOpen} title={`${row[0]} — ${label(row)}`}>
-  <span className={`mat-swatch${surface?'':' object'}`} style={surface?swatchStyle(row):undefined}>{!surface&&<Icon size={30} strokeWidth={1.4}/>}</span>
+  <span className={`mat-swatch${surface?'':' object'}`} style={surface?swatchStyle(row):undefined}>{!surface&&<Icon size={30} strokeWidth={1.4}/>}{photo&&<img src={photoUrl(photo,256)} alt="" loading="lazy" decoding="async" onError={e=>{e.currentTarget.style.display='none'}}/>}</span>
   <span className="mat-name">{row[3]}</span>
   {row[4]&&<span className="mat-variant">{row[4]}</span>}
   <span className={`mat-price${isPriced(price)?'':' todo'}`}>{isPriced(price)?`${money(unitPrice(price))} / ${row[6]}`:'À sourcer'}</span>
@@ -20,7 +20,7 @@ function Tile({row,price,onOpen}:{row:MaterialRow;price?:MaterialPrice;onOpen:()
 }
 
 /** Admin library of every catalogue reference, with MG Pro's own prices (used by the AI quote). */
-export default function MaterialsLibrary({value,onSave,readOnly=false}:{value:MaterialPrices;onSave:(prices:MaterialPrices)=>Promise<void>;readOnly?:boolean}){
+export default function MaterialsLibrary({value,onSave,photos={},onSavePhotos,readOnly=false}:{value:MaterialPrices;onSave:(prices:MaterialPrices)=>Promise<void>;photos?:Record<string,Photo>;onSavePhotos?:(next:Record<string,Photo>)=>Promise<void>;readOnly?:boolean}){
  const [rows,setRows]=useState<MaterialRow[]>([]);
  const [group,setGroup]=useState<string>('');const [sub,setSub]=useState<string>('');
  const [query,setQuery]=useState('');const [onlyPriced,setOnlyPriced]=useState<'all'|'priced'|'todo'>('all');
@@ -74,7 +74,7 @@ export default function MaterialsLibrary({value,onSave,readOnly=false}:{value:Ma
     </>}
    </div>
   </div>}
-  {open&&<PriceDrawer row={open} rows={rows} prices={value} readOnly={readOnly} onClose={()=>setOpen(null)} onSave={async(next,msg)=>{await persist(next,msg);setOpen(null)}}/>}
+  {open&&<PriceDrawer row={open} rows={rows} prices={value} readOnly={readOnly} onClose={()=>setOpen(null)} onSave={async(next,msg)=>{await persist(next,msg);setOpen(null)}} onPhoto={onSavePhotos&&!readOnly?async(p)=>{const k=photoKey(open[1],open[2],open[3]);const next={...photos};if(p)next[k]=p;else delete next[k];setStatus('Enregistrement…');try{await onSavePhotos(next);setStatus(p?'Photo du matériau mise à jour (catalogue, plan 3D).':'Photo d’origine rétablie.')}catch(e){setStatus((e as Error).message)}}:undefined}/>}
  </div>;
 }
 
@@ -87,14 +87,14 @@ function Home({groups,rows,prices,onGroup,onOpen}:{groups:Group[];rows:MaterialR
  </section>)}</>;
 }
 
-function PriceDrawer({row,rows,prices,readOnly,onClose,onSave}:{row:MaterialRow;rows:MaterialRow[];prices:MaterialPrices;readOnly:boolean;onClose:()=>void;onSave:(next:MaterialPrices,msg:string)=>Promise<void>}){
+function PriceDrawer({row,rows,prices,readOnly,onClose,onSave,onPhoto}:{row:MaterialRow;rows:MaterialRow[];prices:MaterialPrices;readOnly:boolean;onClose:()=>void;onSave:(next:MaterialPrices,msg:string)=>Promise<void>;onPhoto?:(p:Photo|null)=>Promise<void>}){
  const p=prices[row[0]]||{};
  const [f,setF]=useState({buy:p.buy?String(p.buy):'',sell:p.sell?String(p.sell):'',labour:p.labour?String(p.labour):'',waste:p.waste?String(p.waste):'',supplier:p.supplier||'',ref:p.ref||''});
  const [scope,setScope]=useState<'one'|'variants'|'sub'>('one');const [busy,setBusy]=useState(false);
  const n=(s:string)=>{const v=Number(s.replace(',','.').replace(/\s/g,''));return Number.isFinite(v)&&v>0?Math.round(v*100)/100:undefined};
  const buy=n(f.buy),sell=n(f.sell),labour=n(f.labour);const margin=buy&&sell?Math.round((sell-buy)/sell*1000)/10:null;
  const variants=rows.filter(r=>r[1]===row[1]&&r[2]===row[2]&&r[3]===row[3]);const subRows=rows.filter(r=>r[1]===row[1]&&r[2]===row[2]);
- const surface=isSurface(row);const Icon=ICONS[iconOf(row)];
+ const surface=isSurface(row);const Icon=ICONS[iconOf(row)];const photo=photoOfRow(row);
  useEffect(()=>{const k=(e:KeyboardEvent)=>{if(e.key==='Escape')onClose()};window.addEventListener('keydown',k);return()=>window.removeEventListener('keydown',k)},[onClose]);
  async function submit(clear=false){setBusy(true);const now=new Date().toISOString();const target=scope==='one'?[row]:scope==='variants'?variants:subRows;const next={...prices};
   for(const r of target){if(clear){delete next[r[0]];continue}const v:MaterialPrice={buy,sell,labour,waste:n(f.waste),supplier:f.supplier.trim()||undefined,ref:scope==='one'?f.ref.trim()||undefined:prices[r[0]]?.ref,updated:now};for(const k of Object.keys(v) as (keyof MaterialPrice)[])if(v[k]===undefined)delete v[k];if(Object.keys(v).some(k=>k!=='updated'))next[r[0]]=v;else delete next[r[0]]}
@@ -102,7 +102,9 @@ function PriceDrawer({row,rows,prices,readOnly,onClose,onSave}:{row:MaterialRow;
  return <div className="mat-drawer-wrap" role="dialog" aria-modal="true" aria-label={label(row)} onClick={e=>{if(e.target===e.currentTarget)onClose()}}>
   <aside className="mat-drawer">
    <button type="button" className="mat-close" aria-label="Fermer" onClick={onClose}><X size={18}/></button>
-   <span className={`mat-swatch big${surface?'':' object'}`} style={surface?swatchStyle(row):undefined}>{!surface&&<Icon size={54} strokeWidth={1.2}/>}</span>
+   <span className={`mat-swatch big${surface?'':' object'}`} style={surface?swatchStyle(row):undefined}>{!surface&&<Icon size={54} strokeWidth={1.2}/>}{photo&&<img src={photoUrl(photo,720)} alt={label(row)} onError={e=>{e.currentTarget.style.display='none'}}/>}</span>
+   {photo&&<p className="mat-note">Photo réelle : texture scannée <b>{photo.a}</b> (ambientCG, licence CC0), utilisée aussi dans le plan 3D{photo.t?` — teinte ${photo.t}`:''}. Illustration du type de matériau, pas d’un produit fabricant précis.</p>}
+   {surface&&onPhoto&&<PhotoPicker current={photo} onPick={onPhoto}/>}
    <p className="mat-eyebrow">{row[1]} · {row[2]}</p>
    <h3>{row[3]}{row[4]&&<em> · {row[4]}</em>}</h3>
    <dl className="mat-meta"><div><dt>Référence</dt><dd>{row[0]}</dd></div><div><dt>Unité de devis</dt><dd>{row[6]}</dd></div><div><dt>Statut</dt><dd>{isPriced(p)?'Prix renseigné':'À sourcer'}</dd></div><div><dt>Variantes</dt><dd>{variants.length}</dd></div></dl>
@@ -127,5 +129,21 @@ function PriceDrawer({row,rows,prices,readOnly,onClose,onSave}:{row:MaterialRow;
     </div>
    </fieldset>
   </aside>
+ </div>;
+}
+
+const QUICK=['wood floor','parquet','tiles','marble','plaster','concrete','terrazzo','travertine','granite','bricks','stone wall','paving','planks','roofing','metal','fabric','carpet','gravel','grass'];
+function PhotoPicker({current,onPick}:{current?:Photo;onPick:(p:Photo|null)=>Promise<void>}){
+ const [open,setOpen]=useState(false);const [q,setQ]=useState('');const [items,setItems]=useState<{id:string;name:string;category:string}[]>([]);const [busy,setBusy]=useState(false);const [err,setErr]=useState('');
+ const [tint,setTint]=useState(current?.t||'');
+ async function search(term:string){setQ(term);if(!term.trim())return;setBusy(true);setErr('');try{const r=await fetch(`/api/material-textures?q=${encodeURIComponent(term)}`);const j=await r.json();setItems(j.items||[]);if(j.error)setErr(j.error)}catch{setErr('Recherche indisponible.')}finally{setBusy(false)}}
+ if(!open)return <div className="mat-actions"><button type="button" className="mat-ghost" onClick={()=>setOpen(true)}>Changer la photo</button>{current&&<label className="mat-tint">Teinte<input type="color" value={tint||'#ffffff'} onChange={e=>setTint(e.target.value)} onBlur={()=>{if(tint&&tint!==current.t)void onPick({a:current.a,t:tint})}}/></label>}</div>;
+ return <div className="mat-picker">
+  <div className="mat-picker-head"><b>Choisir une photo réelle</b><button type="button" className="mat-ghost" onClick={()=>setOpen(false)}>Fermer</button></div>
+  <form onSubmit={e=>{e.preventDefault();void search(q)}} className="mat-search"><Search size={15}/><input placeholder="Recherche en anglais : oak floor, white marble…" value={q} onChange={e=>setQ(e.target.value)}/></form>
+  <div className="mat-quick">{QUICK.map(t=><button type="button" key={t} onClick={()=>void search(t)}>{t}</button>)}</div>
+  {busy&&<p className="mat-loading"><Loader2 size={16} className="spin"/>Recherche…</p>}{err&&<p className="mat-status">{err}</p>}
+  <div className="mat-grid">{items.map(it=><button type="button" key={it.id} className={`mat-tile${current?.a===it.id?' priced':''}`} onClick={()=>void onPick({a:it.id,...(current?.t?{t:current.t}:{})})}><span className="mat-swatch"><img src={`/api/material-photo/${it.id}?s=192`} alt="" loading="lazy"/></span><span className="mat-name">{it.name}</span><span className="mat-variant">{it.category}</span></button>)}</div>
+  <button type="button" className="mat-ghost" onClick={()=>void onPick(null)}>Rétablir la photo d’origine</button>
  </div>;
 }

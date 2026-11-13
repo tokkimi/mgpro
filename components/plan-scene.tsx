@@ -3,7 +3,7 @@ import {useEffect,useRef,useState} from 'react';
 import type {Plan,PlanRoom,PlanElement} from '@/lib/plan';
 import {bounds} from '@/lib/plan';
 import {finishTextures,clearTextureCache,type Finish} from '@/lib/scene-textures';
-import {lookOf,describeFinishes,type Look,type FinishChoice} from '@/lib/finishes';
+import {lookOf,describeFinishes,photoUrl,type Look,type FinishChoice,type Photo} from '@/lib/finishes';
 import FinishPanel from './finish-panel';
 
 type Edge='north'|'south'|'west'|'east';
@@ -45,7 +45,14 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
 
   // ── materials ──
   const mats:any[]=[];const keep=<M,>(m:M)=>{mats.push(m);return m};
-  const textured=(finish:Finish,color:string,uw:number,uh:number,opts:any={})=>{const made=finishTextures(T,finish,color,opts.seed??7);const map=made.map.clone(),normalMap=made.normalMap.clone();for(const t of [map,normalMap]){t.repeat.set(uw/made.size[0],uh/made.size[1]);t.needsUpdate=true}const {seed,...rest}=opts;return keep(new T.MeshPhysicalMaterial({map,normalMap,normalScale:new T.Vector2(.6,.6),roughness:.6,...rest}))};
+  const loader=new T.TextureLoader();const photoTex=new Map<string,any>();
+  // Real scanned texture (ambientCG, CC0) for a catalogue finish; it replaces the procedural one once loaded.
+  const photoMaps=(photo:Photo,finish:Finish,uw:number,uh:number,mat:any)=>{const tile=finish==='wood'?2:finish==='brick'?1.6:finish==='paint'?2.4:finish==='concrete'?2:1.2;
+   const get=(map:'Color'|'NormalGL'|'Roughness')=>{const url=photoUrl(photo,1024,map);let base=photoTex.get(url);if(!base){base=loader.load(url,()=>{for(const u of base.userData.users||[])u();base.userData.users=[];});base.wrapS=base.wrapT=T.RepeatWrapping;base.anisotropy=8;if(map==='Color')base.colorSpace=T.SRGBColorSpace;base.userData.users=[];photoTex.set(url,base)}const t=base.clone();t.repeat.set(uw/tile,uh/tile);return {t,base}};
+   const c=get('Color'),n=get('NormalGL'),r=get('Roughness');
+   const apply=()=>{if(!c.base.image)return;c.t.needsUpdate=true;mat.map=c.t;mat.color=new T.Color('#ffffff');if(n.base.image){n.t.needsUpdate=true;mat.normalMap=n.t}if(r.base.image){r.t.needsUpdate=true;mat.roughnessMap=r.t;mat.roughness=1}mat.needsUpdate=true};
+   for(const x of [c,n,r]){if(x.base.image)apply();else x.base.userData.users.push(apply)}};
+  const textured=(finish:Finish,color:string,uw:number,uh:number,opts:any={})=>{const made=finishTextures(T,finish,color,opts.seed??7);const map=made.map.clone(),normalMap=made.normalMap.clone();for(const t of [map,normalMap]){t.repeat.set(uw/made.size[0],uh/made.size[1]);t.needsUpdate=true}const {seed,photo,...rest}=opts;if(photo){const m=keep(new T.MeshPhysicalMaterial({map,normalMap,normalScale:new T.Vector2(.6,.6),roughness:.6,...rest}));photoMaps(photo,finish,uw,uh,m);return m}return keep(new T.MeshPhysicalMaterial({map,normalMap,normalScale:new T.Vector2(.6,.6),roughness:.6,...rest}))};
   const plain=(color:string,opts:any={})=>keep(new T.MeshPhysicalMaterial({color,roughness:.6,...opts}));
   const M={
    ceramic:plain('#fbfbf9',{roughness:.12,clearcoat:1,clearcoatRoughness:.05}),
@@ -86,14 +93,15 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
 
   // ── fixtures ──
   let cur:{fronts?:Look;worktop?:Look;splash?:Look;taps?:any;vanity?:Look}={};
-  const topMat=(W:number,D:number)=>cur.worktop?textured(cur.worktop.finish as Finish,cur.worktop.color,W,D,{roughness:cur.worktop.roughness,clearcoat:.5}):textured('quartz','#f1efea',W,D,{roughness:.15,clearcoat:.6});
+  const topMat=(W:number,D:number)=>cur.worktop?textured(cur.worktop.finish as Finish,cur.worktop.color,W,D,{photo:cur.worktop.photo,roughness:cur.worktop.roughness,clearcoat:.5}):textured('quartz','#f1efea',W,D,{roughness:.15,clearcoat:.6});
+  const frontMat=(front:string,w:number,h:number)=>{const look=[cur.fronts,cur.vanity].find(f=>f&&f.photo&&f.color===front);return look?textured(look.finish as Finish,front,w,h,{photo:look.photo,roughness:.35,clearcoat:.25}):plain(front,{roughness:.35,clearcoat:.25})};
   function cabinets(g:any,W:number,D:number,H=.88,front=cur.fronts?.color||'#e9e5dd',top=true){
    add(box(W,.1,D-.06),M.black,0,.05,-.03,g);
    add(box(W,H-.13,D-.02),plain(front,{roughness:.4,clearcoat:.2}),0,.1+(H-.13)/2,-.01,g);
-   const n=Math.max(1,Math.round(W/.6));for(let i=0;i<n;i++){const x=-W/2+W/n*(i+.5);add(box(W/n-.006,H-.15,.006),plain(front,{roughness:.35,clearcoat:.25}),x,.1+(H-.13)/2,D/2-.008,g);handle(g,x,H-.12,D/2+.01)}
+   const n=Math.max(1,Math.round(W/.6));for(let i=0;i<n;i++){const x=-W/2+W/n*(i+.5);add(box(W/n-.006,H-.15,.006),frontMat(front,W/n,H-.15),x,.1+(H-.13)/2,D/2-.008,g);handle(g,x,H-.12,D/2+.01)}
    if(top)add(box(W+.02,.03,D+.03),topMat(W,D),0,H+.015,.005,g);
   }
-  function upper(g:any,W:number,D:number,front=cur.fronts?.color||'#e9e5dd'){add(box(W,.72,.34),plain(front,{roughness:.35,clearcoat:.25}),0,1.86,-D/2+.17,g);const n=Math.max(1,Math.round(W/.6));for(let i=0;i<n;i++)handle(g,-W/2+W/n*(i+.5),1.55,-D/2+.35,.12,true);add(box(W,.55,.01),cur.splash?textured(cur.splash.finish as Finish,cur.splash.color,W,.55,{roughness:cur.splash.roughness}):textured('wallTile','#f4f2ee',W,.55),0,1.18,-D/2+.005,g)}
+  function upper(g:any,W:number,D:number,front=cur.fronts?.color||'#e9e5dd'){add(box(W,.72,.34),plain(front,{roughness:.35,clearcoat:.25}),0,1.86,-D/2+.17,g);const n=Math.max(1,Math.round(W/.6));for(let i=0;i<n;i++)handle(g,-W/2+W/n*(i+.5),1.55,-D/2+.35,.12,true);add(box(W,.55,.01),cur.splash?textured(cur.splash.finish as Finish,cur.splash.color,W,.55,{photo:cur.splash.photo,roughness:cur.splash.roughness}):textured('wallTile','#f4f2ee',W,.55),0,1.18,-D/2+.005,g)}
   function faucet(g:any,x:number,y:number,z:number,tall=.32){add(cyl(.018,.022,tall,16),(cur.taps||M.chrome),x,y+tall/2,z,g);const arc=add(new T.TorusGeometry(.09,.013,10,24,Math.PI),(cur.taps||M.chrome),x,y+tall,z+.09,g);arc.rotation.y=Math.PI/2;arc.rotation.x=0}
   function sinkBasin(g:any,x:number,y:number,z:number,W=.6,D=.42){add(box(W,.012,D),M.steel,x,y,z,g);add(box(W-.04,.006,D-.04),plain('#9fa5a9',{metalness:.9,roughness:.25}),x,y-.002,z,g)}
   function toilet(g:any,D:number){
@@ -150,7 +158,7 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
    const bathLook=lookOf(fin.bathWalls,'bathWalls',{finish:'wallTile',color:'#eeece7',roughness:.2});
    const tapLook=fin.taps?lookOf(fin.taps,'taps',{finish:'paint',color:'#e9ecef',roughness:.1}):null;
    cur={fronts:fin.fronts?lookOf(fin.fronts,'fronts',{finish:'paint',color:'#e9e5dd',roughness:.4}):undefined,worktop:fin.worktop?lookOf(fin.worktop,'worktop',{finish:'quartz',color:'#f1efea',roughness:.15}):undefined,splash:fin.splash?lookOf(fin.splash,'splash',{finish:'wallTile',color:'#f4f2ee',roughness:.2}):undefined,vanity:fin.vanity?lookOf(fin.vanity,'vanity',{finish:'paint',color:'#9b7653',roughness:.4}):undefined,taps:tapLook?plain(tapLook.color,{metalness:1,roughness:tapLook.roughness,envMapIntensity:2}):undefined};
-   floors.push(add(box(l,.02,d),textured(floorLook.finish as Finish,floorLook.color,l,d,{roughness:floorLook.roughness,clearcoat:floorLook.finish==='concrete'?.3:.15,seed:Math.round(x*7+z*13)}),x+l/2,-.01,z+d/2,scene,false));{const c=add(box(l,.04,d),ceilLook.finish==='paint'?plain(ceilLook.color,{roughness:.9}):textured(ceilLook.finish as Finish,ceilLook.color,l,d),x+l/2,H+.02,z+d/2,scene,false);c.visible=false;ceilings.push(c)}
+   floors.push(add(box(l,.02,d),textured(floorLook.finish as Finish,floorLook.color,l,d,{photo:floorLook.photo,roughness:floorLook.roughness,clearcoat:floorLook.finish==='concrete'?.3:.15,seed:Math.round(x*7+z*13)}),x+l/2,-.01,z+d/2,scene,false));{const c=add(box(l,.04,d),ceilLook.finish==='paint'&&!ceilLook.photo?plain(ceilLook.color,{roughness:.9}):textured(ceilLook.finish as Finish,ceilLook.color,l,d,{photo:ceilLook.photo}),x+l/2,H+.02,z+d/2,scene,false);c.visible=false;ceilings.push(c)}
    if(roof)add(box(l+.2,.15,d+.2),plain('#444a45'),x+l/2,H,z+d/2);
    // Openings on each edge.
    const roomEls=elements.filter(e=>(e.kind==='door'||e.kind==='window')&&inRoom(e,r));
@@ -166,8 +174,8 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
     const wall=new T.Group();scene.add(wall);
     // Local frame: x along the edge (0..len), wall inside the room, inner face towards +z.
     if(edge==='north'){wall.position.set(x,0,z+t/2)}else if(edge==='south'){wall.position.set(x+l,0,z+d-t/2);wall.rotation.y=Math.PI}else if(edge==='west'){wall.position.set(x+t/2,0,z+d);wall.rotation.y=Math.PI/2}else{wall.position.set(x+l-t/2,0,z);wall.rotation.y=-Math.PI/2}
-    const paint=textured(wallLook.finish as Finish,wallLook.color,len,H,{roughness:wallLook.roughness,seed:3});paint.transparent=true;
-    const tileMat=bath?textured(bathLook.finish as Finish,bathLook.color,len,1.2,{roughness:bathLook.roughness,clearcoat:.5}):null;if(tileMat)tileMat.transparent=true;
+    const paint=textured(wallLook.finish as Finish,wallLook.color,len,H,{photo:wallLook.photo,roughness:wallLook.roughness,seed:3});paint.transparent=true;
+    const tileMat=bath?textured(bathLook.finish as Finish,bathLook.color,len,1.2,{photo:bathLook.photo,roughness:bathLook.roughness,clearcoat:.5}):null;if(tileMat)tileMat.transparent=true;
     const piece=(a:number,b:number,y0:number,y1:number)=>{if(b-a<.01||y1-y0<.01)return;if(tileMat&&y0<1.2){const top=Math.min(1.2,y1);add(box(b-a,top-y0,t),tileMat,(a+b)/2,(y0+top)/2,0,wall);if(y1>1.2)add(box(b-a,y1-1.2,t),paint,(a+b)/2,(1.2+y1)/2,0,wall)}else add(box(b-a,y1-y0,t),paint,(a+b)/2,(y0+y1)/2,0,wall)};
     let cursor=0;
     for(const o of ops){if(o.to<=cursor)continue;piece(cursor,o.from,0,H);piece(o.from,o.to,0,o.bottom);piece(o.from,o.to,o.top,H);

@@ -1,7 +1,8 @@
 // MG Pro materials library: interior catalogue (MGP-, 2060 refs) + exteriors/pools/extensions (EXT-, 377 refs).
 // Both inventories are generic references "à sourcer": no invented prices, no verified-manufacturer claims.
 // Prices are entered by MG Pro (settings.material_prices) and feed the AI quote.
-import {lookOf,type CatalogueRow,type Look,type SurfaceKey} from './finishes';
+import {lookOf,photoFor,type CatalogueRow,type Look,type Photo,type SurfaceKey} from './finishes';
+export {photoUrl,photoKey,type Photo} from './finishes';
 
 export type MaterialRow=CatalogueRow;
 export type MaterialPrice={buy?:number;sell?:number;labour?:number;waste?:number;supplier?:string;ref?:string;updated?:string};
@@ -66,6 +67,9 @@ export function swatchStyle(r:MaterialRow):{background:string;backgroundSize?:st
   default:return {background:`${gloss}linear-gradient(160deg,${l},${c} 60%,${d})`};
  }
 }
+
+/** Real scanned texture for a surface reference (CC0), MG Pro's own choice first. */
+export const photoOfRow=(r:MaterialRow):Photo|undefined=>isSurface(r)?photoFor(r[2],r[3],r[1]):undefined;
 
 export type IconKey='bath'|'shower'|'toilet'|'sink'|'tap'|'light'|'door'|'window'|'blinds'|'fence'|'pool'|'appliance'|'cabinet'|'stairs'|'car'|'home'|'sun'|'plug'|'tree'|'box';
 export function iconOf(r:MaterialRow):IconKey{

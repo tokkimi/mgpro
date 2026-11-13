@@ -13,4 +13,4 @@ export async function proxy(request:NextRequest){
  }
  return response;
 }
-export const config={matcher:['/((?!_next|.*\\..*).*)']};
+export const config={matcher:['/((?!_next|api/material-|.*\\..*).*)']};
