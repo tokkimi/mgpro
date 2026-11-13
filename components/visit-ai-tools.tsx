@@ -26,22 +26,43 @@ async function photoToJpeg(file:File){
  finally{URL.revokeObjectURL(url)}
 }
 
-/** Extracts evenly spaced frames from a walkthrough video, entirely in the browser. */
+/** Extracts evenly spaced frames from a walkthrough video, entirely in the browser.
+ * Works on iPhone Safari: the element is attached to the page, muted and inline, and briefly
+ * played so that iOS starts decoding (otherwise iOS never fires the loading events). */
 async function videoFrames(file:File,count=VIDEO_FRAMES){
  const url=URL.createObjectURL(file);const video=document.createElement('video');
- video.muted=true;video.playsInline=true;video.preload='auto';video.crossOrigin='anonymous';video.src=url;
+ video.muted=true;video.defaultMuted=true;video.playsInline=true;video.setAttribute('playsinline','');video.setAttribute('webkit-playsinline','');video.setAttribute('muted','');
+ video.preload='auto';
+ Object.assign(video.style,{position:'fixed',left:'0',top:'0',width:'2px',height:'2px',opacity:'0',pointerEvents:'none',zIndex:'-1'});
+ document.body.appendChild(video);
+ const once=(event:string,ms:number,message:string)=>new Promise<void>((resolve,reject)=>{
+  const done=()=>{clearTimeout(t);video.removeEventListener(event,done);video.removeEventListener('error',fail);resolve()};
+  const fail=()=>{clearTimeout(t);video.removeEventListener(event,done);video.removeEventListener('error',fail);reject(new Error('Format vidéo non lisible sur cet appareil. Utilisez des photos à la place.'))};
+  const t=setTimeout(()=>{video.removeEventListener(event,done);video.removeEventListener('error',fail);reject(new Error(message))},ms);
+  video.addEventListener(event,done);video.addEventListener('error',fail);
+ });
+ const painted=()=>new Promise<void>(resolve=>{const v=video as any;if(typeof v.requestVideoFrameCallback==='function'){let settled=false;const t=setTimeout(()=>{if(!settled){settled=true;resolve()}},400);v.requestVideoFrameCallback(()=>{if(!settled){settled=true;clearTimeout(t);resolve()}})}else setTimeout(resolve,150)});
  try{
-  await new Promise<void>((resolve,reject)=>{const t=setTimeout(()=>reject(new Error('Vidéo trop longue à charger. Essayez une vidéo plus courte (30 s à 1 min).')),20000);video.onloadeddata=()=>{clearTimeout(t);resolve()};video.onerror=()=>{clearTimeout(t);reject(new Error('Format vidéo non lisible sur cet appareil. Filmez en MP4/MOV ou utilisez des photos.'))}});
-  const duration=Number.isFinite(video.duration)&&video.duration>0?video.duration:0;
+  const meta=once('loadedmetadata',15000,'La vidéo ne se lit pas sur cet appareil. Réessayez, ou utilisez des photos.');
+  video.src=url;video.load();
+  await meta;
+  // iOS: start decoding with a short muted play, then pause.
+  try{await video.play()}catch{/* autoplay refused: seeking below still works on most browsers */}
+  video.pause();
+  if(video.readyState<2)await once('loadeddata',10000,'La vidéo ne se lit pas sur cet appareil. Réessayez, ou utilisez des photos.').catch(()=>{});
+  let duration=video.duration;
+  if(!Number.isFinite(duration)||duration<=0){video.currentTime=1e7;await once('seeked',5000,'Durée de la vidéo illisible.').catch(()=>{});duration=Number.isFinite(video.duration)?video.duration:0}
   if(!duration||!video.videoWidth)throw new Error('Vidéo illisible. Utilisez des photos à la place.');
   const frames:string[]=[];
   for(let k=0;k<count;k++){
-   const time=Math.min(duration-.05,duration*(k+.5)/count);
-   await new Promise<void>((resolve,reject)=>{const t=setTimeout(()=>reject(new Error('Lecture de la vidéo interrompue.')),8000);video.onseeked=()=>{clearTimeout(t);resolve()};video.currentTime=time});
+   const time=Math.min(Math.max(0,duration-.05),duration*(k+.5)/count);
+   const seeked=once('seeked',8000,'Lecture de la vidéo interrompue.');
+   video.currentTime=time;
+   await seeked;await painted();
    frames.push(toJpeg(video,video.videoWidth,video.videoHeight));
   }
   return frames;
- }finally{video.removeAttribute('src');video.load();URL.revokeObjectURL(url)}
+ }finally{video.pause();video.removeAttribute('src');video.load();video.remove();URL.revokeObjectURL(url)}
 }
 
 async function postJson(body:Data){
