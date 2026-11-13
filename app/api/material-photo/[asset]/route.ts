@@ -32,7 +32,9 @@ export async function GET(req:Request,{params}:{params:Promise<{asset:string}>})
   let img=(zoom<1?src.extract({left:Math.round((W-cw)/2),top:Math.round((H-ch)/2),width:cw,height:ch}):src).resize(size,size,{fit:'cover'});
   if(tint&&map==='Color'){
    // Keep the real plaster/paint relief, recoloured: greyscale normalised around the target colour.
-   const grey=await img.greyscale().normalise({lower:2,upper:98}).linear(.16,214).toBuffer();
+   // sharp applies normalise after linear within one pipeline, so the two steps run separately.
+   const stretched=await img.greyscale().normalise({lower:2,upper:98}).toBuffer();
+   const grey=await sharp(stretched).linear(.16,214).toBuffer();
    img=sharp(grey).composite([{input:{create:{width:size,height:size,channels:3,background:tint}},blend:'multiply'}]);
   }
   const out=await img.webp({quality:map==='Color'?82:75}).toBuffer();
