@@ -2,7 +2,7 @@ import {NextResponse} from 'next/server';
 import {z} from 'zod';
 import {identity} from '@/lib/supabase';
 import {sameOrigin} from '@/lib/access';
-import {aiConfigured,aiProvider,aiText,lastModel,lastStop,extractJson,AiError,type AiContent} from '@/lib/ai';
+import {aiConfigured,aiProvider,aiText,aiImage,lastModel,lastStop,extractJson,AiError,type AiContent} from '@/lib/ai';
 import {planSchema} from '@/lib/plan';
 import {MEASURE_SYSTEM,PLAN_SYSTEM,REVIEW_SYSTEM,QUOTE_SYSTEM,measureUserText,planUserText,reviewUserText,quoteUserText,normalizeMeasure,normalizePlan,normalizeReview,normalizeQuote,autoPlan,checkPlan} from '@/lib/visit-ai';
 
@@ -17,7 +17,8 @@ const measureSchema=z.object({action:z.literal('measure'),images:z.array(image).
 const planIn=z.object({action:z.literal('plan'),...context,style:z.enum(['nature','contemporary','classic','industrial']).optional()});
 const reviewIn=z.object({action:z.literal('review'),...context,plan:planSchema});
 const quoteIn=z.object({action:z.literal('quote'),...context,plan:planSchema.nullable().optional(),catalogue:z.array(z.object({name:z.string().max(200),category:z.string().max(120).optional(),unit:z.string().max(40).optional(),price:z.coerce.number().optional(),material:z.coerce.number().optional(),labour:z.coerce.number().optional(),description:z.string().max(400).optional()})).max(400).optional()});
-const body=z.discriminatedUnion('action',[measureSchema,planIn,reviewIn,quoteIn]);
+const renderIn=z.object({action:z.literal('render'),image:image,description:z.string().max(4000).optional()});
+const body=z.discriminatedUnion('action',[measureSchema,planIn,reviewIn,quoteIn,renderIn]);
 const json=(data:unknown,status=200)=>NextResponse.json(data,{status,headers:{'Cache-Control':'private, no-store'}});
 
 /** Visit AI: room measurement from photos/video, 2D/3D plan, plan control and priced quote. */
@@ -64,6 +65,20 @@ export async function POST(req:Request){
   }catch(e){return json({checks,review:null,note:(e as Error).message})}
  }
 
+ if(input.action==='render'){
+  const prompt=`Transforme cette maquette 3D d’intérieur en photographie d’architecture d’intérieur ultra réaliste, comme un rendu professionnel V-Ray / Corona pour un magazine de décoration.
+Règles impératives : conserve EXACTEMENT le même cadrage, la même perspective, la position et la taille de chaque mur, porte, fenêtre, meuble et équipement (douche, toilette, plan de travail, îlot, électroménagers). N’ajoute ni ne supprime aucun élément structurel. Ne change pas les couleurs choisies.
+Rends les matériaux de façon physiquement réaliste : veinage du bois, joints de céramique, reflets du quartz, chrome brillant, verre transparent de la douche, textiles, peinture mate des murs. Lumière naturelle douce entrant par les fenêtres, ombres de contact, éclairage d’ambiance chaud. Aucune personne, aucun texte, aucun logo.
+${input.description||''}`;
+  try{
+   let out=await aiImage({req,prompt,image:input.image});
+   // Keep the answer well under the 4.5 MB response limit.
+   try{const sharp=(await import('sharp')).default;const buf=Buffer.from(out.split(',')[1],'base64');const jpg=await sharp(buf).resize({width:1600,height:1600,fit:'inside',withoutEnlargement:true}).jpeg({quality:86}).toBuffer();out=`data:image/jpeg;base64,${jpg.toString('base64')}`}catch{}
+   return json({image:out});
+  }
+  catch(e){const err=e as AiError;return json({error:err.message},err.status||502)}
+ }
+
  // action === 'quote'
  if(!configured)return json({error:'IA non configurée sur ce déploiement.'},503);
  try{
@@ -80,6 +95,7 @@ export async function GET(req:Request){
  if(probe&&secret&&probe===secret){
   try{
    const test=url.searchParams.get('test');
+   if(test==='render'){const b64=url.searchParams.get('b64')||'';const out=await aiImage({req,prompt:'Transforme cette maquette 3D en photographie d’intérieur ultra réaliste en gardant exactement la même géométrie.',image:`data:image/jpeg;base64,${b64}`});return json({ok:true,size:out.length,head:out.slice(0,40)})}
    if(test==='plan'){
     const rooms=[{id:'cuisine',name:'Cuisine',length:14,width:11,height:8,unit:'pi'},{id:'salon',name:'Salon',length:16,width:13,height:8,unit:'pi',position:{ref:'cuisine',side:'right' as const,align:'start' as const,door:true}},{id:'sdb',name:'Salle de bain',length:8,width:6,height:8,unit:'pi',position:{ref:'cuisine',side:'below' as const,align:'start' as const,door:false}},{id:'chambre',name:'Chambre',length:12,width:11,height:8,unit:'pi',position:{ref:'salon',side:'below' as const,align:'end' as const,door:true}}];
     const ctx={rooms,scope:'Ouvrir le mur entre cuisine et salon, ajouter un îlot, refaire la salle de bain avec douche en céramique.'};

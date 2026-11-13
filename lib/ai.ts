@@ -79,3 +79,36 @@ export function extractJson<T=any>(text:string):T|null{
  if(start<0||end<=start)return null;
  try{return JSON.parse(source.slice(start,end+1)) as T}catch{return null}
 }
+
+// ───────────────────────── Image generation (photorealistic renders) ─────────────────────────
+const IMAGE_MODELS=['google/gemini-3.1-flash-image-preview','google/gemini-3-pro-image-preview','google/gemini-2.5-flash-image'];
+
+/** Edits an image with an image model; returns a data URL. Uses GOOGLE_GENERATIVE_AI_API_KEY when set, else Vercel AI Gateway. */
+export async function aiImage({req,prompt,image,timeoutMs=110000}:{req?:Request;prompt:string;image:string;timeoutMs?:number}):Promise<string>{
+ const [,mime,data]=image.match(/^data:(image\/[a-z]+);base64,(.+)$/)||[];
+ if(!data)throw new AiError('Image de départ invalide.',400);
+ const deadline=Date.now()+timeoutMs;
+ const google=process.env.GOOGLE_GENERATIVE_AI_API_KEY?.trim();
+ if(google){
+  for(const model of ['gemini-3.1-flash-image-preview','gemini-2.5-flash-image']){
+   const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,{method:'POST',signal:AbortSignal.timeout(Math.max(3000,deadline-Date.now())),headers:{'content-type':'application/json','x-goog-api-key':google},body:JSON.stringify({contents:[{parts:[{inline_data:{mime_type:mime,data}},{text:prompt}]}],generationConfig:{responseModalities:['IMAGE','TEXT']}})}).catch(()=>null);
+   if(!res)continue;const out=await res.json().catch(()=>null);
+   const part=out?.candidates?.[0]?.content?.parts?.find((p:any)=>p.inline_data||p.inlineData);const inline=part?.inline_data||part?.inlineData;
+   if(inline?.data)return `data:${inline.mime_type||inline.mimeType||'image/png'};base64,${inline.data}`;
+   console.error('image google',model,res.status,JSON.stringify(out).slice(0,300));
+  }
+ }
+ const token=process.env.AI_GATEWAY_API_KEY?.trim()||process.env.VERCEL_OIDC_TOKEN?.trim()||req?.headers.get('x-vercel-oidc-token')?.trim();
+ if(!token)throw new AiError('Rendu photoréaliste non configuré.',503);
+ let last='';
+ for(const model of IMAGE_MODELS){
+  if(deadline-Date.now()<5000)break;
+  const res=await fetch('https://ai-gateway.vercel.sh/v1/chat/completions',{method:'POST',signal:AbortSignal.timeout(Math.max(3000,deadline-Date.now())),headers:{authorization:`Bearer ${token}`,'content-type':'application/json'},body:JSON.stringify({model,modalities:['text','image'],stream:false,messages:[{role:'user',content:[{type:'image_url',image_url:{url:image}},{type:'text',text:prompt}]}]})}).catch(e=>{last=(e as Error).message;return null});
+  if(!res)continue;
+  const body=await res.text();
+  if(!res.ok){last=body;console.error('image gateway',model,res.status,body.slice(0,300));continue}
+  try{const out=JSON.parse(body);const img=out?.choices?.[0]?.message?.images?.[0]?.image_url?.url;if(img)return img;last='Aucune image renvoyée.'}catch{last='Réponse illisible.'}
+ }
+ if(/Free tier|top-up|credits/i.test(last))throw new AiError('Le rendu photoréaliste demande des crédits Vercel AI Gateway (l’offre gratuite ne donne pas accès aux modèles d’image).',402);
+ throw new AiError('Le rendu photoréaliste a échoué. Réessayez dans un instant.',502);
+}
