@@ -5,6 +5,8 @@ import {Camera,Loader2,Ruler,Sparkles,Video,Check,X,Images,ShieldCheck,AlertTria
 import type {Plan} from '@/lib/plan';
 import {autoPlan,checkPlan,SIDE_LABEL,type Check as PlanCheckItem,type MeasureResult,type QuoteDraft,type Review} from '@/lib/visit-ai';
 import './visit-ai-tools.css';
+import {loadMaterials,pricedForQuote,type MaterialPrices} from '@/lib/material-library';
+import {surfacesFor} from '@/lib/finishes';
 import {describeFinishes} from '@/lib/finishes';
 
 type Data=Record<string,any>;
@@ -241,7 +243,9 @@ export function PlanCheck({request,plan,demo=false,onRelayout}:{request:Data;pla
 }
 
 /** Priced quote built by the AI from rooms, plan, notes and the company catalogue. */
-export function QuoteBuilder({request,plan,catalogue,draft,onDraft,demo=false,disabled=false}:{request:Data;plan:Plan|null|undefined;catalogue:Data[];draft:{lines?:Data[];assumptions?:string[];exclusions?:string[];summary?:string};onDraft:(draft:QuoteDraft)=>void;demo?:boolean;disabled?:boolean}){
+/** Finishes chosen on the 3D plan, labelled by room and surface, so the quote prices them first. */
+function chosenFinishes(plan:Plan|null|undefined){if(!plan?.finishes)return [];const out:{id:string;where:string}[]=[];for(const room of plan.rooms){const f=plan.finishes[room.id];if(!f)continue;for(const s of surfacesFor(room.furniture||'none'))if(f[s.key])out.push({id:f[s.key].id,where:`${room.name} — ${s.label.toLowerCase()}`})}return out}
+export function QuoteBuilder({request,plan,catalogue,prices,draft,onDraft,demo=false,disabled=false}:{request:Data;plan:Plan|null|undefined;catalogue:Data[];prices?:MaterialPrices;draft:{lines?:Data[];assumptions?:string[];exclusions?:string[];summary?:string};onDraft:(draft:QuoteDraft)=>void;demo?:boolean;disabled?:boolean}){
  const [busy,setBusy]=useState(false),[error,setError]=useState('');
  const lines=draft.lines||[];const total=lines.reduce((s,l)=>s+(Number(l.quantity)||0)*(Number(l.price)||0),0);
  const priced=lines.length>0&&lines.every(l=>Number(l.price)>0);
@@ -250,14 +254,15 @@ export function QuoteBuilder({request,plan,catalogue,draft,onDraft,demo=false,di
   if(demo){setError('Démonstration : le chiffrage IA est disponible dans l’espace réel.');return}
   setBusy(true);
   try{const items=catalogue.filter(c=>['Mon catalogue','Produits','Gabarits de départ'].includes(c.tab)).map(c=>({name:String(c.name||''),category:c.category||undefined,unit:c.unit||undefined,price:Number(c.price)||undefined,material:Number(c.material)||undefined,labour:Number(c.labour)||undefined,description:c.description?String(c.description).slice(0,300):undefined})).filter(c=>c.name);
-   const out=await postJson({...request,action:'quote',plan:plan||null,catalogue:items});onDraft(out.quote)}
+   const mats=prices&&Object.keys(prices).length?pricedForQuote(await loadMaterials(),prices,chosenFinishes(plan),220):[];
+   const out=await postJson({...request,action:'quote',plan:plan||null,catalogue:[...mats,...items].slice(0,400)});onDraft(out.quote)}
   catch(e){setError((e as Error).message)}finally{setBusy(false)}
  }
  const groups=lines.reduce((m:Record<string,Data[]>,l)=>{const k=String(l.category||'Travaux');(m[k]=m[k]||[]).push(l);return m},{});
  return <div className="quote-builder">
   <p className="eyebrow">DEVIS</p>
   <h3>Soumission chiffrée</h3>
-  <p className="muted">L’IA calcule les quantités à partir des cotes et du plan (surfaces, murs, ouvertures) et applique d’abord les prix de votre catalogue, sinon les prix du marché du Grand Montréal.</p>
+  <p className="muted">L’IA calcule les quantités à partir des cotes et du plan (surfaces, murs, ouvertures) et applique d’abord vos prix (finitions choisies sur le plan 3D, bibliothèque des matériaux, catalogue), sinon les prix du marché du Grand Montréal.</p>{prices&&<p className="muted">{Object.keys(prices).length} matériau(x) avec prix dans la bibliothèque{chosenFinishes(plan).length?` · ${chosenFinishes(plan).length} finition(s) choisie(s) sur le plan`:''}.</p>}
   <button type="button" className="btn primary" disabled={busy||disabled} onClick={()=>void build()}>{busy?<Loader2 size={16} className="spin"/>:<Calculator size={16}/>}{busy?'L’IA chiffre le devis… (30 à 90 s)':lines.length?'Rechiffrer avec l’IA':'Chiffrer le devis avec l’IA'}</button>
   {error&&<p className="error" role="alert">{error}</p>}
   {lines.length>0&&<>

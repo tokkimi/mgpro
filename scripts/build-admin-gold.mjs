@@ -1,0 +1,88 @@
+// Generates app/workspace-gold.css: the admin (.workspace) recoloured black & gold.
+// It mirrors every colour declaration of the existing stylesheets, scoped to .workspace with !important,
+// so layout and menu structure stay untouched and the public site is not affected.
+// Run: node scripts/build-admin-gold.mjs   (re-run after editing admin CSS)
+import fs from 'node:fs';
+import postcss from 'postcss';
+
+const FILES=['app/globals.css','app/responsive.css','app/brand.css','app/atelier.css','app/modules.css','app/workspace-glass.css','app/theme-silver.css','app/theme-noir.css','app/public-white.css','app/workspace-billdr.css','components/visit-ai-tools.css'];
+const SKIP=/atelier|\.site-|public|landing|\.mat-|lib-switch|plan-scene|finish-panel|brand-intro|cookie|blog|legal|\.hero|about-mgpro|footer/;
+const PROPS=/^(color|background|background-color|background-image|border|border-(top|right|bottom|left)|border-(top|right|bottom|left)-color|border-color|outline|outline-color|box-shadow|fill|stroke|caret-color|accent-color|text-decoration-color|--.*)$/;
+
+const NAMED={white:'#ffffff',black:'#000000',transparent:'rgba(0,0,0,0)',currentcolor:null,inherit:null};
+function parse(c){
+ c=c.trim().toLowerCase();if(c in NAMED)return NAMED[c]?parse(NAMED[c]):null;
+ let m=c.match(/^#([0-9a-f]{3,8})$/);if(m){let h=m[1];if(h.length<=4)h=[...h].map(x=>x+x).join('');const n=[0,2,4,6].map(i=>parseInt(h.slice(i,i+2)||'ff',16));return {r:n[0],g:n[1],b:n[2],a:n[3]/255}}
+ m=c.match(/^rgba?\(([^)]+)\)$/);if(m){const p=m[1].split(/[\s,/]+/).filter(Boolean);const v=p.map(x=>x.endsWith('%')?parseFloat(x)*2.55:parseFloat(x));return {r:v[0],g:v[1],b:v[2],a:p[3]==null?1:(p[3].endsWith('%')?parseFloat(p[3])/100:parseFloat(p[3]))}}
+ return null;
+}
+function hsl({r,g,b}){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2;let h=0,s=0;if(mx!==mn){const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;h*=60}return {h,s,l}}
+function fromHsl(h,s,l,a=1){const k=n=>(n+h/30)%12,A=s*Math.min(l,1-l),f=n=>l-A*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));const c=[f(0),f(8),f(4)].map(x=>Math.round(x*255));return a<1?`rgba(${c.join(',')},${+a.toFixed(3)})`:'#'+c.map(x=>x.toString(16).padStart(2,'0')).join('')}
+const out=(hex,a)=>{if(a>=1)return hex;const n=parseInt(hex.slice(1),16);return `rgba(${n>>16},${(n>>8)&255},${n&255},${+a.toFixed(3)})`};
+
+function mapColor(c,role){
+ const v=parse(c);if(!v)return c;if(v.a===0)return c;
+ const {h,s,l}=hsl(v);const neutral=s<.18||l>.96||l<.04;
+ if(role==='bg'){
+  if(!neutral){if(l>.82)return fromHsl(h,Math.min(s,.45),.16,v.a);if(l<.22)return fromHsl(h,s,.3,v.a);return c}
+  if(v.a<.5&&l>.8)return `rgba(255,255,255,${+(v.a*.08).toFixed(3)})`;
+  if(v.a<.5&&l<.3)return `rgba(0,0,0,${+Math.min(.6,v.a*2).toFixed(3)})`;
+  return out(l>=.985?'#141417':l>=.955?'#17171b':l>=.9?'#1d1d22':l>=.75?'#26262c':l>=.45?'#34343b':l>=.2?'#2a2a30':'#202025',v.a);
+ }
+ if(role==='text'){
+  if(!neutral){if(l<.4)return fromHsl(h,Math.min(s,.6),.72,v.a);return c}
+  return out(l<.3?'#f2ede4':l<.5?'#d8d2c7':l<.7?'#a9a49b':l<.9?'#8c877f':'#ffffff',v.a);
+ }
+ if(role==='border'){
+  if(!neutral)return c;
+  if(v.a<.5)return `rgba(255,255,255,${+Math.min(.14,v.a*.6+.04).toFixed(3)})`;
+  return out(l>.9?'#2a2a31':l>.7?'#36363e':l>.4?'#4a4a53':'#d9b36c',v.a);
+ }
+ if(role==='shadow'){if(l>.7)return `rgba(255,255,255,${+Math.min(.05,v.a*.1).toFixed(3)})`;return `rgba(0,0,0,${+Math.min(.65,v.a*2+.1).toFixed(3)})`}
+ return c;
+}
+const COLOR_RE=/#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)|\b(white|black)\b/g;
+function roleOf(prop){
+ if(prop.startsWith('--')){if(/bg|surface|panel|paper|card|fill|glass|back/.test(prop))return 'bg';if(/line|border|stroke|rule/.test(prop))return 'border';if(/ink|text|muted|fg|forest|title|head/.test(prop))return 'text';return 'auto'}
+ if(prop==='color'||prop==='fill'||prop==='caret-color'||prop==='text-decoration-color')return 'text';
+ if(prop==='stroke')return 'text';
+ if(prop.startsWith('background'))return 'bg';
+ if(prop==='box-shadow')return 'shadow';
+ if(prop.startsWith('border')||prop.startsWith('outline'))return 'border';
+ if(prop==='accent-color')return 'keep';
+ return 'keep';
+}
+function mapValue(prop,value){
+ const role=roleOf(prop);if(role==='keep')return value;
+ if(/^var\(|^inherit$|^currentcolor$|^unset$|^initial$/i.test(value.trim()))return null;
+ let changed=false;
+ const v=value.replace(COLOR_RE,m=>{let r=role;if(r==='auto'){const p=parse(m);r=p&&hsl(p).l>.6?'bg':'text'}const n=mapColor(m,r);if(n!==m)changed=true;return n});
+ return changed?v:null;
+}
+function scope(sel){
+ sel=sel.trim();if(SKIP.test(sel))return null;
+ if(/^(:root|html|body)$/.test(sel))return 'html body .workspace';
+ if(sel.includes('.workspace'))return /^(html|body)/.test(sel)?sel.replace(/^html\s*/,'html ').replace(/^body/,'html body'):'html body '+sel;
+ if(/^(html|body|:root)\b/.test(sel))return null;
+ return 'html body .workspace '+sel;
+}
+
+let css='/* GENERATED by scripts/build-admin-gold.mjs — admin black & gold. Do not edit by hand. */\n';
+for(const f of FILES){
+ const root=postcss.parse(fs.readFileSync(f,'utf8'),{from:f});
+ const res=postcss.root();
+ root.walkRules(rule=>{
+  if(rule.parent.type==='atrule'&&/keyframes/.test(rule.parent.name))return;
+  const sels=rule.selectors.map(scope).filter(Boolean);if(!sels.length)return;
+  const decls=[];rule.walkDecls(d=>{if(d.parent!==rule||!PROPS.test(d.prop))return;const v=mapValue(d.prop,d.value);if(v!=null)decls.push(postcss.decl({prop:d.prop,value:v,important:!d.prop.startsWith('--')}))});
+  if(!decls.length)return;
+  const nr=postcss.rule({selectors:sels});decls.forEach(d=>nr.append(d));
+  let target=res;const chain=[];let p=rule.parent;while(p&&p.type==='atrule'){chain.unshift(p);p=p.parent}
+  for(const at of chain){if(!/media|supports|container/.test(at.name))return;let ex=target.last&&target.last.type==='atrule'&&target.last.name===at.name&&target.last.params===at.params?target.last:null;if(!ex){ex=postcss.atRule({name:at.name,params:at.params});target.append(ex)}target=ex}
+  target.append(nr);
+ });
+ css+=`/* ${f} */\n`+res.toString().replace(/\n\s*\n/g,'\n')+'\n';
+}
+css+=fs.readFileSync('scripts/admin-gold-accents.css','utf8');
+fs.writeFileSync('app/workspace-gold.css',css);
+console.log('app/workspace-gold.css',(css.length/1024).toFixed(0),'KB');

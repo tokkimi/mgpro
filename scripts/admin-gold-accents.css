@@ -1,0 +1,37 @@
+/* Hand-written black & gold accents for the admin (appended to the generated mirror). */
+html:has(.workspace),html body:has(.workspace){background:#0b0b0d!important;color-scheme:dark}
+html body .workspace{--mg-gold:#d9b36c;--mg-gold-2:#b98d45;background:#0b0b0d!important;color:#f2ede4!important;color-scheme:dark}
+html body .workspace .workspace-content{background:#0b0b0d!important}
+html body .workspace .sidebar{background:#0f0f12!important;border-right:1px solid #222228!important}
+html body .workspace .sidebar nav button,html body .workspace .workspace-settings{color:#d8d2c7!important;background:transparent!important}
+html body .workspace .sidebar nav button svg,html body .workspace .workspace-settings svg{color:#a9a49b!important}
+html body .workspace .sidebar nav button:hover,html body .workspace .workspace-settings:hover{background:#1b1b20!important;color:#fff!important}
+html body .workspace .sidebar nav button.active,html body .workspace .workspace-settings.active{background:linear-gradient(135deg,rgba(217,179,108,.26),rgba(185,141,69,.1))!important;color:#e7c784!important;box-shadow:inset 0 0 0 1px rgba(217,179,108,.45)!important;border-color:rgba(217,179,108,.45)!important}
+html body .workspace .sidebar nav button.active svg,html body .workspace .workspace-settings.active svg{color:#e7c784!important}
+html body .workspace .workspace-switch,html body .workspace .company-avatar{background:#16161a!important;color:#f2ede4!important;border-color:#26262c!important;box-shadow:none!important}
+html body .workspace .company-avatar{color:#e7c784!important;border:1px solid rgba(217,179,108,.4)!important}
+html body .workspace :is(h1,h2,h3,h4){color:#f6f1e7!important}
+html body .workspace :is(.eyebrow,.section-kicker,.module-kicker){color:#d9b36c!important}
+html body .workspace a:not(.btn):not([class*=nav]){color:#e2c487}
+html body .workspace .btn.primary,html body .workspace button.primary{color:#141414!important;background:linear-gradient(135deg,#e7c784,#b98d45)!important;border-color:transparent!important;box-shadow:0 6px 18px rgba(185,141,69,.25)!important}
+html body .workspace .btn.primary::after{background:linear-gradient(135deg,#e7c784,#b98d45)!important}
+html body .workspace .btn.primary svg{color:#141414!important}
+html body .workspace .btn:not(.primary){color:#ece6da!important}
+html body .workspace .btn[aria-pressed=true]{color:#141414!important}
+html body .workspace .btn[aria-pressed=true]::after{background:linear-gradient(135deg,#e7c784,#b98d45)!important}
+html body .workspace :is(input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea){background-color:#111114!important;color:#f2ede4!important;border-color:#2e2e35!important}
+html body .workspace :is(input,textarea)::placeholder{color:#77736c!important}
+html body .workspace :is(input,select,textarea):focus{border-color:#d9b36c!important;outline-color:rgba(217,179,108,.5)!important}
+html body .workspace input:is([type=checkbox],[type=radio],[type=range]){accent-color:#d9b36c}
+html body .workspace option{background:#141417;color:#f2ede4}
+html body .workspace .catalogue-nav.workspace-tabs>button.active,html body .workspace [role=tab][aria-selected=true]{border-bottom-color:#d9b36c!important;color:#e7c784!important}
+html body .workspace ::selection{background:rgba(217,179,108,.35)}
+html body .workspace .admin-brand-logo{filter:drop-shadow(0 2px 10px rgba(0,0,0,.6))}
+html body .workspace .workspace-logo{background:transparent!important;box-shadow:none!important;border:0!important}
+html body .workspace .admin-brand-logo{content:url(/images/mgpro-logo-fond-sombre.png);background:transparent!important}
+html body .workspace .mat-lib .mat-search input{border:0!important;background:transparent!important;padding:10px 0!important;min-height:0!important;box-shadow:none!important;outline:none!important}
+html body .workspace .mobile-tabbar{background:#0f0f12!important;border-top:1px solid #222228!important}
+html body .workspace .mobile-tabbar .tab{background:transparent!important;color:#a9a49b!important}
+html body .workspace .mobile-tabbar .tab.active,html body .workspace .mobile-tabbar .tab[aria-current]{color:#e7c784!important}
+html body .workspace .mobile-tabbar .tab.primary{background:transparent!important}
+html body .workspace .mobile-tabbar .tab.primary span{background:linear-gradient(135deg,#e7c784,#b98d45)!important;color:#141414!important;box-shadow:0 8px 18px -6px rgba(185,141,69,.6)!important}
