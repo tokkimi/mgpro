@@ -79,7 +79,8 @@ for(const [cat,sub,name] of uniq){
  const wood=/wood|planks|parquet/.test(tags.join(' '))&&WOODTONE.find(([re])=>re.test(nn));if(wood)t.push(...wood[1]);
  if(tintMode==='color'||(tintMode==='colorIfNamed'&&col))tint=col?.[1];
  else if(typeof tintMode==='string'&&tintMode.startsWith('#'))tint=tintMode;
- const target=tint?undefined:(TARGET.find(([re])=>re.test(nn))||[])[1];
+ const target=tint?'#efede8':((TARGET.find(([re])=>re.test(nn))||[])[1]||col?.[1]||(/peinture|plafond|platre|enduit|chaux|stuc|crepi|mat |satin|brillant|lessivable|anti /.test(nn+' ')?'#ebe8e2':/gres cerame|carrelage|ceramique/.test(nn)?'#cfccc6':undefined));
+ if(!tint&&rule[4]==='color')tint='#eeebe5';
  const id=scored({cats,tags:t,avoid},`${sub}${name}`,target,sub);
  if(!id){miss.push(`${cat}|${sub}|${name}`);continue}
  out[`${cat}|${sub}|${name}`]=tint?{a:id,t:tint}:{a:id};
