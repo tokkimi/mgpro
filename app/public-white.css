@@ -193,3 +193,12 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 .atelier-site :not(.immersive-banner-copy)>.section-kicker{font-size:18px!important;line-height:1.4!important;letter-spacing:.1em}
 @media(max-width:1100px){.atelier-site .expertise-photo-grid{display:flex;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x proximity;scrollbar-width:none;gap:14px;padding-bottom:8px}.atelier-site .expertise-photo-grid::-webkit-scrollbar{display:none}.atelier-site .expertise-photo-link{flex:0 0 clamp(140px,30vw,200px);scroll-snap-align:start}.atelier-site .header-rbq{font-size:9px}}
 @media(max-width:600px){.atelier-site .header-rbq{font-size:8px;letter-spacing:0}.atelier-site .atelier-header-right{gap:8px}.atelier-site :not(.immersive-banner-copy)>.section-kicker{font-size:15px!important;letter-spacing:.06em}}
+
+/* Map is indicative: the gold line is a visual guide, not a service boundary. */
+.atelier-site .territory-map{margin:0;min-width:0;align-self:center}
+.atelier-site .territory-map-frame{position:relative;overflow:hidden;border-radius:18px;background:#f4f4f1;aspect-ratio:3/2;box-shadow:0 12px 35px #23232312;isolation:isolate}
+.atelier-site .territory-map iframe{border:0;width:100%;height:100%;display:block;filter:grayscale(.72) saturate(.55)}
+.atelier-site .territory-map-outline{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;filter:drop-shadow(0 0 4px #d5ac5c99)}
+.atelier-site .territory-map figcaption{margin-top:12px;font-size:11px;line-height:1.5;color:#60686b!important}
+.atelier-site .territory-map figcaption a{color:#60686b!important;text-decoration:underline}
+@media(max-width:600px){.atelier-site .territory-map-frame{aspect-ratio:4/3}.atelier-site .territory-map-outline{filter:drop-shadow(0 0 2px #d5ac5c99)}}
