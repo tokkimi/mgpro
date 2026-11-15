@@ -270,7 +270,7 @@ body:has(.atelier-site) .cookie-settings-footer{display:none}
 @media(prefers-reduced-motion:reduce){.atelier-site .finance-glass-layer{display:none}}
 
 /* Animate the entire Financeit card together, not just its glass layer. */
-.atelier-site a.finance-offer{transform-origin:center center;animation:finance-card-reveal 8s cubic-bezier(.22,.7,.25,1) infinite;will-change:transform}
+.atelier-site a.finance-offer{transform-origin:center center;animation:finance-card-reveal 4s cubic-bezier(.22,.7,.25,1) infinite;will-change:transform}
 @keyframes finance-card-reveal{
   0%{transform:perspective(1100px) translateY(24px) scale(.76) rotateY(-20deg) rotateX(8deg)}
   25%{transform:perspective(1100px) translateY(-12px) scale(1.04) rotateY(7deg) rotateX(-3deg)}
@@ -290,3 +290,6 @@ body:has(.atelier-site) .cookie-settings-footer{display:none}
 @media(prefers-reduced-motion:reduce){.atelier-site .finance-offer.finance-glass-ready> :not(.finance-glass-layer){opacity:1}.atelier-site .finance-offer.finance-glass-ready .finance-glass-layer{display:none}}
 
 .atelier-site a.finance-offer.finance-glass-ready{background:transparent;border-color:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+
+/* A slightly larger offer while retaining the mobile width limit. */
+.atelier-site a.finance-offer{max-width:min(430px,100%)}
