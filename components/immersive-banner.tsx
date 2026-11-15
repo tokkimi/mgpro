@@ -4,7 +4,7 @@ import {useEffect,useRef} from 'react';
 
 const scenes={
  vision:{image:'/images/immersive/vision-desktop.webp',mobile:'/images/immersive/vision-mobile.webp',alt:{fr:'Inspiration : cuisine contemporaine ouverte sur un séjour lumineux',en:'Design inspiration: contemporary kitchen opening onto a bright living room'},title:{fr:'Votre espace. Réinventé.',en:'Your space. Reimagined.'},kicker:{fr:'IMAGINER LA SUITE',en:'IMAGINE WHAT COMES NEXT'}},
- detail:{image:'/images/immersive/detail-desktop.webp',mobile:'/images/immersive/detail-mobile.webp',alt:{fr:'Inspiration : salle de bain contemporaine, douche vitrée et baignoire',en:'Design inspiration: contemporary bathroom with a glass shower and bathtub'},title:{fr:'Le détail fait la différence.',en:'Every detail makes a difference.'},kicker:{fr:'LA SIGNATURE MG PRO',en:'THE MG PRO SIGNATURE'}}
+ detail:{image:'/images/immersive/detail-desktop.webp',mobile:'/images/immersive/detail-mobile.webp',alt:{fr:'Inspiration : salle de bain contemporaine, douche vitrée et baignoire',en:'Design inspiration: contemporary bathroom with a glass shower and bathtub'},title:{fr:'Le détail fait la différence.',en:'Every detail makes a difference.'},kicker:{fr:'LA SIGNATURE MG PRO',en:'THE MG PRO SIGNATURE'}}
 };
 
 export default function ImmersiveBanner({scene,locale='fr'}:{scene:keyof typeof scenes;locale?:'fr'|'en'}){
