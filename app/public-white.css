@@ -282,3 +282,11 @@ body:has(.atelier-site) .cookie-settings-footer{display:none}
 
 .atelier-site a.finance-offer:hover,.atelier-site a.finance-offer:focus-visible{animation-play-state:running}
 
+
+/* Render the whole offer through the original liquid-glass reveal. */
+.atelier-site .finance-glass-layer{mix-blend-mode:normal;opacity:0;transition:opacity .2s}
+.atelier-site .finance-offer.finance-glass-ready .finance-glass-layer{opacity:1}
+.atelier-site .finance-offer.finance-glass-ready> :not(.finance-glass-layer){opacity:0}
+@media(prefers-reduced-motion:reduce){.atelier-site .finance-offer.finance-glass-ready> :not(.finance-glass-layer){opacity:1}.atelier-site .finance-offer.finance-glass-ready .finance-glass-layer{display:none}}
+
+.atelier-site a.finance-offer.finance-glass-ready{background:transparent;border-color:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}

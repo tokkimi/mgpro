@@ -811,6 +811,7 @@ interface GlassIconRevealProps extends Omit<React.HTMLAttributes<HTMLDivElement>
   tuning?: Partial<GlassTuning>
   /** Accessible name of the logo */
   label?: string
+  onRevealReady?: () => void
 }
 
 export function GlassIconReveal({
@@ -832,6 +833,7 @@ export function GlassIconReveal({
   time,
   tuning,
   label = "Logo",
+  onRevealReady,
   className,
   style,
   onClick,
@@ -878,14 +880,14 @@ export function GlassIconReveal({
     loadLogo(logo).then(
       (data) => {
         if (cancelled) return
-        engineRef.current?.setLogo(data)
+        if (engineRef.current) { engineRef.current.setLogo(data); onRevealReady?.() }
       },
       (err) => { console.error(err); setFallback(true) },
     )
     return () => {
       cancelled = true
     }
-  }, [logo])
+  }, [logo, onRevealReady])
 
   const fallbackUrl = React.useMemo(() => (fallback ? logoUrl(logo) : ""), [fallback, logo])
 
