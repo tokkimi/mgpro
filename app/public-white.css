@@ -182,3 +182,14 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 .atelier-site .hero-scroll-sequence .atelier-hero-copy h1 span.hero-gold-copy:not(#hero-specificity){color:#e4c274!important}
 .atelier-site .hero-scroll-sequence .hero-project-button.glass-button{width:240px!important;max-width:100%!important;white-space:normal!important}
 @media(max-width:400px){.atelier-site .hero-scroll-sequence .hero-project-button.glass-button{width:min(240px,100%)!important}}
+
+/* Persistent hero content and compact horizontal expertise browsing. */
+.atelier-site .hero-scroll-sequence{--hero-copy-alpha:1;--hero-copy-blur:0px;--hero-copy-shift:0px;--hero-action-alpha:1;--hero-secondary-alpha:1}
+.atelier-site .hero-scroll-sequence .atelier-hero-copy,.atelier-site .hero-scroll-sequence .hero-finance,.atelier-site .hero-scroll-sequence .hero-project-button,.atelier-site .hero-scroll-sequence .atelier-hero-topline,.atelier-site .hero-scroll-sequence .hero-photo-credit{opacity:1!important;filter:none!important;transform:none!important;visibility:visible!important;pointer-events:auto!important}
+.atelier-site .hero-scroll-sequence .atelier-hero-shade{opacity:1!important}
+.atelier-site .header-rbq{color:#ead7a5!important;font-size:10px;white-space:nowrap;letter-spacing:.04em}
+.atelier-site .contact-glass-panel .finance-mark{width:23px;height:24px;flex:0 0 23px;overflow:hidden;display:block}
+.atelier-site .contact-glass-panel .finance-mark img{height:24px;width:auto;max-width:none;display:block}
+.atelier-site :not(.immersive-banner-copy)>.section-kicker{font-size:18px!important;line-height:1.4!important;letter-spacing:.1em}
+@media(max-width:1100px){.atelier-site .expertise-photo-grid{display:flex;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x proximity;scrollbar-width:none;gap:14px;padding-bottom:8px}.atelier-site .expertise-photo-grid::-webkit-scrollbar{display:none}.atelier-site .expertise-photo-link{flex:0 0 clamp(140px,30vw,200px);scroll-snap-align:start}.atelier-site .header-rbq{font-size:9px}}
+@media(max-width:600px){.atelier-site .header-rbq{font-size:8px;letter-spacing:0}.atelier-site .atelier-header-right{gap:8px}.atelier-site :not(.immersive-banner-copy)>.section-kicker{font-size:15px!important;letter-spacing:.06em}}

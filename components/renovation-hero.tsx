@@ -82,12 +82,12 @@ export default function RenovationHero({locale='fr',finance,onQuote}:Props){
    raf=0;
    const progress=clamp((window.scrollY-start)/distance);
    framePosition=progress*(sequence.frames.length-1);
-   const copyAlpha=smooth((progress-.28)/.58),actionAlpha=smooth((progress-.6)/.35);
+   const copyAlpha=1,actionAlpha=1;
    container.style.setProperty('--hero-copy-alpha',String(copyAlpha));
    container.style.setProperty('--hero-copy-blur',`${(1-copyAlpha)*12}px`);
    container.style.setProperty('--hero-copy-shift',`${(1-copyAlpha)*18}px`);
    container.style.setProperty('--hero-action-alpha',String(actionAlpha));
-   container.style.setProperty('--hero-secondary-alpha',String(smooth((progress-.68)/.3)));
+   container.style.setProperty('--hero-secondary-alpha','1');
    container.dataset.progress=progress.toFixed(4);container.dataset.frame=String(Math.round(framePosition)+1);
    container.dataset.animating=progress<1?'true':'false';
    container.dataset.revealed=copyAlpha===1?'true':'false';
@@ -131,8 +131,8 @@ export default function RenovationHero({locale='fr',finance,onQuote}:Props){
    <canvas ref={canvas} className="hero-frame-canvas" aria-hidden="true"/>
    <div className="atelier-hero-shade"/>
    <div className="atelier-hero-topline"><span>{en?'RESIDENTIAL & COMMERCIAL RENOVATION':'RÉNOVATIONS RÉSIDENTIELLES & COMMERCIALES'}</span><span>{en?'LAVAL · MONTRÉAL · NORTH SHORE':'LAVAL · MONTRÉAL · RIVE-NORD'}</span></div>
-   <div className="atelier-hero-copy" ref={copy} inert={!staticMode}><div className="hero-intro-line"><span/>{en?'OVER 20 YEARS OF SHAPING SPACES':'PLUS DE 20 ANS À FAÇONNER VOS ESPACES'}</div><h1>{en?'Beauty to live in.':'Le beau se vit.'}<br/><span className="hero-gold-copy">{en?'Quality you':'Le bien fait,'}<br/>{en?'can feel.':'se ressent'}{!en&&'.'}</span></h1><p>{en?'Renovate today.':'Rénover aujourd’hui.'}<br/>{en?'For a better tomorrow.':'Pour un meilleur demain.'}</p><button type="button" className="glass-button hero-project-button" onClick={onQuote}>{en?'Bring your project to life':'Donnons vie à votre projet'}<ArrowUpRight size={19}/></button></div>
-   <a ref={financeLink} className="hero-finance glass-surface" href={finance} target="_blank" rel="noopener noreferrer" inert={!staticMode}><div><span>{en?'YOUR PROJECT, AT YOUR PACE':'VOTRE PROJET, À VOTRE RYTHME'}</span><b><img className="financeit-logo hero-finance-logo" src="/images/financeit-official.png" alt="Financeit"/><ArrowUpRight size={24} aria-hidden="true"/></b></div><p>{en?'Explore financing options':'Des solutions de financement'}<br/>{en?'for your renovation.':'pour passer de l’idée aux travaux.'}</p></a>
+   <div className="atelier-hero-copy" ref={copy} ><div className="hero-intro-line"><span/>{en?'OVER 20 YEARS OF SHAPING SPACES':'PLUS DE 20 ANS À FAÇONNER VOS ESPACES'}</div><h1>{en?'Beauty to live in.':'Le beau se vit.'}<br/><span className="hero-gold-copy">{en?'Quality you':'Le bien fait,'}<br/>{en?'can feel.':'se ressent'}{!en&&'.'}</span></h1><p>{en?'Renovate today.':'Rénover aujourd’hui.'}<br/>{en?'For a better tomorrow.':'Pour un meilleur demain.'}</p><button type="button" className="glass-button hero-project-button" onClick={onQuote}>{en?'Bring your project to life':'Donnons vie à votre projet'}<ArrowUpRight size={19}/></button></div>
+   <a ref={financeLink} className="hero-finance glass-surface" href={finance} target="_blank" rel="noopener noreferrer" ><div><span>{en?'YOUR PROJECT, AT YOUR PACE':'VOTRE PROJET, À VOTRE RYTHME'}</span><b><img className="financeit-logo hero-finance-logo" src="/images/financeit-official.png" alt="Financeit"/><ArrowUpRight size={24} aria-hidden="true"/></b></div><p>{en?'Explore financing options':'Des solutions de financement'}<br/>{en?'for your renovation.':'pour passer de l’idée aux travaux.'}</p></a>
    <div className="hero-photo-credit"><span>{en?'THE MG PRO SIGNATURE':'LA SIGNATURE MG PRO'}</span><span>{en?'Spaces designed to last.':'Des espaces pensés pour durer.'}</span></div>
   </section></div>
   <noscript><style>{'.hero-scroll-sequence{height:auto!important}.hero-scroll-pin{position:relative!important;top:auto!important}.hero-first-frame,.hero-frame-canvas{display:none!important}.hero-scroll-sequence .atelier-hero-copy,.hero-scroll-sequence .hero-finance,.hero-scroll-sequence .hero-project-button,.hero-scroll-sequence .atelier-hero-topline,.hero-scroll-sequence .hero-photo-credit,.atelier-site .atelier-contact{opacity:1!important;filter:none!important;transform:none!important;visibility:visible!important;pointer-events:auto!important}'}</style></noscript>
