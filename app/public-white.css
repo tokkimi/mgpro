@@ -202,3 +202,8 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 .atelier-site .territory-map figcaption{margin-top:12px;font-size:11px;line-height:1.5;color:#60686b!important}
 .atelier-site .territory-map figcaption a{color:#60686b!important;text-decoration:underline}
 @media(max-width:600px){.atelier-site .territory-map-frame{aspect-ratio:4/3}.atelier-site .territory-map-outline{filter:drop-shadow(0 0 2px #d5ac5c99)}}
+/* Isolate the green Financeit emblem in the contact menu. */
+.atelier-site .contact-glass-panel .finance-mark{position:relative;width:24px;height:30px;flex:0 0 24px;overflow:hidden}
+.atelier-site .contact-glass-panel .finance-mark img{position:absolute;width:225px!important;height:auto!important;max-width:none!important;left:-17px;top:-42px}
+@media(max-width:1200px){.atelier-site .atelier-header .atelier-header-right{gap:14px!important}.atelier-site .header-rbq{flex:none;white-space:nowrap}}
+@media(max-width:380px){.atelier-site .atelier-header{gap:6px;padding-inline:12px}.atelier-site .atelier-header>.atelier-brand{width:85px!important;flex:0 0 85px;padding-right:8px}.atelier-site .atelier-header>.atelier-brand img{width:75px!important}.atelier-site .atelier-header .atelier-header-right{gap:12px!important}.atelier-site .header-rbq{font-size:8px}}
