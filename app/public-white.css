@@ -293,3 +293,7 @@ body:has(.atelier-site) .cookie-settings-footer{display:none}
 
 /* A slightly larger offer while retaining the mobile width limit. */
 .atelier-site a.finance-offer{max-width:min(430px,100%)}
+
+/* Financeit green, sampled from its official logo. */
+.atelier-site .finance-orb{background:transparent;box-shadow:none;opacity:.18}
+.atelier-site .finance-orb span{color:#02b77b}
