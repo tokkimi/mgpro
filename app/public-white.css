@@ -261,3 +261,10 @@ body:has(.atelier-site) .cookie-settings-footer{display:none}
 .mg-brand-intro .mg-intro-flare{display:block;mix-blend-mode:multiply;filter:invert(1) grayscale(1);opacity:.45;pointer-events:none}
 .mg-brand-intro .mg-intro-aura::before,.mg-brand-intro .mg-intro-aura::after{background:radial-gradient(ellipse,rgba(90,95,105,.13),rgba(180,185,190,.06) 38%,transparent 70%)}
 @media(prefers-reduced-motion:reduce){.mg-brand-intro .mg-intro-flare{display:none}}
+
+/* Original WebGL glass reveal over the full Financeit card; the offer remains readable and clickable underneath. */
+.atelier-site a.finance-offer{animation:none;will-change:auto}
+.atelier-site a.finance-offer::after{animation:none;opacity:0}
+.atelier-site .finance-glass-layer{position:absolute;inset:0;z-index:3;pointer-events:none;mix-blend-mode:multiply;opacity:.8;overflow:hidden;border-radius:inherit}
+.atelier-site .finance-glass-layer>div{width:100%;height:100%;pointer-events:none}
+@media(prefers-reduced-motion:reduce){.atelier-site .finance-glass-layer{display:none}}
