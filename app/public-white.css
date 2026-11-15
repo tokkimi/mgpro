@@ -249,3 +249,16 @@ body:has(.atelier-site) .cookie-settings-footer{display:none}
 .atelier-site .atelier-footer .footer-cookie-settings:hover{color:#e8c579!important}
 .atelier-site .atelier-header>nav>a:not(#mg-nav-override):is(:hover,:focus-visible,[aria-current=page]){color:#cbb55e!important}
 .atelier-site .atelier-header>nav>a::after{background:linear-gradient(90deg,#998538,#f2e29c,#998538)}
+
+/* Financeit: animated glass reveal stays inside the existing offer card. */
+.atelier-site .financeit-reveal{width:min(100%,240px);height:150px;margin:0 0 8px;overflow:hidden;border-radius:20px;background:#fafafa}
+.atelier-site .financeit-reveal>div,.atelier-site .financeit-reveal>img{display:block;width:100%;height:100%}
+.atelier-site .financeit-reveal>img{object-fit:contain;padding:20px}
+@media(max-width:600px){.atelier-site .financeit-reveal{height:132px;max-width:210px}}
+
+.atelier-site a.finance-offer{display:block;text-decoration:none;cursor:pointer}
+.atelier-site .finance-card-link{display:inline-flex;align-items:center;gap:8px;margin-top:20px;font-weight:600}
+.atelier-site a.finance-offer:hover .finance-card-link{text-decoration:underline;text-underline-offset:4px}
+.mg-brand-intro .mg-intro-flare{display:block;mix-blend-mode:multiply;filter:invert(1) grayscale(1);opacity:.45;pointer-events:none}
+.mg-brand-intro .mg-intro-aura::before,.mg-brand-intro .mg-intro-aura::after{background:radial-gradient(ellipse,rgba(90,95,105,.13),rgba(180,185,190,.06) 38%,transparent 70%)}
+@media(prefers-reduced-motion:reduce){.mg-brand-intro .mg-intro-flare{display:none}}
