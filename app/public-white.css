@@ -296,3 +296,7 @@ body:has(.atelier-site) .cookie-settings-footer{display:none}
 
 /* Financeit green, sampled from its official logo. */
 .atelier-site .finance-orb span{color:#02b77b}
+
+/* Warm gold light on the white welcome screen, without the dark inverted halo. */
+.mg-brand-intro .mg-intro-flare{mix-blend-mode:multiply;filter:invert(1) sepia(1) saturate(1.4) hue-rotate(355deg) brightness(1.45);opacity:.18}
+.mg-brand-intro .mg-intro-aura::before,.mg-brand-intro .mg-intro-aura::after{background:radial-gradient(ellipse,rgba(214,173,81,.25),rgba(242,220,166,.12) 38%,transparent 70%)}
