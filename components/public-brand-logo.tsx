@@ -8,6 +8,6 @@ const sizes:Record<Variant,string>={
  intro:'(max-height:500px) 250px, (max-width:524px) 82vw, 430px',
 };
 export default function PublicBrandLogo({variant='header',alt='MG Pro'}:{variant?:Variant;alt?:string}){
- const src=variant==='header'||variant==='footer'?'/images/mgpro-logo-blanc-moh.png':'/images/mgpro-logo-noir-original.png';
+ const src=variant==='header'||variant==='footer'?'/images/mgpro-logo-blanc-fourni.png':'/images/mgpro-logo-noir-fourni.png';
  return <img className="mg-public-logo" src={src} sizes={sizes[variant]} width="1024" height="1536" alt={alt} fetchPriority={variant==='intro'||variant==='header'?'high':'auto'} decoding="sync" data-brand-variant={variant}/>;
 }
