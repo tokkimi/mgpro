@@ -546,7 +546,8 @@ void main() {
 
   vec3 outc = mix(plain, col, uPlateAlpha);
   outc += (hash(gl_FragCoord.xy) - 0.5) / 255.0;
-  outColor = vec4(outc, 1.0);
+  float coverage = max(lg.a * uBare, (1.0 - smoothstep(-2.0 * px, 2.0 * px, sd)) * uPlateAlpha);
+  outColor = vec4(outc, clamp(coverage, 0.0, 1.0));
 }`
 
 /* ------------------------------------------------------------------ *
@@ -897,7 +898,7 @@ export function GlassIconReveal({
       role="img"
       aria-label={label}
       className={className}
-      style={{ position: "relative", isolation: "isolate", overflow: "hidden", backgroundColor: settings.background, ...style }}
+      style={{ position: "relative", isolation: "isolate", overflow: "hidden", backgroundColor: "transparent", ...style }}
       onClick={(e) => {
         engineRef.current?.replay()
         onClick?.(e)
