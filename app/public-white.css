@@ -314,3 +314,8 @@ body:has(.atelier-site) .cookie-settings-footer{display:none}
 .atelier-site .finance-orb{left:4%;bottom:4%;width:min(42%,540px);height:auto;opacity:.11;transform:rotate(-7deg);transform-origin:center}
 .atelier-site .atelier-finance>a.finance-offer{box-shadow:13px 16px 30px rgba(63,84,72,.22),-10px -10px 24px #fff,inset 1px 1px 2px #fff}
 @media(max-width:800px){.atelier-site .finance-orb{width:70%;left:15%;bottom:4%;opacity:.09;transform:rotate(-5deg)}.atelier-site .atelier-finance{box-shadow:-5px -5px 16px #fff,8px 12px 26px rgba(61,79,69,.19),inset 1px 2px 2px #fff}}
+
+/* No rectangular shell around the animated glass square. */
+.atelier-site .atelier-finance>a.finance-offer.finance-glass-ready{background:transparent!important;border:0!important;border-radius:0;box-shadow:none!important;backdrop-filter:none;-webkit-backdrop-filter:none}
+.atelier-site .atelier-finance>a.finance-offer.finance-glass-ready:hover,.atelier-site .atelier-finance>a.finance-offer.finance-glass-ready:focus-visible{box-shadow:none!important}
+.atelier-site .finance-offer.finance-glass-ready .finance-glass-layer{border-radius:0;mix-blend-mode:multiply}
