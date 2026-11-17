@@ -325,3 +325,8 @@ body:has(.atelier-site) .cookie-settings-footer{display:none}
 .atelier-site .atelier-finance>a.finance-offer.finance-glass-ready{isolation:auto!important;background:transparent!important;box-shadow:none!important}
 .atelier-site .finance-offer.finance-glass-ready .finance-glass-layer{mix-blend-mode:multiply!important;background:transparent!important}
 @media(max-width:800px){.atelier-site .atelier-finance{box-shadow:-7px -7px 18px #fff,9px 12px 23px #c5cbd2,inset 1px 1px 1px #fff}}
+
+/* Keep the offer moving gently throughout the reveal cycle. */
+.atelier-site a.finance-offer.finance-glass-ready{animation:finance-fluid-motion 5s ease-in-out infinite}
+@keyframes finance-fluid-motion{0%,100%{transform:perspective(1100px) translateY(0) rotateY(-3deg)}50%{transform:perspective(1100px) translateY(-7px) rotateY(3deg)}}
+@media(prefers-reduced-motion:reduce){.atelier-site a.finance-offer.finance-glass-ready{animation:none;transform:none}}

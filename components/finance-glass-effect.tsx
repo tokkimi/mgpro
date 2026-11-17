@@ -32,5 +32,5 @@ export default function FinanceGlassEffect(){
   };void draw();
   return ()=>{cancelled=true;card.classList.remove("finance-glass-ready")};
  },[]);
- return <div ref={layer} className="finance-glass-layer" aria-hidden="true">{texture&&<GlassIconReveal logo={texture} originalColors background="#ffffff" tileSize={520} logoScale={1.2} finalScale={1} hold={1.5} speed={1.7} onRevealReady={ready} tuning={{startZoom:2.3}}/>}</div>;
+ return <div ref={layer} className="finance-glass-layer" aria-hidden="true">{texture&&<GlassIconReveal logo={texture} originalColors background="#ffffff" tileSize={520} logoScale={1.2} finalScale={1} hold={0.35} speed={1.7} onRevealReady={ready} tuning={{startZoom:2.3}}/>}</div>;
 }
