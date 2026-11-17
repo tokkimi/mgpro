@@ -35,18 +35,18 @@ export default function RenovationHero({locale='fr',finance,onQuote}:Props){
   const suffix=mobile?'mobile':'desktop';
   const loaded=new Map<string,HTMLImageElement>();
   const pending=new Map<string,Promise<HTMLImageElement|null>>();
-  let cancelled=false,raf=0,framePosition=0,start=0,distance=1,painted='';
+  let cancelled=false,raf=0,framePosition=0,start=0,distance=1,painted='',introBlend=0;
   let width=0,height=0,cropX=.5,cropY=.5;
   const source=(index:number)=>`${sequence.directory}/${sequence.frames[index]}-${suffix}.webp`;
   const draw=()=>{
    const lower=Math.floor(framePosition),upper=Math.min(lower+1,sequence.frames.length-1);
-   const image=loaded.get(source(lower));
+   const image=loaded.get(source(introBlend<1?sequence.frames.length-1:lower));
    if(!image)return;
-   const next=loaded.get(source(upper));
+   const next=loaded.get(source(introBlend<1?0:upper));
    container.dataset.paintedFrame=(lower+(next?framePosition-lower:0)+1).toFixed(3);
-   const blend=next&&next!==image?framePosition-lower:0;
+   const blend=next&&next!==image?(introBlend<1?introBlend:framePosition-lower):0;
    container.dataset.blend=blend.toFixed(3);
-   const key=`${lower}:${blend.toFixed(3)}:${width}:${height}`;
+   const key=`${introBlend<1?"intro":"sequence"}:${lower}:${blend.toFixed(3)}:${width}:${height}`;
    if(key===painted)return;
    painted=key;
    // Use the exact CSS crop of the original photo, so the final frame cannot jump.
@@ -81,7 +81,8 @@ export default function RenovationHero({locale='fr',finance,onQuote}:Props){
   const update=()=>{
    raf=0;
    const progress=clamp((window.scrollY-start)/distance);
-   framePosition=progress*(sequence.frames.length-1);
+   introBlend=smooth(progress/0.08);
+   framePosition=clamp((progress-0.08)/0.92)*(sequence.frames.length-1);
    const copyAlpha=1,actionAlpha=1;
    container.style.setProperty('--hero-copy-alpha',String(copyAlpha));
    container.style.setProperty('--hero-copy-blur',`${(1-copyAlpha)*12}px`);
@@ -127,7 +128,7 @@ export default function RenovationHero({locale='fr',finance,onQuote}:Props){
  return <div className={`hero-scroll-sequence${staticMode?' is-static':''}`} ref={root} data-animating={staticMode?'false':'true'} data-ready={ready?'true':'false'}>
   <div className="hero-scroll-pin" ref={pin}><section className="atelier-hero">
    <img className="atelier-hero-photo hero-final-photo" src="/images/renovation-inspiration.png" alt={en?'Renovation inspiration: natural oak kitchen — generated image':'Inspiration : cuisine rénovée en bois naturel — visuel généré'} fetchPriority="high"/>
-   <picture className="hero-first-frame"><source media="(max-width:800px)" srcSet={`${sequence.directory}/${sequence.frames[0]}-mobile.webp`}/><img className="atelier-hero-photo" src={`${sequence.directory}/${sequence.frames[0]}-desktop.webp`} alt="" fetchPriority="high"/></picture>
+   <picture className="hero-first-frame"><source media="(max-width:800px)" srcSet={`${sequence.directory}/${sequence.frames[sequence.frames.length-1]}-mobile.webp`}/><img className="atelier-hero-photo" src={`${sequence.directory}/${sequence.frames[sequence.frames.length-1]}-desktop.webp`} alt="" fetchPriority="high"/></picture>
    <canvas ref={canvas} className="hero-frame-canvas" aria-hidden="true"/>
    <div className="atelier-hero-shade"/>
    <div className="atelier-hero-topline"><span>{en?'RESIDENTIAL & COMMERCIAL RENOVATION':'RÉNOVATIONS RÉSIDENTIELLES & COMMERCIALES'}</span><span>{en?'LAVAL · MONTRÉAL · NORTH SHORE':'LAVAL · MONTRÉAL · RIVE-NORD'}</span></div>
