@@ -330,3 +330,13 @@ body:has(.atelier-site) .cookie-settings-footer{display:none}
 .atelier-site a.finance-offer.finance-glass-ready{animation:finance-fluid-motion 5s ease-in-out infinite}
 @keyframes finance-fluid-motion{0%,100%{transform:perspective(1100px) translateY(0) rotateY(-3deg)}50%{transform:perspective(1100px) translateY(-7px) rotateY(3deg)}}
 @media(prefers-reduced-motion:reduce){.atelier-site a.finance-offer.finance-glass-ready{animation:none;transform:none}}
+
+/* Financeit partner banner, adapted from the supplied English campaign. */
+.atelier-site .financeit-banner{display:flex;align-items:center;gap:clamp(18px,3vw,42px);margin:0 clamp(20px,3vw,48px) 40px;padding:18px clamp(20px,3vw,42px);background:#f4f6f5;border-radius:18px;box-shadow:inset 1px 1px 2px #fff,0 9px 24px #34463b0c}
+.atelier-site .financeit-banner img{width:clamp(130px,15vw,195px);height:auto;flex:none}
+.atelier-site .financeit-banner-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.atelier-site .financeit-banner-copy strong{font-size:clamp(15px,1.25vw,19px);line-height:1.3;color:#20262b!important}
+.atelier-site .financeit-banner-copy small{font-size:11px;line-height:1.4;color:#626a67!important}
+.atelier-site .financeit-banner>a{display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;padding:12px 18px;border:1px solid #b8c9bf;border-radius:999px;color:#173e2e!important;font-size:13px;font-weight:600;text-decoration:none;transition:background .2s}
+.atelier-site .financeit-banner>a:hover{background:#e2ece6}
+@media(max-width:700px){.atelier-site .financeit-banner{margin:0 16px 28px;padding:20px;flex-wrap:wrap;gap:12px}.atelier-site .financeit-banner img{width:125px}.atelier-site .financeit-banner-copy{flex-basis:100%;order:1}.atelier-site .financeit-banner>a{order:2;white-space:normal}}
