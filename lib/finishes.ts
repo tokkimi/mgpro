@@ -39,7 +39,13 @@ export const photoUrl=(p:Photo,size=320,map:'Color'|'NormalGL'|'Roughness'='Colo
 
 /** Turns a catalogue designation into a 3D appearance (procedural, indicative until real PBR assets are sourced). */
 export function lookOf(choice:FinishChoice|undefined,surface:SurfaceKey,fallback:Look):Look{
- const look=baseLook(choice,surface,fallback);const photo=choice&&surface!=='taps'?photoFor(choice.sub,choice.name):undefined;return photo?{...look,photo}:look;
+ const look=baseLook(choice,surface,fallback);const photo=choice&&surface!=='taps'?photoFor(choice.sub,choice.name):undefined;if(photo)return {...look,photo};
+ if(!choice||surface==='taps')return look;
+ const scans:Record<Look['finish'],string>={
+  wood:'WoodFloor069',tile:'Tiles027',wallTile:'Tiles133A',concrete:'Concrete048',
+  paint:'Plaster001',brick:'Bricks025',quartz:'Granite002A',marble:'Marble012',fabric:'Carpet001',
+ };
+ return {...look,photo:{a:scans[look.finish],...(look.finish==='paint'?{t:look.color}:{})}};
 }
 function baseLook(choice:FinishChoice|undefined,surface:SurfaceKey,fallback:Look):Look{
  if(!choice)return fallback;
