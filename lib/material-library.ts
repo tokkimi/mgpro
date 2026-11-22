@@ -1,6 +1,7 @@
 // MG Pro materials library: interior catalogue (MGP-, 2060 refs) + exteriors/pools/extensions (EXT-, 377 refs).
 // Both inventories are generic references "à sourcer": no invented prices, no verified-manufacturer claims.
 // Prices are entered by MG Pro (settings.material_prices) and feed the AI quote.
+import catalogueModels from './catalogue-models.json';
 import {lookOf,photoFor,type CatalogueRow,type Look,type Photo,type SurfaceKey} from './finishes';
 export {photoUrl,photoKey,type Photo} from './finishes';
 
@@ -12,12 +13,22 @@ export type Group={name:string;universe:Universe;photo:string;count:number;subs:
 
 let all:Promise<MaterialRow[]>|null=null;
 /** Lazy-loads both inventories (≈200 KB) only when the library or the finishes panel opens. */
-export const loadMaterials=()=>all??=Promise.all([import('./finish-catalogue.json'),import('./exterior-catalogue.json')]).then(([a,b])=>[...(a.default as unknown as MaterialRow[]),...(b.default as unknown as MaterialRow[])]);
+export const loadMaterials=()=>all??=Promise.all([import('./finish-catalogue.json'),import('./exterior-catalogue.json'),import('./catalogue-extension.json')]).then(files=>files.flatMap(file=>file.default as unknown as MaterialRow[]));
+
+const catalogueModelsById=catalogueModels as unknown as Record<string,[string,number,number,number]>;
+export function catalogueModel(id:string){
+ const entry=catalogueModelsById[id];
+ if(!entry)return undefined;
+ const [slug,width,depth,height]=entry;
+ return {slug,width,depth,height};
+}
+export const modelOfRow=(row:MaterialRow)=>catalogueModel(row[0])?.slug;
+export const modelPreview=(slug:string)=>`https://tevy.dev/models/${slug}/v1/preview.webp`;
 
 export const universeOf=(row:MaterialRow):Universe=>row[0].startsWith('EXT-')?'exterieur':'interieur';
 
 const PHOTOS:Record<string,string>={
- 'Murs':'chambre','Sols':'salon','Plafonds':'extension','Cuisines':'cuisine','Salles de bain':'salle-de-bain','Menuiseries':'veranda','Garages':'garage','Terrasses':'terrasse','Piscines':'piscine','Façades':'facade','Escaliers':'exterieur','Éclairage':'ext-eclairage','Techniques':'ext-equipement','Extérieurs':'pergola',
+ 'Mobilier':'salon','Buanderies':'salle-de-bain','Murs':'chambre','Sols':'salon','Plafonds':'extension','Cuisines':'cuisine','Salles de bain':'salle-de-bain','Menuiseries':'veranda','Garages':'garage','Terrasses':'terrasse','Piscines':'piscine','Façades':'facade','Escaliers':'exterieur','Éclairage':'ext-eclairage','Techniques':'ext-equipement','Extérieurs':'pergola',
  'Piscines et bassins':'ext-piscine','Terrasses et plages':'ext-terrasse','Vérandas et jardins d’hiver':'ext-veranda','Extensions et agrandissements':'ext-extension','Pergolas, auvents et abris':'ext-pergola','Façades et bardages':'ext-facade','Toitures et étanchéité':'ext-toiture','Garages et carports':'ext-garage','Clôtures, portails et accès':'ext-cloture','Jardins et aménagements paysagers':'ext-jardin','Éclairage et équipements extérieurs':'ext-eclairage',
 };
 export const photoOf=(group:string)=>`/catalogue/${PHOTOS[group]||'salon'}.webp`;
@@ -30,7 +41,7 @@ export function groupsOf(rows:MaterialRow[]):Group[]{
 
 export const label=(r:MaterialRow)=>`${r[3]}${r[4]?` · ${r[4]}`:''}`;
 const norm=(s:string)=>s.toLocaleLowerCase('fr').normalize('NFD').replace(/[̀-ͯ]/g,'');
-export const matches=(r:MaterialRow,q:string)=>!q||norm(`${r[0]} ${r[1]} ${r[2]} ${r[3]} ${r[4]}`).includes(norm(q));
+export const matches=(r:MaterialRow,q:string)=>norm(q).trim().split(/\s+/).every(word=>norm(`${r[0]} ${r[1]} ${r[2]} ${r[3]} ${r[4]}`).includes(word));
 
 /** Surface material (rendered as a swatch) vs. equipment / object (rendered as an icon tile). */
 export function isSurface(r:MaterialRow){
@@ -69,7 +80,7 @@ export function swatchStyle(r:MaterialRow):{background:string;backgroundSize?:st
 }
 
 /** Real scanned texture for a surface reference (CC0), MG Pro's own choice first. */
-export const photoOfRow=(r:MaterialRow):Photo|undefined=>isSurface(r)?photoFor(r[2],r[3],r[1]):undefined;
+export const photoOfRow=(r:MaterialRow):Photo|undefined=>isSurface(r)?photoFor(r[2],r[3],r[1],r[0]):undefined;
 
 export type IconKey='bath'|'shower'|'toilet'|'sink'|'tap'|'light'|'door'|'window'|'blinds'|'fence'|'pool'|'appliance'|'cabinet'|'stairs'|'car'|'home'|'sun'|'plug'|'tree'|'box';
 export function iconOf(r:MaterialRow):IconKey{

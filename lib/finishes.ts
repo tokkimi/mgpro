@@ -1,6 +1,8 @@
 // Finishes chosen per room from the MG Pro catalogue (2060 references, to source),
 // and how each one is rendered in the 3D model.
 import photos from './material-photos.json';
+import additionalPhotos from './catalogue-surface-photos.json';
+import assetDetails from './texture-provenance.json';
 export type FinishChoice={id:string;name:string;variant?:string;sub?:string};
 export type CatalogueRow=[id:string,cat:string,sub:string,name:string,variant:string,application:string,unit:string];
 export type SurfaceKey='floor'|'walls'|'ceiling'|'fronts'|'worktop'|'splash'|'bathWalls'|'taps'|'vanity';
@@ -26,20 +28,29 @@ export type Look={finish:'wood'|'tile'|'concrete'|'paint'|'brick'|'quartz'|'marb
 
 // Real photo-scanned textures (ambientCG, CC0) matched to each catalogue designation, plus MG Pro's own choices.
 const photoBase=photos as Record<string,Photo>;
+const photosById=additionalPhotos as Record<string,Photo>;
+const assets=assetDetails as unknown as Record<string,['scan'|'photo'|'pbr',number?,number?]>;
+export function textureDetails(photo:Photo){
+ const [method,width,height]=assets[photo.a]||[];
+ return {method,width,height,label:method==='scan'?'Scan photographique':method==='photo'?'Texture issue de photos':'Texture PBR de référence'};
+}
 let photoOverrides:Record<string,Photo>={};
 export const photoKey=(cat:string,sub:string,name:string)=>`${cat}|${sub}|${name}`;
 export function setPhotoOverrides(value:unknown){photoOverrides=value&&typeof value==='object'&&!Array.isArray(value)?Object.fromEntries(Object.entries(value as Record<string,any>).filter(([k,v])=>k.split('|').length===3&&v&&/^[A-Za-z]{2,30}\d{3}[A-Z]?$/.test(v.a)).map(([k,v])=>[k,{a:String(v.a),...(/^#[0-9a-f]{6}$/i.test(v.t)?{t:v.t}:{})}])):{}}
 /** Photo for a catalogue designation; the sub-category + name pair is enough to find it from a 3D finish choice. */
-export function photoFor(sub:string|undefined,name:string,cat?:string):Photo|undefined{
- if(cat){const k=photoKey(cat,sub||'',name);return photoOverrides[k]||photoBase[k]}
- const end=`|${sub||''}|${name}`;for(const src of [photoOverrides,photoBase])for(const k in src)if(k.endsWith(end))return src[k];
+export function photoFor(sub:string|undefined,name:string,cat?:string,id?:string):Photo|undefined{
+ if(cat){const k=photoKey(cat,sub||'',name);return photoOverrides[k]||(id?photosById[id]:undefined)||photoBase[k]}
+ const end=`|${sub||''}|${name}`;
+ for(const k in photoOverrides)if(k.endsWith(end))return photoOverrides[k];
+ if(id&&photosById[id])return photosById[id];
+ for(const k in photoBase)if(k.endsWith(end))return photoBase[k];
  return undefined;
 }
 export const photoUrl=(p:Photo,size=320,map:'Color'|'NormalGL'|'Roughness'='Color')=>`/api/material-photo/${p.a}?map=${map}&s=${size}${size>=768?'&full=1&v=2':''}${p.t&&map==='Color'?`&t=${p.t.slice(1)}`:''}`;
 
 /** Turns a catalogue designation into a 3D appearance (procedural, indicative until real PBR assets are sourced). */
 export function lookOf(choice:FinishChoice|undefined,surface:SurfaceKey,fallback:Look):Look{
- const look=baseLook(choice,surface,fallback);const photo=choice&&surface!=='taps'?photoFor(choice.sub,choice.name):undefined;if(photo)return {...look,photo};
+ const look=baseLook(choice,surface,fallback);const photo=choice&&surface!=='taps'?photoFor(choice.sub,choice.name,undefined,choice.id):undefined;if(photo)return {...look,photo};
  if(!choice||surface==='taps')return look;
  const scans:Record<Look['finish'],string>={
   wood:'WoodFloor069',tile:'Tiles027',wallTile:'Tiles133A',concrete:'Concrete048',
@@ -52,12 +63,14 @@ function baseLook(choice:FinishChoice|undefined,surface:SurfaceKey,fallback:Look
  const n=`${choice.name} ${choice.sub||''}`.toLowerCase(),v=(choice.variant||'').toLowerCase();
  const rough=v==='mat'?.85:v==='satiné'||v==='satine'?.5:v==='premium'?.35:fallback.roughness;
  if(surface==='taps'){const c=/noir/.test(n)?'#1c1c1c':/laiton|or\b|doré|dore/.test(n)?'#b8965a':/bronze|cuivre/.test(n)?'#8a5a3a':/nickel|inox|brossé|brosse/.test(n)?'#b9bbbd':'#e9ecef';return {finish:'paint',color:c,roughness:/brossé|brosse|mat/.test(n)?.35:.1,metal:true}}
+ if(/inox|acier(?: inoxydable)? brossé|acier brosse/.test(n))return {finish:'quartz',color:'#a8adb0',roughness:.38,metal:true};
+ if(/liège|liege|moquette/.test(n))return {finish:'fabric',color:colorOf(n,'#ae9273'),roughness:.9};
  const wood=WOODS.find(([re])=>re.test(n));
  if(/marbre|marble|calacatta|carrare/.test(n))return {finish:'marble',color:/noir/.test(n)?'#2b2b2e':'#eeece8',roughness:Math.min(rough,.25)};
- if(/granit|quartz|quartzite|composite|céramique|ceramique|pierre|ardoise|terrazzo|dekton/.test(n)&&!/grès|gres|carrel|faïence|faience/.test(n))return {finish:/ardoise/.test(n)?'concrete':'quartz',color:colorOf(n,/noir|ardoise|foncé|fonce/.test(n)?'#2e2e30':/pierre|bleue/.test(n)?'#8c8f8f':'#e9e6df'),roughness:Math.min(rough,.3)};
+ if(/granit|quartz|quartzite|composite|céramique|ceramique|pierre|ardoise|terrazzo|dekton|travertin/.test(n)&&!/grès|gres|carrel|faïence|faience/.test(n))return {finish:/ardoise/.test(n)?'concrete':'quartz',color:colorOf(n,/noir|ardoise|foncé|fonce/.test(n)?'#2e2e30':/pierre|bleue/.test(n)?'#8c8f8f':'#e9e6df'),roughness:Math.min(rough,.3)};
  if(/béton|beton|microciment|résine|resine|ciment(?! décor)/.test(n))return {finish:'concrete',color:colorOf(n,'#a8a7a2'),roughness:/poli|ciré|cire|époxy|epoxy/.test(n)?.3:rough};
  if(/grès|gres|carrel|faïence|faience|mosaïque|mosaique|hexagonal|ciment décor|zellige|métro|metro|tomette/.test(n)){const base=/bois/.test(n)?(wood?.[1]||'#b8895a'):/marbre/.test(n)?'#ece9e3':/béton|beton/.test(n)?'#a8a7a2':/pierre/.test(n)?'#b3aea5':colorOf(n,'#e4e0d8');return {finish:surface==='floor'?'tile':'wallTile',color:base,roughness:/mat/.test(n+v)?.6:.22}}
- if(wood||/parquet|lvt|stratifié|stratifie|vinyle/.test(n))return {finish:'wood',color:wood?.[1]||colorOf(n,'#b8895a'),roughness:/verni|brillant/.test(n)?.3:/huil/.test(n)?.55:.45};
+ if(wood||/parquet|placage|lambris|lvt|stratifié|stratifie|vinyle/.test(n))return {finish:'wood',color:wood?.[1]||colorOf(n,'#b8895a'),roughness:/verni|brillant/.test(n)?.3:/huil/.test(n)?.55:.45};
  if(/brique|parement/.test(n))return {finish:'brick',color:colorOf(n,'#9b5a42'),roughness:.9};
  if(/moquette|textile|velours|bouclée|liège|liege|linoléum|linoleum|pvc|caoutchouc/.test(n))return {finish:'fabric',color:colorOf(n,'#9c968c'),roughness:.95};
  return {finish:surface==='floor'?'concrete':'paint',color:colorOf(n,fallback.color),roughness:rough};

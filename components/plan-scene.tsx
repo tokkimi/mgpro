@@ -3,7 +3,8 @@ import {useEffect,useRef,useState} from 'react';
 import type {Plan,PlanRoom,PlanElement} from '@/lib/plan';
 import {bounds} from '@/lib/plan';
 import {finishTextures,clearTextureCache,type Finish} from '@/lib/scene-textures';
-import {lookOf,describeFinishes,photoUrl,type Look,type FinishChoice,type Photo} from '@/lib/finishes';
+import {lookOf,describeFinishes,photoUrl,textureDetails,type Look,type FinishChoice,type Photo} from '@/lib/finishes';
+import {catalogueModel} from '@/lib/material-library';
 import FinishPanel from './finish-panel';
 
 type Edge='north'|'south'|'west'|'east';
@@ -57,6 +58,7 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
 
   function photoMaps(photo:Photo,finish:Finish,uw:number,uh:number,mat:import('three').MeshPhysicalMaterial){
    const tile=finish==='wood'?2:finish==='brick'?1.6:finish==='paint'?2.4:finish==='concrete'?2:1.2;
+   const {width,height}=textureDetails(photo);
    const size=matchMedia('(pointer:coarse)').matches?768:1024;
    const maps={Color:'map',NormalGL:'normalMap',Roughness:'roughnessMap'} as const;
    const colorUrl=photoUrl(photo,size,'Color');
@@ -82,12 +84,12 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
     void Promise.all([color.ready,ready]).then(()=>{
      if(cancelled)return;
      const texture=base.clone();
-     texture.repeat.set(uw/tile,uh/tile);
+     texture.repeat.set(uw/(width||tile),uh/(height||tile));
      texture.needsUpdate=true;
      sceneTextures.add(texture);
      mat[maps[map]]=texture;
      if(map==='Color')mat.color.set('#ffffff');
-     if(map==='Roughness')mat.roughness=1;
+     if(map==='Roughness')mat.roughness=Math.min(1,.48+mat.roughness);
      if(map==='NormalGL')mat.normalScale.setScalar(finish==='paint'?.24:.65);
      mat.needsUpdate=true;
      texturesChanged();
@@ -149,17 +151,69 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
 
   // ── fixtures ──
   let cur:{fronts?:Look;worktop?:Look;splash?:Look;taps?:any;vanity?:Look}={};
-  const topMat=(W:number,D:number)=>cur.worktop?textured(cur.worktop.finish as Finish,cur.worktop.color,W,D,{photo:cur.worktop.photo,roughness:cur.worktop.roughness,clearcoat:.5}):textured('quartz','#f1efea',W,D,{photo:{a:'Marble012'},roughness:.15,clearcoat:.6});
+  const topMat=(W:number,D:number)=>cur.worktop?textured(cur.worktop.finish as Finish,cur.worktop.color,W,D,{photo:cur.worktop.photo,roughness:cur.worktop.roughness,metalness:cur.worktop.metal?.94:0,clearcoat:cur.worktop.roughness<.4?.4:.06}):textured('quartz','#f1efea',W,D,{photo:{a:'Marble012'},roughness:.15,clearcoat:.6});
   const frontMat=(front:string,w:number,h:number)=>{const look=[cur.fronts,cur.vanity].find(f=>f&&f.photo&&f.color===front);return look?textured(look.finish as Finish,front,w,h,{photo:look.photo,roughness:.35,clearcoat:.25}):plain(front,{roughness:.35,clearcoat:.25})};
-  function cabinets(g:any,W:number,D:number,H=.88,front=cur.fronts?.color||'#e9e5dd',top=true){
+  function cabinets(g:any,W:number,D:number,H=.88,front=cur.fronts?.color||'#e9e5dd',top=true,sink=false,sinkX=0){
    add(box(W,.1,D-.06),M.black,0,.05,-.03,g);
-   add(box(W,H-.13,D-.02),plain(front,{roughness:.4,clearcoat:.2}),0,.1+(H-.13)/2,-.01,g);
+   const bodyHeight=H-(sink?.31:.13);
+   add(box(W,bodyHeight,D-.02),plain(front,{roughness:.4,clearcoat:.2}),0,.1+bodyHeight/2,-.01,g);
    const n=Math.max(1,Math.round(W/.6));for(let i=0;i<n;i++){const x=-W/2+W/n*(i+.5);add(box(W/n-.006,H-.15,.006),frontMat(front,W/n,H-.15),x,.1+(H-.13)/2,D/2-.008,g);handle(g,x,H-.12,D/2+.01)}
-   if(top)add(rbox(W+.02,.03,D+.03,.006),topMat(W,D),0,H+.015,.005,g);
+   if(top&&!sink)add(rbox(W+.02,.03,D+.03,.006),topMat(W,D),0,H+.015,.005,g);
+   if(top&&sink)sinkWorktop(g,W,D,H,sinkX);
   }
-  function upper(g:any,W:number,D:number,front=cur.fronts?.color||'#e9e5dd'){add(box(W,.72,.34),plain(front,{roughness:.35,clearcoat:.25}),0,1.86,-D/2+.17,g);const n=Math.max(1,Math.round(W/.6));for(let i=0;i<n;i++)handle(g,-W/2+W/n*(i+.5),1.55,-D/2+.35,.12,true);add(box(W,.55,.01),cur.splash?textured(cur.splash.finish as Finish,cur.splash.color,W,.55,{photo:cur.splash.photo,roughness:cur.splash.roughness}):textured('wallTile','#f4f2ee',W,.55,{photo:{a:'Tiles133A'}}),0,1.18,-D/2+.005,g)}
+  function upper(g:any,W:number,D:number,front=cur.fronts?.color||'#e9e5dd'){
+   const count=Math.max(1,Math.round(W/.6)),width=W/count;
+   for(let i=0;i<count;i++){
+    const x=(i+.5)*width-W/2;
+    add(rbox(width-.005,.72,.34,.004),frontMat(front,width,.72),x,1.86,-D/2+.17,g);
+    handle(g,x+width*.38,1.55,-D/2+.35,.12,true);
+   }
+   const splash=cur.splash;
+   const material=splash?textured(splash.finish as Finish,splash.color,W,.55,{photo:splash.photo,roughness:splash.roughness,metalness:splash.metal?.94:0}):textured('wallTile','#f4f2ee',W,.55,{photo:{a:'Tiles133A'}});
+   add(box(W,.55,.01),material,0,1.18,-D/2+.005,g);
+  }
   function faucet(g:any,x:number,y:number,z:number,tall=.32){add(cyl(.018,.022,tall,16),(cur.taps||M.chrome),x,y+tall/2,z,g);const arc=add(new T.TorusGeometry(.09,.013,10,24,Math.PI),(cur.taps||M.chrome),x,y+tall,z+.09,g);arc.rotation.y=Math.PI/2;arc.rotation.x=0}
-  function sinkBasin(g:any,x:number,y:number,z:number,W=.6,D=.42){add(box(W,.012,D),M.steel,x,y,z,g);add(box(W-.04,.006,D-.04),plain('#9fa5a9',{metalness:.9,roughness:.25}),x,y-.002,z,g)}
+  function sinkWorktop(g:import('three').Group,W:number,D:number,H:number,sinkX:number){
+   const bowlWidth=Math.min(.64,W*.76),bowlDepth=Math.min(.43,D*.72),z=D*.025;
+   const x=Math.min(W/2-bowlWidth*.57,Math.max(-W/2+bowlWidth*.57,sinkX));
+   const top=new T.Shape();
+   top.moveTo(-W/2-.01,-D/2-.015);top.lineTo(W/2+.01,-D/2-.015);
+   top.lineTo(W/2+.01,D/2+.015);top.lineTo(-W/2-.01,D/2+.015);top.closePath();
+
+   // Rounded rectangular profile shared by the countertop cutout and the pressed steel bowl.
+   function profile(width:number,depth:number,angle:number){
+    const x=Math.cos(angle),y=Math.sin(angle);
+    return new T.Vector2(Math.sign(x)*Math.sqrt(Math.abs(x))*width/2,Math.sign(y)*Math.sqrt(Math.abs(y))*depth/2);
+   }
+   const steps=64,hole=new T.Path();
+   for(let i=0;i<steps;i++){
+    const point=profile(bowlWidth,bowlDepth,-i*2*Math.PI/steps);
+    if(i===0)hole.moveTo(point.x+x,point.y-z);else hole.lineTo(point.x+x,point.y-z);
+   }
+   hole.closePath();top.holes.push(hole);
+   const stone=new T.ExtrudeGeometry(top,{depth:.03,bevelEnabled:false});
+   const {position,uv}=stone.attributes;
+   for(let i=0;i<position.count;i++)uv.setXY(i,position.getX(i)/W+.5,position.getY(i)/D+.5);
+   const slab=add(stone,topMat(W,D),0,H,0,g);
+   slab.rotation.x=-Math.PI/2;
+
+   const levels=[[1.045,.002],[1,.002],[.96,-.016],[.89,-.125],[.79,-.15],[.08,-.152],[0,-.152]];
+   const vertices:number[]=[],indices:number[]=[];
+   for(const [scale,y] of levels)for(let i=0;i<steps;i++){
+    const point=profile(bowlWidth*scale,bowlDepth*scale,i*2*Math.PI/steps);
+    vertices.push(point.x,y,point.y);
+   }
+   for(let ring=0;ring<levels.length-1;ring++)for(let i=0;i<steps;i++){
+    const a=ring*steps+i,b=ring*steps+(i+1)%steps,c=b+steps,d=a+steps;
+    indices.push(a,b,c,a,c,d);
+   }
+   const geometry=new T.BufferGeometry();
+   geometry.setAttribute('position',new T.Float32BufferAttribute(vertices,3));
+   geometry.setIndex(indices);geometry.computeVertexNormals();
+   add(geometry,plain('#c5c9cc',{metalness:.93,roughness:.28,side:T.DoubleSide}),x,H+.03,z,g);
+   add(cyl(.022,.022,.004,24),M.blackMetal,x,H-.12,z,g);
+   faucet(g,x,H+.03,-D/2+.07,.23);
+  }
   // Versioned, CC0 equipment models. Scale their bounds to the plan footprint in metres.
   const modelLoader=new GLTFLoader();
   const modelCache=new Map<string,Promise<import('three').Group>>();
@@ -263,26 +317,56 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
    }
   }
 
+  const sinkLabel=(label:string)=>/évier|evier/i.test(label);
+  const pairedSink=(counter:PlanElement)=>elements.find(item=>item.kind==='fixture'&&sinkLabel(item.label)&&
+   item.x+item.length/2>=counter.x&&item.x+item.length/2<=counter.x+counter.length&&
+   item.y+item.width/2>=counter.y&&item.y+item.width/2<=counter.y+counter.width);
   function fixture(e:PlanElement,r:PlanRoom){
    const label=(e.label||'').toLowerCase();const edge=nearestEdge(e,r);const {g,W,D}=anchored(e,edge);
-   if(e.kind==='counter'){cabinets(g,W,D);const clash=elements.some(o=>o.kind==='window'&&inRoom(o,r)&&nearestEdge(o,r)===edge&&(edge==='north'||edge==='south'?o.x<e.x+e.length&&o.x+o.length>e.x:o.y<e.y+e.width&&o.y+o.width>e.y));if(!/îlot|ilot/.test(label)&&!clash)upper(g,W,D);if(/évier|evier/.test(label)){sinkBasin(g,0,.915,.02);faucet(g,0,.91,-D/2+.08)}return}
+   const picked=e.modelId?catalogueModel(e.modelId):undefined;
+   if(e.kind==='fixture'&&picked){
+    if(picked.slug==='kitchen-base-unit-sink'){if(!elements.some(counter=>counter.kind==='counter'&&pairedSink(counter)?.id===e.id))cabinets(g,W,D,.88,undefined,true,true);return}
+    const elevation=({
+     'bathroom-vanity':.43,'white-kitchen-wall-cabinet':1.5,'range-hood':1.5,'round-brass-mirror':1.2,
+     'white-roller-blind':1.1,'brass-wall-sconce':1.7,'white-panel-radiator':.12,'dome-pendant-lamp':Math.max(1.85,r.height-.55),
+    } as Record<string,number>)[picked.slug]||0;
+    return model(picked.slug,g,0,elevation,0,{width:W,depth:D,height:e.height||undefined},picked.slug==='shower-enclosure'?1:0);
+   }
+   if(e.kind==='counter'){
+    const sink=pairedSink(e);
+    g.updateMatrixWorld(true);
+    const offset=sink?g.worldToLocal(new T.Vector3(sink.x+sink.length/2,0,sink.y+sink.width/2)).x:0;
+    cabinets(g,W,D,.88,undefined,true,!!sink||sinkLabel(label),offset);const clash=elements.some(o=>o.kind==='window'&&inRoom(o,r)&&nearestEdge(o,r)===edge&&(edge==='north'||edge==='south'?o.x<e.x+e.length&&o.x+o.length>e.x:o.y<e.y+e.width&&o.y+o.width>e.y));if(!/îlot|ilot/.test(label)&&!clash)upper(g,W,D);return}
    if(e.kind==='island'){cabinets(g,W,Math.max(.6,D-.25),.88,undefined,false);add(rbox(W+.04,.03,D+.04,.006),topMat(W,D),0,.895,.1,g);const n=Math.max(1,Math.floor(W/.62));for(let i=0;i<n;i++)stool(-W/2+W/n*(i+.5),D/2+.35,g);return}
    if(e.kind==='stairs')return model('oak-interior-staircase',g,0,0,0,{width:W,depth:D,height:e.height||undefined});
-   if(e.kind==='wall'){g.rotation.y=0;g.position.set(e.x+e.length/2,0,e.y+e.width/2);add(box(e.length,Math.max(2.1,e.height),e.width),textured('paint',r.wall,Math.max(e.length,e.width),e.height),0,Math.max(2.1,e.height)/2,0,g);return}
+   if(e.kind==='wall'){g.rotation.y=0;g.position.set(e.x+e.length/2,0,e.y+e.width/2);add(box(e.length,Math.max(2.1,e.height),e.width),textured('paint',r.wall,Math.max(e.length,e.width),e.height,{photo:{a:'PaintedPlaster017',t:r.wall}}),0,Math.max(2.1,e.height)/2,0,g);return}
    if(/toilette|wc|cuvette/.test(label))return toilet(g,D);
    if(/douche/.test(label))return shower(g,W,D);
    if(/baignoire|bain\b/.test(label))return bathtub(g,W,D);
-   if(/lavabo|vanit|meuble.*(sdb|salle de bain)/.test(label))return vanity(g,W,D);
-   if(/évier|evier/.test(label)){cabinets(g,W,D);sinkBasin(g,0,.915,.02,Math.min(W-.1,.75));faucet(g,0,.91,-D/2+.08);return}
+   if(/lavabo.*colonne/.test(label))return model('pedestal-washbasin',g,0,0,0,{width:W,depth:D});
+   if(/lavabo|vanit|meuble.*(sdb|salle de bain)|meuble.vasque/.test(label))return vanity(g,W,D);
+   if(sinkLabel(label)){if(!elements.some(counter=>counter.kind==='counter'&&pairedSink(counter)?.id===e.id))cabinets(g,W,D,.88,undefined,true,true);return}
    if(/cuisini|four|plaque|range/.test(label))return stove(g,W,D);
    if(/frigo|réfrig|refrig/.test(label))return fridge(g,W,D);
    if(/laveuse|lave-linge|machine à laver/.test(label))return washer(g,W,D);
-   if(/canap|sofa/.test(label))return model('sofa',g,0,0,0,{width:W,depth:D});
+   if(/canap|sofa/.test(label))return model(/angle/.test(label)?'corner-sofa':'sofa',g,0,0,0,{width:W,depth:D});
    if(/lit\b/.test(label))return model('double-bed',g,0,0,0,{width:W,depth:D});
+   if(/table.*chevet/.test(label))return model('nightstand',g,0,0,0,{width:W,depth:D});
+   if(/table.*basse/.test(label))return model('coffee-table',g,0,0,0,{width:W,depth:D});
    if(/table/.test(label))return model('dining-table',g,0,0,0,{width:W,depth:D});
    if(/chaise/.test(label))return model('dining-chair',g,0,0,0,{width:W,depth:D});
    if(/fauteuil/.test(label))return model('armchair',g,0,0,0,{width:W,depth:D});
-   if(/armoire|penderie/.test(label))return model('wardrobe',g,0,0,0,{width:W,depth:D});
+   if(/tabouret/.test(label))return model('bar-stool',g,0,0,0,{width:W,depth:D});
+   if(/penderie/.test(label))return model('wardrobe',g,0,0,0,{width:W,depth:D});
+   if(/commode/.test(label))return model('chest-of-drawers',g,0,0,0,{width:W,depth:D});
+   if(/armoire.*haute/.test(label))return model('white-kitchen-wall-cabinet',g,0,1.5,0,{width:W,depth:D});
+   if(/armoire/.test(label))return model('wardrobe',g,0,0,0,{width:W,depth:D});
+   if(/hotte/.test(label))return model('range-hood',g,0,1.5,0,{width:W,depth:D});
+   if(/radiateur/.test(label))return model('white-panel-radiator',g,0,.12,0,{width:W,depth:D});
+   if(/lampadaire/.test(label))return model('floor-lamp',g,0,0,0);
+   if(/miroir/.test(label))return model('round-brass-mirror',g,0,1.2,0,{width:W});
+   if(/suspension/.test(label))return model('dome-pendant-lamp',g,0,Math.max(1.85,r.height-.55),0,{width:W,depth:D});
+   if(/applique/.test(label))return model('brass-wall-sconce',g,0,1.7,0);
    unavailable.add(e.label||'équipement');
   }
 
@@ -360,7 +444,7 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
    const has=(re:RegExp,kinds:string[]=[])=>own.some(e=>kinds.includes(e.kind)||re.test((e.label||'').toLowerCase()));
    if(r.furniture==='living'&&!has(/canap|sofa/)){sofa(r);plant(x+.45,z+.45,1.3);const wa=anchored({x:x+l/2-.5,y:z+d-.06,length:1,width:.05},'south');art(wa.g,0,1.55,0,1.1,.75)}
    if(r.furniture==='bedroom'&&!has(/lit\b/)){bed(r);plant(x+l-.4,z+d-.4,1);const wa=anchored({x:x+l/2-.45,y:z+t,length:.9,width:.05},'north');art(wa.g,0,1.55,0,.9,.6)}
-   if(r.furniture==='kitchen'&&!has(/./,['counter','island'])){const run={x:x+.15,y:z+t,length:Math.max(1.2,l-.3),width:.64};const {g,W,D}=anchored(run,'north');cabinets(g,W,D);upper(g,W,D);sinkBasin(g,0,.915,.02);faucet(g,0,.91,-D/2+.08);const f=anchored({x:x+l-.15-.8,y:z+t,length:.8,width:.7},'north');fridge(f.g,.8,.7);if(l>3.4&&d>3.2){const isl=anchored({x:x+l/2-.9,y:z+d/2-.2,length:1.8,width:.95},'north');cabinets(isl.g,1.8,.7,.88,undefined,false);add(rbox(1.84,.03,.99,.006),topMat(1.8,.95),0,.895,.12,isl.g);for(const s of [-.5,0,.5])stool(s,.85,isl.g)}}
+   if(r.furniture==='kitchen'&&!has(/./,['counter','island'])){const run={x:x+.15,y:z+t,length:Math.max(1.2,l-.3),width:.64};const {g,W,D}=anchored(run,'north');cabinets(g,W,D,.88,undefined,true,true);upper(g,W,D);const f=anchored({x:x+l-.15-.8,y:z+t,length:.8,width:.7},'north');fridge(f.g,.8,.7);if(l>3.4&&d>3.2){const isl=anchored({x:x+l/2-.9,y:z+d/2-.2,length:1.8,width:.95},'north');cabinets(isl.g,1.8,.7,.88,undefined,false);add(rbox(1.84,.03,.99,.006),topMat(1.8,.95),0,.895,.12,isl.g);for(const s of [-.5,0,.5])stool(s,.85,isl.g)}}
    if(r.furniture==='bath'&&!has(/toilette|wc|douche|baignoire|lavabo|vanit/)){toilet(anchored({x:x+.2,y:z+t,length:.42,width:.72},'north').g,.72);const v=anchored({x:x+.75,y:z+t,length:Math.min(.9,l-1.2),width:.5},'north');vanity(v.g,v.W,v.D);if(d>1.6){const s=anchored({x:x+l-1.0-.02,y:z+d-1.0-.02,length:1.0,width:1.0},'south');shower(s.g,1,1)}}
    // Ceiling light per room (warm, soft).
    if(lights<10&&!top){const p=new T.PointLight('#ffd9a8',Math.min(16,l*d*.9),0,2);p.position.set(x+l/2,H-.15,z+d/2);scene.add(p);lights++}
@@ -395,7 +479,7 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
   void Promise.all(modelJobs).then(()=>{
    if(cancelled)return;
    modelsReady=true;
-   setAssetStatus(unavailable.size?`${unavailable.size} équipement(s) sans modèle 3D disponible.`:'');
+   setAssetStatus(unavailable.size?`Modèle 3D indisponible : ${[...unavailable].join(', ')}.`:'');
    if(walking&&realRef.current)void ptStart();
   });
   let ptReady=false;const lastCam=new T.Matrix4();let lastFov=0;

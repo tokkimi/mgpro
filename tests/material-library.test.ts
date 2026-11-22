@@ -54,3 +54,20 @@ test('surface references get a real scanned photo, objects do not',async()=>{
  assert.equal(photoOfRow(parquet)!.a,'WoodFloor001');
  setPhotoOverrides({});
 });
+
+
+test('new catalogue finishes use the same material in the sample and the plan',async()=>{
+ const {loadMaterials,photoOfRow,modelOfRow}=await import('../lib/material-library');
+ const {lookOf,textureDetails}=await import('../lib/finishes');
+ const all=await loadMaterials();
+ assert.equal(all.length,rows.length+148);
+ assert.equal(new Set(all.map(row=>row[0])).size,all.length);
+ const finish=all.find(row=>row[0]==='MGP-03000')!;
+ const photo=photoOfRow(finish)!;
+ const choice={id:finish[0],sub:finish[2],name:finish[3]};
+ const appearance=lookOf(choice,'floor',{finish:'paint',color:'#ffffff',roughness:1});
+ assert.equal(appearance.photo?.a,photo.a);
+ assert.equal(textureDetails(photo).method,'scan');
+ assert.equal(textureDetails({a:'Marble012'}).method,'pbr');
+ assert.equal(modelOfRow(all.find(row=>row[0]==='MGP-03200')!),'toilet');
+});

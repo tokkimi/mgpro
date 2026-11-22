@@ -1,7 +1,9 @@
 'use client';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {AppWindow,Armchair,Bath,Blinds,Box,Car,ChevronDown,ChevronRight,DoorOpen,Download,Fence,House,Lightbulb,Loader2,Plug,Refrigerator,Search,ShowerHead,Sparkles,Sun,Toilet,TreePine,Upload,Waves,Droplets,Footprints,X} from 'lucide-react';
-import {groupsOf,photoOfRow,photoUrl,photoKey,iconOf,isPriced,isSurface,label,loadMaterials,matches,pricesFromCsv,pricesToCsv,swatchStyle,unitPrice,type Group,type IconKey,type MaterialPrice,type MaterialPrices,type MaterialRow,type Photo} from '@/lib/material-library';
+import {groupsOf,modelOfRow,modelPreview,photoOfRow,photoUrl,photoKey,iconOf,isPriced,isSurface,label,loadMaterials,matches,pricesFromCsv,pricesToCsv,swatchStyle,unitPrice,type Group,type IconKey,type MaterialPrice,type MaterialPrices,type MaterialRow,type Photo} from '@/lib/material-library';
+import {textureDetails} from '@/lib/finishes';
+import {suppliersFor} from '@/lib/catalogue-suppliers';
 import {money} from '@/lib/model';
 import './materials-library.css';
 
@@ -10,10 +12,11 @@ const UNIVERSES=[{key:'interieur',title:'Intérieur'},{key:'exterieur',title:'Ex
 const fmt=(n:number)=>n.toLocaleString('fr-CA');
 
 function Tile({row,price,onOpen}:{row:MaterialRow;price?:MaterialPrice;onOpen:()=>void}){
- const surface=isSurface(row);const Icon=ICONS[iconOf(row)];const photo=photoOfRow(row);
+ const surface=isSurface(row);const Icon=ICONS[iconOf(row)];const photo=photoOfRow(row);const model=modelOfRow(row);
  return <button type="button" className={`mat-tile${isPriced(price)?' priced':''}`} onClick={onOpen} title={`${row[0]} — ${label(row)}`}>
-  <span className={`mat-swatch${surface?'':' object'}`} style={surface?swatchStyle(row):undefined}>{!surface&&<Icon size={30} strokeWidth={1.4}/>}{photo&&<img src={photoUrl(photo,256)} alt="" loading="lazy" decoding="async" onError={e=>{e.currentTarget.style.display='none'}}/>}</span>
+  <span className={`mat-swatch${surface?'':' object'}`} style={surface?swatchStyle(row):undefined}>{!surface&&<Icon size={30} strokeWidth={1.4}/>}{(photo||model)&&<img src={photo?photoUrl(photo,256):modelPreview(model!)} alt="" loading="lazy" decoding="async" onError={e=>{e.currentTarget.style.display='none'}}/>}</span>
   <span className="mat-name">{row[3]}</span>
+  {photo&&<span className="mat-variant">{textureDetails(photo).label}</span>}
   {row[4]&&<span className="mat-variant">{row[4]}</span>}
   <span className={`mat-price${isPriced(price)?'':' todo'}`}>{isPriced(price)?`${money(unitPrice(price))} / ${row[6]}`:'À sourcer'}</span>
  </button>;
@@ -24,20 +27,21 @@ export default function MaterialsLibrary({value,onSave,photos={},onSavePhotos,re
  const [rows,setRows]=useState<MaterialRow[]>([]);
  const [group,setGroup]=useState<string>('');const [sub,setSub]=useState<string>('');
  const [query,setQuery]=useState('');const [onlyPriced,setOnlyPriced]=useState<'all'|'priced'|'todo'>('all');
+ const [onlyScans,setOnlyScans]=useState(false);
  const [open,setOpen]=useState<MaterialRow|null>(null);const [status,setStatus]=useState('');
  const top=useRef<HTMLDivElement>(null);const main=useRef<HTMLDivElement>(null);const file=useRef<HTMLInputElement>(null);
  useEffect(()=>{void loadMaterials().then(setRows)},[]);
  const groups=useMemo(()=>groupsOf(rows),[rows]);
  const pricedCount=useMemo(()=>rows.filter(r=>isPriced(value[r[0]])).length,[rows,value]);
- const keep=(r:MaterialRow)=>onlyPriced==='all'||(onlyPriced==='priced')===isPriced(value[r[0]]);
- const visible=useMemo(()=>rows.filter(r=>(!group||r[1]===group)&&(!sub||r[2]===sub)&&matches(r,query)&&keep(r)),[rows,group,sub,query,onlyPriced,value]);
+ const keep=(r:MaterialRow)=>{const photo=photoOfRow(r);return (!onlyScans||!!photo&&['scan','photo'].includes(textureDetails(photo).method||''))&&(onlyPriced==='all'||(onlyPriced==='priced')===isPriced(value[r[0]]))};
+ const visible=useMemo(()=>rows.filter(r=>(!group||r[1]===group)&&(!sub||r[2]===sub)&&matches(r,query)&&keep(r)),[rows,group,sub,query,onlyPriced,onlyScans,value]);
  function choose(g:string,s=''){setGroup(g);setSub(s);setQuery('');requestAnimationFrame(()=>((g&&window.innerWidth<900?main:top).current)?.scrollIntoView({block:'start',behavior:'smooth'}))}
  async function persist(next:MaterialPrices,msg:string){setStatus('Enregistrement…');try{await onSave(next);setStatus(msg)}catch(e){setStatus((e as Error).message||'Enregistrement impossible.')}}
  function exportCsv(){const list=group?rows.filter(r=>r[1]===group):rows;const blob=new Blob([pricesToCsv(list,value)],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`mgpro-prix-materiaux${group?'-'+group.toLowerCase().replace(/[^a-z0-9]+/gi,'-'):''}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
  async function importCsv(f:File){try{const {prices,updated}=pricesFromCsv(await f.text(),value);await persist(prices,`${fmt(updated)} référence(s) mises à jour depuis le fichier.`)}catch(e){setStatus((e as Error).message)}}
  const current=groups.find(g=>g.name===group);
  const sections=useMemo(()=>{const m=new Map<string,MaterialRow[]>();for(const r of visible){const k=group?r[2]:`${r[1]} — ${r[2]}`;(m.get(k)||m.set(k,[]).get(k)!).push(r)}return [...m.entries()]},[visible,group]);
- const searching=!!query||onlyPriced!=='all';
+ const searching=!!query||onlyPriced!=='all'||onlyScans;
 
  return <div className="mat-lib" ref={top}>
   <header className="mat-head">
@@ -47,6 +51,7 @@ export default function MaterialsLibrary({value,onSave,photos={},onSavePhotos,re
   <div className="mat-toolbar">
    <label className="mat-search"><Search size={16}/><input placeholder="Rechercher : chêne, liner, zinc, MGP-00120…" value={query} onChange={e=>setQuery(e.target.value)}/>{query&&<button type="button" aria-label="Effacer" onClick={()=>setQuery('')}><X size={14}/></button>}</label>
    <div className="mat-filter" role="group" aria-label="Filtre prix">{([['all','Tout'],['priced','Avec prix'],['todo','À sourcer']] as const).map(([k,t])=><button type="button" key={k} aria-pressed={onlyPriced===k} onClick={()=>setOnlyPriced(k)}>{t}</button>)}</div>
+   <button type="button" className="mat-ghost" aria-pressed={onlyScans} onClick={()=>setOnlyScans(v=>!v)}>Textures issues de photos</button>
    <button type="button" className="mat-ghost" onClick={exportCsv} disabled={!rows.length}><Download size={15}/>Exporter les prix (Excel)</button>
    {!readOnly&&<><button type="button" className="mat-ghost" onClick={()=>file.current?.click()}><Upload size={15}/>Importer des prix</button><input ref={file} type="file" accept=".csv,text/csv" hidden onChange={e=>{const f=e.target.files?.[0];e.target.value='';if(f)void importCsv(f)}}/></>}
   </div>
@@ -94,7 +99,7 @@ function PriceDrawer({row,rows,prices,readOnly,onClose,onSave,onPhoto}:{row:Mate
  const n=(s:string)=>{const v=Number(s.replace(',','.').replace(/\s/g,''));return Number.isFinite(v)&&v>0?Math.round(v*100)/100:undefined};
  const buy=n(f.buy),sell=n(f.sell),labour=n(f.labour);const margin=buy&&sell?Math.round((sell-buy)/sell*1000)/10:null;
  const variants=rows.filter(r=>r[1]===row[1]&&r[2]===row[2]&&r[3]===row[3]);const subRows=rows.filter(r=>r[1]===row[1]&&r[2]===row[2]);
- const surface=isSurface(row);const Icon=ICONS[iconOf(row)];const photo=photoOfRow(row);
+ const surface=isSurface(row);const Icon=ICONS[iconOf(row)];const photo=photoOfRow(row);const model=modelOfRow(row);
  useEffect(()=>{const k=(e:KeyboardEvent)=>{if(e.key==='Escape')onClose()};window.addEventListener('keydown',k);return()=>window.removeEventListener('keydown',k)},[onClose]);
  async function submit(clear=false){setBusy(true);const now=new Date().toISOString();const target=scope==='one'?[row]:scope==='variants'?variants:subRows;const next={...prices};
   for(const r of target){if(clear){delete next[r[0]];continue}const v:MaterialPrice={buy,sell,labour,waste:n(f.waste),supplier:f.supplier.trim()||undefined,ref:scope==='one'?f.ref.trim()||undefined:prices[r[0]]?.ref,updated:now};for(const k of Object.keys(v) as (keyof MaterialPrice)[])if(v[k]===undefined)delete v[k];if(Object.keys(v).some(k=>k!=='updated'))next[r[0]]=v;else delete next[r[0]]}
@@ -102,8 +107,10 @@ function PriceDrawer({row,rows,prices,readOnly,onClose,onSave,onPhoto}:{row:Mate
  return <div className="mat-drawer-wrap" role="dialog" aria-modal="true" aria-label={label(row)} onClick={e=>{if(e.target===e.currentTarget)onClose()}}>
   <aside className="mat-drawer">
    <button type="button" className="mat-close" aria-label="Fermer" onClick={onClose}><X size={18}/></button>
-   <span className={`mat-swatch big${surface?'':' object'}`} style={surface?swatchStyle(row):undefined}>{!surface&&<Icon size={54} strokeWidth={1.2}/>}{photo&&<img src={photoUrl(photo,720)} alt={label(row)} onError={e=>{e.currentTarget.style.display='none'}}/>}</span>
-   {photo&&<p className="mat-note">Photo réelle : texture scannée <b>{photo.a}</b> (ambientCG, licence CC0), utilisée aussi dans le plan 3D{photo.t?` — teinte ${photo.t}`:''}. Illustration du type de matériau, pas d’un produit fabricant précis.</p>}
+   <span className={`mat-swatch big${surface?'':' object'}`} style={surface?swatchStyle(row):undefined}>{!surface&&<Icon size={54} strokeWidth={1.2}/>}{(photo||model)&&<img src={photo?photoUrl(photo,720):modelPreview(model!)} alt={label(row)} onError={e=>{e.currentTarget.style.display='none'}}/>}</span>
+   {photo&&<p className="mat-note">{textureDetails(photo).label}{photo.t?' · teinte ajustée':''}. Aperçu de la matière. <a href={`https://ambientcg.com/view?id=${photo.a}`} target="_blank" rel="noreferrer">Source ambientCG</a></p>}
+   {model&&<p className="mat-note">Modèle 3D d’illustration. <a href={`https://tevy.dev/models/${model}`} target="_blank" rel="noreferrer">Voir l’objet</a></p>}
+   <p className="mat-note">Catalogues fournisseurs {suppliersFor(row[1],row[2]).map(supplier=><a key={supplier.name} href={supplier.url} target="_blank" rel="noreferrer" style={{marginInlineStart:8}}>{supplier.name}</a>)}</p>
    {surface&&onPhoto&&<PhotoPicker current={photo} onPick={onPhoto}/>}
    <p className="mat-eyebrow">{row[1]} · {row[2]}</p>
    <h3>{row[3]}{row[4]&&<em> · {row[4]}</em>}</h3>
@@ -134,6 +141,7 @@ function PriceDrawer({row,rows,prices,readOnly,onClose,onSave,onPhoto}:{row:Mate
 
 const QUICK=['wood floor','parquet','tiles','marble','plaster','concrete','terrazzo','travertine','granite','bricks','stone wall','paving','planks','roofing','metal','fabric','carpet','gravel','grass'];
 function PhotoPicker({current,onPick}:{current?:Photo;onPick:(p:Photo|null)=>Promise<void>}){
+ const [onlyScans,setOnlyScans]=useState(false);
  const [open,setOpen]=useState(false);const [q,setQ]=useState('');const [items,setItems]=useState<{id:string;name:string;category:string}[]>([]);const [busy,setBusy]=useState(false);const [err,setErr]=useState('');
  const [tint,setTint]=useState(current?.t||'');
  async function search(term:string){setQ(term);if(!term.trim())return;setBusy(true);setErr('');try{const r=await fetch(`/api/material-textures?q=${encodeURIComponent(term)}`);const j=await r.json();setItems(j.items||[]);if(j.error)setErr(j.error)}catch{setErr('Recherche indisponible.')}finally{setBusy(false)}}
