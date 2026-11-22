@@ -37,7 +37,7 @@ export async function GET(req:Request,{params}:{params:Promise<{asset:string}>})
    const grey=await sharp(stretched).linear(.16,214).toBuffer();
    img=sharp(grey).composite([{input:{create:{width:size,height:size,channels:3,background:tint}},blend:'multiply'}]);
   }
-  const out=await img.webp({quality:map==='Color'?82:75}).toBuffer();
+  const out=await img.webp(map==='Color'?{quality:88}:{lossless:true}).toBuffer();
   return new Response(new Uint8Array(out),{headers:{'Content-Type':'image/webp','Cache-Control':'public, max-age=31536000, s-maxage=31536000, immutable','X-Texture-Source':`ambientCG ${asset} (CC0)`}});
  }catch(e){
   return new Response('Texture indisponible',{status:502,headers:{'Cache-Control':'no-store'}});

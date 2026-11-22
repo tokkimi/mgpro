@@ -31,6 +31,7 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
   const {OrbitControls}=await import('three/addons/controls/OrbitControls.js');
   const {RoomEnvironment}=await import('three/addons/environments/RoomEnvironment.js');
   const {RoundedBoxGeometry}=await import('three/addons/geometries/RoundedBoxGeometry.js');
+  const {RectAreaLightUniformsLib}=await import('three/addons/lights/RectAreaLightUniformsLib.js');
   if(cancelled||!host.current)return;const el=host.current;
   const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true,powerPreference:'high-performance'});
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=.92;
@@ -47,14 +48,64 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
   // ── materials ──
   const mats:any[]=[];const keep=<M,>(m:M)=>{mats.push(m);return m};
   let ptMaterialsTimer:any=0;let pt:any=null;const texturesChanged=()=>{if(!pt)return;clearTimeout(ptMaterialsTimer);ptMaterialsTimer=setTimeout(()=>{try{pt?.updateMaterials()}catch{}},250)};
-  const loader=new T.TextureLoader();const photoTex=new Map<string,any>();
-  // Real scanned texture (ambientCG, CC0) for a catalogue finish; it replaces the procedural one once loaded.
-  const photoMaps=(photo:Photo,finish:Finish,uw:number,uh:number,mat:any)=>{const tile=finish==='wood'?2:finish==='brick'?1.6:finish==='paint'?2.4:finish==='concrete'?2:1.2;
-   const get=(map:'Color'|'NormalGL'|'Roughness')=>{const url=photoUrl(photo,1024,map);let base=photoTex.get(url);if(!base){base=loader.load(url,()=>{for(const u of base.userData.users||[])u();base.userData.users=[];});base.wrapS=base.wrapT=T.RepeatWrapping;base.anisotropy=8;if(map==='Color')base.colorSpace=T.SRGBColorSpace;base.userData.users=[];photoTex.set(url,base)}const t=base.clone();t.repeat.set(uw/tile,uh/tile);return {t,base}};
-   const c=get('Color'),n=get('NormalGL'),r=get('Roughness');
-   const apply=()=>{if(!c.base.image)return;c.t.needsUpdate=true;mat.map=c.t;mat.color=new T.Color('#ffffff');if(n.base.image){n.t.needsUpdate=true;mat.normalMap=n.t}if(r.base.image){r.t.needsUpdate=true;mat.roughnessMap=r.t;mat.roughness=1}mat.needsUpdate=true;texturesChanged()};
-   for(const x of [c,n,r]){if(x.base.image)apply();else x.base.userData.users.push(apply)}};
-  const textured=(finish:Finish,color:string,uw:number,uh:number,opts:any={})=>{const made=finishTextures(T,finish,color,opts.seed??7);const map=made.map.clone(),normalMap=made.normalMap.clone();for(const t of [map,normalMap]){t.repeat.set(uw/made.size[0],uh/made.size[1]);t.needsUpdate=true}const {seed,photo,...rest}=opts;if(photo){const m=keep(new T.MeshPhysicalMaterial({map,normalMap,normalScale:new T.Vector2(.6,.6),roughness:.6,...rest}));photoMaps(photo,finish,uw,uh,m);return m}return keep(new T.MeshPhysicalMaterial({map,normalMap,normalScale:new T.Vector2(.6,.6),roughness:.6,...rest}))};
+  const loader=new T.TextureLoader();
+  const photoTex=new Map<string,{base:import('three').Texture; ready:Promise<void>}>();
+  const sceneTextures=new Set<import('three').Texture>();
+  const anisotropy=Math.min(16,renderer.capabilities.getMaxAnisotropy());
+
+  function photoMaps(photo:Photo,finish:Finish,uw:number,uh:number,mat:import('three').MeshPhysicalMaterial){
+   const tile=finish==='wood'?2:finish==='brick'?1.6:finish==='paint'?2.4:finish==='concrete'?2:1.2;
+   const size=matchMedia('(pointer:coarse)').matches?768:1024;
+   const maps={Color:'map',NormalGL:'normalMap',Roughness:'roughnessMap'} as const;
+   const colorUrl=photoUrl(photo,size,'Color');
+   function loadMap(map:keyof typeof maps){
+    const url=photoUrl(photo,size,map);
+    const cached=photoTex.get(url);
+    if(cached)return cached;
+    let base:import('three').Texture;
+    const ready=new Promise<void>((resolve,reject)=>{
+     base=loader.load(url,()=>resolve(),undefined,reject);
+    });
+    const entry={base:base!,ready};
+    entry.base.wrapS=entry.base.wrapT=T.RepeatWrapping;
+    entry.base.anisotropy=anisotropy;
+    if(url===colorUrl)entry.base.colorSpace=T.SRGBColorSpace;
+    photoTex.set(url,entry);
+    sceneTextures.add(entry.base);
+    return entry;
+   }
+   const color=loadMap('Color');
+   for(const map of Object.keys(maps) as (keyof typeof maps)[]){
+    const {base,ready}=loadMap(map);
+    void Promise.all([color.ready,ready]).then(()=>{
+     if(cancelled)return;
+     const texture=base.clone();
+     texture.repeat.set(uw/tile,uh/tile);
+     texture.needsUpdate=true;
+     sceneTextures.add(texture);
+     mat[maps[map]]=texture;
+     if(map==='Color')mat.color.set('#ffffff');
+     if(map==='Roughness')mat.roughness=1;
+     if(map==='NormalGL')mat.normalScale.setScalar(finish==='paint'?.24:.65);
+     mat.needsUpdate=true;
+     texturesChanged();
+    }).catch(()=>{ /* Retain the procedural map if a scan cannot be loaded. */ });
+   }
+  }
+  const textured=(finish:Finish,color:string,uw:number,uh:number,opts:any={})=>{
+   const {seed,photo,...rest}=opts;
+   const made=finishTextures(T,finish,color,seed??7);
+   const map=made.map.clone(),normalMap=made.normalMap.clone();
+   for(const texture of [map,normalMap]){
+    texture.repeat.set(uw/made.size[0],uh/made.size[1]);
+    texture.anisotropy=anisotropy;
+    texture.needsUpdate=true;
+    sceneTextures.add(texture);
+   }
+   const material=keep(new T.MeshPhysicalMaterial({map,normalMap,normalScale:new T.Vector2(.6,.6),roughness:.6,...rest}));
+   if(photo)photoMaps(photo,finish,uw,uh,material);
+   return material;
+  };
   const plain=(color:string,opts:any={})=>keep(new T.MeshPhysicalMaterial({color,roughness:.6,...opts}));
   const M={
    ceramic:plain('#fbfbf9',{roughness:.12,clearcoat:1,clearcoatRoughness:.05}),
@@ -84,6 +135,7 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
   const shared=(r:PlanRoom,edge:Edge)=>live.some(o=>o!==r&&(edge==='north'?Math.abs(o.y+o.width-r.y)<.08&&o.x<r.x+r.length&&o.x+o.length>r.x:edge==='south'?Math.abs(o.y-(r.y+r.width))<.08&&o.x<r.x+r.length&&o.x+o.length>r.x:edge==='west'?Math.abs(o.x+o.length-r.x)<.08&&o.y<r.y+r.width&&o.y+o.width>r.y:Math.abs(o.x-(r.x+r.length))<.08&&o.y<r.y+r.width&&o.y+o.width>r.y));
   const nearestEdge=(e:PlanElement,r:PlanRoom):Edge=>{const cx=e.x+e.length/2,cy=e.y+e.width/2;const d={north:cy-r.y,south:r.y+r.width-cy,west:cx-r.x,east:r.x+r.length-cx};return (Object.keys(d) as Edge[]).sort((a,b)=>d[a]-d[b])[0]};
   const wallFades:{mesh:any;mat:any;normal:any;center:any}[]=[];const floors:any[]=[];const ceilings:any[]=[];const ceilingMat=plain('#fbfaf7',{roughness:.9});
+  RectAreaLightUniformsLib.init();
   let lights=0;
 
   /** Group in a local frame: x along the wall, +z towards the room, y up; placed on the element footprint. */
@@ -183,12 +235,37 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
     if(edge==='north'){wall.position.set(x,0,z+t/2)}else if(edge==='south'){wall.position.set(x+l,0,z+d-t/2);wall.rotation.y=Math.PI}else if(edge==='west'){wall.position.set(x+t/2,0,z+d);wall.rotation.y=Math.PI/2}else{wall.position.set(x+l-t/2,0,z);wall.rotation.y=-Math.PI/2}
     const paint=textured(wallLook.finish as Finish,wallLook.color,len,H,{photo:wallLook.photo,roughness:wallLook.roughness,seed:3});paint.transparent=true;
     const tileMat=bath?textured(bathLook.finish as Finish,bathLook.color,len,1.2,{photo:bathLook.photo,roughness:bathLook.roughness,clearcoat:.5}):null;if(tileMat)tileMat.transparent=true;
-    const piece=(a:number,b:number,y0:number,y1:number)=>{if(b-a<.01||y1-y0<.01)return;if(tileMat&&y0<1.2){const top=Math.min(1.2,y1);add(box(b-a,top-y0,t),tileMat,(a+b)/2,(y0+top)/2,0,wall);if(y1>1.2)add(box(b-a,y1-1.2,t),paint,(a+b)/2,(1.2+y1)/2,0,wall)}else add(box(b-a,y1-y0,t),paint,(a+b)/2,(y0+y1)/2,0,wall)};
+    // Keep a common UV origin for each wall, including the strips above and below openings.
+    const wallPiece=(a:number,b:number,bottom:number,top:number,material:import('three').Material,uvHeight:number)=>{
+     const width=b-a,height=top-bottom;
+     if(width<.01||height<.01)return;
+     const geometry=box(width,height,t);
+     const {position,uv,normal}=geometry.attributes;
+     const centerX=(a+b)/2,centerY=(bottom+top)/2;
+     for(let i=0;i<uv.count;i++){
+      if(normal.getZ(i)===0)continue;
+      const u=(position.getX(i)+centerX)/len;
+      uv.setXY(i,normal.getZ(i)>0?u:1-u,(position.getY(i)+centerY)/uvHeight);
+     }
+     add(geometry,material,centerX,centerY,0,wall);
+    };
+    const piece=(a:number,b:number,y0:number,y1:number)=>{
+     if(tileMat&&y0<1.2){
+      wallPiece(a,b,y0,Math.min(1.2,y1),tileMat,1.2);
+      wallPiece(a,b,1.2,y1,paint,H);
+     }else wallPiece(a,b,y0,y1,paint,H);
+    };
     let cursor=0;
     for(const o of ops){if(o.to<=cursor)continue;piece(cursor,o.from,0,H);piece(o.from,o.to,0,o.bottom);piece(o.from,o.to,o.top,H);
      const mid=(o.from+o.to)/2,wd=o.to-o.from;
      if(o.kind==='window'){add(box(wd,.05,.06),M.white,mid,o.top+.025,0,wall);add(box(wd+.08,.03,.18),M.white,mid,o.bottom-.015,.05,wall);for(const s of [-1,1])add(box(.05,o.top-o.bottom,.06),M.white,mid+s*(wd/2-.025),(o.top+o.bottom)/2,0,wall);add(box(.04,o.top-o.bottom,.05),M.white,mid,(o.top+o.bottom)/2,0,wall);const gl=add(box(wd-.06,o.top-o.bottom-.05,.01),M.glass,mid,(o.top+o.bottom)/2,0,wall,false);gl.renderOrder=2}
-     else{for(const s of [-1,1])add(box(.06,o.top+.06,t+.03),M.white,mid+s*(wd/2+.03),(o.top+.06)/2,0,wall);add(box(wd+.18,.07,t+.03),M.white,mid,o.top+.035,0,wall);
+     if(o.kind==='window'&&!o.shared&&wd>.12&&o.top-o.bottom>.12){
+      const daylight=new T.RectAreaLight('#f4f7ff',4.5,wd-.1,o.top-o.bottom-.1);
+      daylight.position.set(mid,(o.top+o.bottom)/2,.055);
+      daylight.rotation.y=Math.PI;
+      wall.add(daylight);
+     }
+     else if(o.kind==='door'){for(const s of [-1,1])add(box(.06,o.top+.06,t+.03),M.white,mid+s*(wd/2+.03),(o.top+.06)/2,0,wall);add(box(wd+.18,.07,t+.03),M.white,mid,o.top+.035,0,wall);
       if(!o.shared){const leaf=new T.Group();leaf.position.set(o.from,0,t/2);leaf.rotation.y=-.5;wall.add(leaf);add(box(wd-.02,o.top-.02,.04),plain('#f3f1ec',{roughness:.4,clearcoat:.2}),(wd-.02)/2,(o.top-.02)/2,0,leaf);handle(leaf,wd-.1,1.0,.04,.12)}}
      cursor=o.to}
     piece(cursor,len,0,H);
@@ -224,15 +301,14 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
    camera.position.set(best[0],eye,best[1]);yaw=Math.atan2(r.x+r.length/2-best[0],r.y+r.width/2-best[1]);pitch=-.12;goal=null;look()};
   // Photoreal mode: progressive path tracing (real light bounces, soft shadows, reflections) whenever the view is still.
   let grad:any=null;let denoise:any=null;let ptBg:any=null;const rasterEnv=scene.environment;
-  const ptStart=async()=>{if(pt||!realRef.current)return;try{const {WebGLPathTracer,GradientEquirectTexture,DenoiseMaterial}=await import('three-gpu-pathtracer');const {FullScreenQuad}=await import('three/addons/postprocessing/Pass.js');if(cancelled)return;
-    pt=new WebGLPathTracer(renderer);pt.tiles.set(1,1);pt.bounces=4;pt.filterGlossyFactor=1;pt.minSamples=3;pt.renderDelay=180;pt.fadeDuration=350;pt.dynamicLowRes=false;pt.renderScale=matchMedia('(pointer:coarse)').matches?.5:Math.min(1,1.25/Math.max(1,devicePixelRatio));
-    grad=new GradientEquirectTexture();grad.topColor.set('#fbf6ee');grad.bottomColor.set('#8c8577');grad.update();scene.environment=grad;(scene as any).environmentIntensity=1.25;
-    // Daylight from above (soft studio light) converges fast and looks like a real photo; small lamps would only add noise.
-    renderer.toneMappingExposure=.8;ceilings.forEach(c=>c.visible=false);ptBg=scene.background;scene.background=new T.Color('#f3efe8');scene.traverse((o:any)=>{if(o.isPointLight){o.userData.base??=o.intensity;o.intensity=0}});
+  const ptStart=async()=>{if(pt||!realRef.current)return;try{const {WebGLPathTracer,GradientEquirectTexture,DenoiseMaterial}=await import('three-gpu-pathtracer');const {FullScreenQuad}=await import('three/addons/postprocessing/Pass.js');if(cancelled||pt||!walking||!realRef.current)return;
+    pt=new WebGLPathTracer(renderer);pt.tiles.set(1,1);pt.bounces=6;pt.filterGlossyFactor=.5;pt.minSamples=3;pt.renderDelay=180;pt.fadeDuration=350;pt.dynamicLowRes=false;pt.renderScale=matchMedia('(pointer:coarse)').matches?.5:Math.min(1,1.25/Math.max(1,devicePixelRatio));
+    grad??=new GradientEquirectTexture();grad.topColor.set('#fbf6ee');grad.bottomColor.set('#8c8577');grad.update();scene.environment=grad;(scene as any).environmentIntensity=1.25;
+    renderer.toneMappingExposure=.92;ptBg=scene.background;scene.background=new T.Color('#f3efe8');
     // Edge-preserving denoise while samples accumulate, fading out as the image converges.
     denoise=new FullScreenQuad(new DenoiseMaterial({transparent:true,premultipliedAlpha:renderer.getContextAttributes().premultipliedAlpha}));
-    pt.renderToCanvasCallback=(target:any,r:any,quad:any)=>{const m=denoise.material;m.map=target.texture;m.opacity=quad.material.opacity;m.sigma=Math.max(1.5,5-pt.samples*.05);m.threshold=Math.max(.06,.35-pt.samples*.004);m.kSigma=1;const ac=r.autoClear;r.autoClear=false;denoise.render(r);r.autoClear=ac};
-    pt.setScene(scene,camera);ptReady=true}catch(e){console.error(e);pt=null}};
+    pt.renderToCanvasCallback=(target:any,r:any,quad:any)=>{const m=denoise.material;m.map=target.texture;m.opacity=quad.material.opacity;m.sigma=Math.max(.8,3-pt.samples*.065);m.threshold=Math.max(.035,.18-pt.samples*.004);m.kSigma=1;const ac=r.autoClear;r.autoClear=false;denoise.render(r);r.autoClear=ac};
+    pt.setScene(scene,camera);ptReady=true}catch(e){console.error(e);ptStop()}};
   const ptStop=()=>{ptReady=false;if(ptBg){scene.background=ptBg;ptBg=null}try{pt?.dispose();denoise?.dispose()}catch{}pt=null;denoise=null;scene.environment=rasterEnv;(scene as any).environmentIntensity=.38;renderer.toneMappingExposure=.92;ceilings.forEach(c=>c.visible=walking);scene.traverse((o:any)=>{if(o.isPointLight&&o.userData.base!=null)o.intensity=o.userData.base})};
   let ptReady=false;const lastCam=new T.Matrix4();let lastFov=0;
   const setWalking=(on:boolean,id?:string)=>{walking=on;controls.enabled=!on;ceilings.forEach(c=>c.visible=on);for(const f of wallFades)for(const m of f.mat){m.opacity=1;m.depthWrite=true}
@@ -264,7 +340,7 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
     if(!top&&!roof)for(const f of wallFades){v.copy(camera.position).sub(f.center).setY(0);const facing=v.normalize().dot(f.normal);const o=facing>.25?.12:1;for(const m of f.mat)if(Math.abs(m.opacity-o)>.01){m.opacity+=(o-m.opacity)*.25;m.depthWrite=m.opacity>.9}}}
    if(walking&&ptReady&&pt){camera.updateMatrixWorld();if(!lastCam.equals(camera.matrixWorld)||lastFov!==camera.fov){lastCam.copy(camera.matrixWorld);lastFov=camera.fov;pt.updateCamera()}pt.renderSample()}
    else renderer.render(scene,camera);raf=requestAnimationFrame(draw)};draw();
-  dispose=()=>{ptStop();clearTimeout(ptMaterialsTimer);grad?.dispose?.();view.current={walking,pos:camera.position.clone(),target:controls.target.clone(),yaw,pitch,fov:camera.fov};cancelAnimationFrame(raf);cv.removeEventListener('pointerdown',onDown);cv.removeEventListener('pointermove',onMove);cv.removeEventListener('pointerup',onUp);cv.removeEventListener('pointercancel',onUp);cv.removeEventListener('wheel',onWheel);window.removeEventListener('keydown',onKey);window.removeEventListener('keyup',onKey);api.current=null;observer.disconnect();controls.dispose();scene.traverse((o:any)=>{if(o.isMesh)o.geometry.dispose()});mats.forEach(m=>{m.map?.dispose?.();m.normalMap?.dispose?.();m.dispose()});envTex.dispose();pmrem.dispose();clearTextureCache();renderer.dispose();renderer.domElement.remove()};
+  dispose=()=>{ptStop();clearTimeout(ptMaterialsTimer);grad?.dispose?.();view.current={walking,pos:camera.position.clone(),target:controls.target.clone(),yaw,pitch,fov:camera.fov};cancelAnimationFrame(raf);cv.removeEventListener('pointerdown',onDown);cv.removeEventListener('pointermove',onMove);cv.removeEventListener('pointerup',onUp);cv.removeEventListener('pointercancel',onUp);cv.removeEventListener('wheel',onWheel);window.removeEventListener('keydown',onKey);window.removeEventListener('keyup',onKey);api.current=null;observer.disconnect();controls.dispose();scene.traverse((o:any)=>{if(o.isMesh)o.geometry.dispose()});mats.forEach(m=>m.dispose());sceneTextures.forEach(texture=>texture.dispose());envTex.dispose();pmrem.dispose();clearTextureCache();renderer.dispose();renderer.domElement.remove()};
  }catch(e){console.error(e);setError('La 3D nécessite WebGL sur cet appareil. Le plan 2D reste disponible.')}})();return()=>{cancelled=true;dispose()}},[plan,roof,top]);
 
  useEffect(()=>{if(mode!=='visit'){setQuality(-1);return}const t=setInterval(()=>setQuality(api.current?.samples()??-1),400);return()=>clearInterval(t)},[mode]);

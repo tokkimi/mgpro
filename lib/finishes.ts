@@ -35,7 +35,7 @@ export function photoFor(sub:string|undefined,name:string,cat?:string):Photo|und
  const end=`|${sub||''}|${name}`;for(const src of [photoOverrides,photoBase])for(const k in src)if(k.endsWith(end))return src[k];
  return undefined;
 }
-export const photoUrl=(p:Photo,size=320,map:'Color'|'NormalGL'|'Roughness'='Color')=>`/api/material-photo/${p.a}?map=${map}&s=${size}${p.t&&map==='Color'?`&t=${p.t.slice(1)}`:''}`;
+export const photoUrl=(p:Photo,size=320,map:'Color'|'NormalGL'|'Roughness'='Color')=>`/api/material-photo/${p.a}?map=${map}&s=${size}${size>=768?'&full=1&v=2':''}${p.t&&map==='Color'?`&t=${p.t.slice(1)}`:''}`;
 
 /** Turns a catalogue designation into a 3D appearance (procedural, indicative until real PBR assets are sourced). */
 export function lookOf(choice:FinishChoice|undefined,surface:SurfaceKey,fallback:Look):Look{
