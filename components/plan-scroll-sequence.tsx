@@ -95,7 +95,6 @@ export default function PlanScrollSequence({locale='fr'}:{locale?:'fr'|'en'}){
  return <div className={`approach-photo plan-scroll-track${staticMode?' is-static':''}`} ref={track} data-ready={ready?'true':'false'}>
   <div className="plan-scroll-pin" ref={pin} role="img" aria-label={en?'A renovation floor plan drawn line by line':'Un plan de rénovation dessiné trait par trait'}>
    <div className="plan-drawing-area"><PlanFallback locale={locale}/><canvas ref={canvas} className="plan-scroll-canvas" aria-hidden="true"/><PlanHandwriting locale={locale} animated/></div>
-   <p className="plan-scroll-caption">{en?'From the first line. To the final finish.':'Du premier trait. À la dernière finition.'}</p>
   </div>
   <noscript><style>{'.plan-scroll-track{height:var(--plan-pane-height)!important}.plan-scroll-pin{position:relative!important;top:auto!important}'}</style></noscript>
  </div>;

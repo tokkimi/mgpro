@@ -12,7 +12,7 @@ const englishTitles=['Bathrooms','Basements','Residential renovation','Commercia
 export default function RealizationsCoverflow({locale='fr',onPhoto}:{locale?:'fr'|'en';onPhoto:(src:string)=>void}){
  const en=locale==='en';
  return <section className="atelier-realisations atelier-coverflow-section" id="realisations" aria-labelledby="realisations-heading">
-  <div className="realisations-heading"><div><p className="section-kicker">{en?'MG PRO PROJECTS':'LES RÉALISATIONS MG PRO'}</p><h2 id="realisations-heading">{en?'Real spaces.':'Du concret.'}<br/><span>{en?'Distinctive character.':'Et du caractère.'}</span></h2></div><p>{en?'Explore our projects.':'Explorez nos réalisations.'}<br/>{en?'Bathrooms, basements, homes and businesses.':'Salles de bain, sous-sols, résidentiel et commercial.'}</p></div>
+  <div className="realisations-heading"><div><p className="section-kicker">{en?'MG PRO PROJECTS':'LES RÉALISATIONS MG PRO'}</p><h2 id="realisations-heading">{en?'Real spaces.':'Du concret.'}<br/><span>{en?'Distinctive character.':'Et du caractère.'}</span></h2></div><p>{en?'Explore our projects.':'Explorez nos réalisations.'}<br/>{en?'Bathrooms, basements, homes and businesses.':'Salles de bain, sous-sols, résidentiel et commercial.'}</p></div>
   <CoverFlowCarousel locale={locale} items={galleries.groups.map((group,index)=>({id:group.title,title:en?englishTitles[index]:group.title,description:descriptions[locale][index],photos:group.photos}))} onPhoto={onPhoto}/>
  </section>;
 }

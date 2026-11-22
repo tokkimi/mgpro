@@ -35,18 +35,18 @@ export default function RenovationHero({locale='fr',finance,onQuote}:Props){
   const suffix=mobile?'mobile':'desktop';
   const loaded=new Map<string,HTMLImageElement>();
   const pending=new Map<string,Promise<HTMLImageElement|null>>();
-  let cancelled=false,raf=0,framePosition=0,start=0,distance=1,painted='';
+  let cancelled=false,raf=0,framePosition=0,start=0,distance=1,painted='',introBlend=0;
   let width=0,height=0,cropX=.5,cropY=.5;
   const source=(index:number)=>`${sequence.directory}/${sequence.frames[index]}-${suffix}.webp`;
   const draw=()=>{
    const lower=Math.floor(framePosition),upper=Math.min(lower+1,sequence.frames.length-1);
-   const image=loaded.get(source(lower));
+   const image=loaded.get(source(introBlend<1?sequence.frames.length-1:lower));
    if(!image)return;
-   const next=loaded.get(source(upper));
+   const next=loaded.get(source(introBlend<1?0:upper));
    container.dataset.paintedFrame=(lower+(next?framePosition-lower:0)+1).toFixed(3);
-   const blend=next&&next!==image?framePosition-lower:0;
+   const blend=next&&next!==image?(introBlend<1?introBlend:framePosition-lower):0;
    container.dataset.blend=blend.toFixed(3);
-   const key=`${lower}:${blend.toFixed(3)}:${width}:${height}`;
+   const key=`${introBlend<1?"intro":"sequence"}:${lower}:${blend.toFixed(3)}:${width}:${height}`;
    if(key===painted)return;
    painted=key;
    // Use the exact CSS crop of the original photo, so the final frame cannot jump.
@@ -81,13 +81,14 @@ export default function RenovationHero({locale='fr',finance,onQuote}:Props){
   const update=()=>{
    raf=0;
    const progress=clamp((window.scrollY-start)/distance);
-   framePosition=progress*(sequence.frames.length-1);
-   const copyAlpha=smooth((progress-.28)/.58),actionAlpha=smooth((progress-.6)/.35);
+   introBlend=smooth(progress/0.08);
+   framePosition=clamp((progress-0.08)/0.92)*(sequence.frames.length-1);
+   const copyAlpha=1,actionAlpha=1;
    container.style.setProperty('--hero-copy-alpha',String(copyAlpha));
    container.style.setProperty('--hero-copy-blur',`${(1-copyAlpha)*12}px`);
    container.style.setProperty('--hero-copy-shift',`${(1-copyAlpha)*18}px`);
    container.style.setProperty('--hero-action-alpha',String(actionAlpha));
-   container.style.setProperty('--hero-secondary-alpha',String(smooth((progress-.68)/.3)));
+   container.style.setProperty('--hero-secondary-alpha','1');
    container.dataset.progress=progress.toFixed(4);container.dataset.frame=String(Math.round(framePosition)+1);
    container.dataset.animating=progress<1?'true':'false';
    container.dataset.revealed=copyAlpha===1?'true':'false';
@@ -127,12 +128,12 @@ export default function RenovationHero({locale='fr',finance,onQuote}:Props){
  return <div className={`hero-scroll-sequence${staticMode?' is-static':''}`} ref={root} data-animating={staticMode?'false':'true'} data-ready={ready?'true':'false'}>
   <div className="hero-scroll-pin" ref={pin}><section className="atelier-hero">
    <img className="atelier-hero-photo hero-final-photo" src="/images/renovation-inspiration.png" alt={en?'Renovation inspiration: natural oak kitchen — generated image':'Inspiration : cuisine rénovée en bois naturel — visuel généré'} fetchPriority="high"/>
-   <picture className="hero-first-frame"><source media="(max-width:800px)" srcSet={`${sequence.directory}/${sequence.frames[0]}-mobile.webp`}/><img className="atelier-hero-photo" src={`${sequence.directory}/${sequence.frames[0]}-desktop.webp`} alt="" fetchPriority="high"/></picture>
+   <picture className="hero-first-frame"><source media="(max-width:800px)" srcSet={`${sequence.directory}/${sequence.frames[sequence.frames.length-1]}-mobile.webp`}/><img className="atelier-hero-photo" src={`${sequence.directory}/${sequence.frames[sequence.frames.length-1]}-desktop.webp`} alt="" fetchPriority="high"/></picture>
    <canvas ref={canvas} className="hero-frame-canvas" aria-hidden="true"/>
    <div className="atelier-hero-shade"/>
    <div className="atelier-hero-topline"><span>{en?'RESIDENTIAL & COMMERCIAL RENOVATION':'RÉNOVATIONS RÉSIDENTIELLES & COMMERCIALES'}</span><span>{en?'LAVAL · MONTRÉAL · NORTH SHORE':'LAVAL · MONTRÉAL · RIVE-NORD'}</span></div>
-   <div className="atelier-hero-copy" ref={copy} inert={!staticMode}><div className="hero-intro-line"><span/>{en?'OVER 20 YEARS OF SHAPING SPACES':'PLUS DE 20 ANS À FAÇONNER VOS ESPACES'}</div><h1>{en?'Beauty to live in.':'Le beau se vit.'}<br/><span className="hero-gold-copy">{en?'Quality you':'Le bien fait,'}<br/>{en?'can feel.':'se ressent'}{!en&&'.'}</span></h1><p>{en?'Renovate today.':'Rénover aujourd’hui.'}<br/>{en?'For a better tomorrow.':'Pour un meilleur demain.'}</p><button type="button" className="glass-button hero-project-button" onClick={onQuote}>{en?'Bring your project to life':'Donnons vie à votre projet'}<ArrowUpRight size={19}/></button></div>
-   <a ref={financeLink} className="hero-finance glass-surface" href={finance} target="_blank" rel="noopener noreferrer" inert={!staticMode}><div><span>{en?'YOUR PROJECT, AT YOUR PACE':'VOTRE PROJET, À VOTRE RYTHME'}</span><b><img className="financeit-logo hero-finance-logo" src="/images/financeit-official.png" alt="Financeit"/><ArrowUpRight size={24} aria-hidden="true"/></b></div><p>{en?'Explore financing options':'Des solutions de financement'}<br/>{en?'for your renovation.':'pour passer de l’idée aux travaux.'}</p></a>
+   <div className="atelier-hero-copy" ref={copy} ><div className="hero-intro-line"><span/>{en?'OVER 20 YEARS OF SHAPING SPACES':'PLUS DE 20 ANS À FAÇONNER VOS ESPACES'}</div><h1>{en?'Beauty to live in.':'Le beau se vit.'}<br/><span className="hero-gold-copy">{en?'Quality you':'Le bien fait,'}<br/>{en?'can feel.':'se ressent'}{!en&&'.'}</span></h1><p>{en?'Renovate today.':'Rénover aujourd’hui.'}<br/>{en?'For a better tomorrow.':'Pour un meilleur demain.'}</p><button type="button" className="glass-button hero-project-button" onClick={onQuote}>{en?'Bring your project to life':'Donnons vie à votre projet'}<ArrowUpRight size={19}/></button></div>
+   <a ref={financeLink} className="hero-finance glass-surface" href={finance} target="_blank" rel="noopener noreferrer" ><div><span>{en?'YOUR PROJECT, AT YOUR PACE':'VOTRE PROJET, À VOTRE RYTHME'}</span><b><img className="financeit-logo hero-finance-logo" src="/images/financeit-official.png" alt="Financeit"/><ArrowUpRight size={24} aria-hidden="true"/></b></div><p>{en?'Explore financing options':'Des solutions de financement'}<br/>{en?'for your renovation.':'pour passer de l’idée aux travaux.'}</p></a>
    <div className="hero-photo-credit"><span>{en?'THE MG PRO SIGNATURE':'LA SIGNATURE MG PRO'}</span><span>{en?'Spaces designed to last.':'Des espaces pensés pour durer.'}</span></div>
   </section></div>
   <noscript><style>{'.hero-scroll-sequence{height:auto!important}.hero-scroll-pin{position:relative!important;top:auto!important}.hero-first-frame,.hero-frame-canvas{display:none!important}.hero-scroll-sequence .atelier-hero-copy,.hero-scroll-sequence .hero-finance,.hero-scroll-sequence .hero-project-button,.hero-scroll-sequence .atelier-hero-topline,.hero-scroll-sequence .hero-photo-credit,.atelier-site .atelier-contact{opacity:1!important;filter:none!important;transform:none!important;visibility:visible!important;pointer-events:auto!important}'}</style></noscript>
