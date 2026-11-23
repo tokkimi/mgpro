@@ -21,7 +21,7 @@ function toJpeg(source:CanvasImageSource,w:number,h:number){
  ctx.drawImage(source,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',QUALITY);
 }
 
-async function photoToJpeg(file:File){
+export async function photoToJpeg(file:File){
  if('createImageBitmap' in window){
   try{const bitmap=await createImageBitmap(file,{imageOrientation:'from-image'} as any);const out=toJpeg(bitmap,bitmap.width,bitmap.height);bitmap.close?.();return out}catch{/* fall back to <img> */}
  }

@@ -18,7 +18,8 @@ const planIn=z.object({action:z.literal('plan'),...context,style:z.enum(['nature
 const reviewIn=z.object({action:z.literal('review'),...context,plan:planSchema});
 const quoteIn=z.object({action:z.literal('quote'),...context,plan:planSchema.nullable().optional(),catalogue:z.array(z.object({name:z.string().max(200),category:z.string().max(120).optional(),unit:z.string().max(40).optional(),price:z.coerce.number().optional(),material:z.coerce.number().optional(),labour:z.coerce.number().optional(),description:z.string().max(400).optional()})).max(400).optional()});
 const renderIn=z.object({action:z.literal('render'),image:image,description:z.string().max(4000).optional()});
-const body=z.discriminatedUnion('action',[measureSchema,planIn,reviewIn,quoteIn,renderIn]);
+const sketchIn=z.object({action:z.literal('sketch'),image,reference:z.string().max(240).optional()});
+const body=z.discriminatedUnion('action',[measureSchema,planIn,reviewIn,quoteIn,renderIn,sketchIn]);
 const json=(data:unknown,status=200)=>NextResponse.json(data,{status,headers:{'Cache-Control':'private, no-store'}});
 
 /** Visit AI: room measurement from photos/video, 2D/3D plan, plan control and priced quote. */
@@ -32,6 +33,19 @@ export async function POST(req:Request){
  const input=parsed.data;
  const configured=aiConfigured(req);
 
+ if(input.action==='sketch'){
+  if(!configured)return json({error:'La conversion IA est indisponible. Vous pouvez tracer le plan manuellement.'},503);
+  const [,mime,data]=input.image.match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/)!;
+  try{
+   const answer=await aiText({req,system:PLAN_SYSTEM,messages:[{role:'user',content:[
+    {type:'image',source:{type:'base64',media_type:mime as 'image/jpeg',data}},
+    {type:'text',text:'Transcris ce croquis en pièces et ouvertures. Préserve les positions et les cotes visibles, en mètres. Si les cotes sont absentes, propose un brouillon approximatif. N’invente pas de pièce hors du dessin. Cote de référence fournie : '+(input.reference||'aucune')},
+   ]}],maxTokens:12000,timeoutMs:105000});
+   const plan=normalizePlan(extractJson(answer),[]);
+   if(!plan)return json({error:'Le dessin n’a pas pu être converti. Essayez une photo nette, prise de face.'},422);
+   return json({plan:{...plan,validated:false}});
+  }catch(e){const err=e as AiError;return json({error:err.message},err.status||502)}
+ }
  if(input.action==='measure'){
   if(!configured)return json({error:'IA non configurée sur ce déploiement.'},503);
   const content:AiContent[]=[];

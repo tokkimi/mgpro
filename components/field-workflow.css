@@ -1,0 +1,19 @@
+.field-dashboard-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-block:0 18px}
+.field-dashboard-actions .btn{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-height:92px;padding:16px;text-align:left;white-space:normal}
+.field-dashboard-actions b{font-size:1.1rem}.field-dashboard-actions span{font-size:.85rem}
+.visit-steps{display:grid;gap:9px;margin-bottom:16px;min-width:0}
+.visit-step-title{padding:12px;border:1px solid var(--line,#79797966);border-radius:12px;touch-action:pan-y}
+.visit-step-title h3,.visit-step-title p{margin:.3em 0}.visit-step-title small,.visit-step-title p{font-size:.85rem}
+.visit-steps nav{display:flex;overflow:auto;gap:6px;padding-block:3px;scrollbar-width:thin}
+.visit-steps nav .btn{min-height:44px;flex:none;white-space:nowrap;padding-inline:10px}
+.visit-steps nav [aria-current=step]{outline:2px solid #caa45c;outline-offset:-2px}
+.visit-guided .form-actions{position:sticky;bottom:0;z-index:3;gap:8px;padding-bottom:max(10px,env(safe-area-inset-bottom))}
+.sketch-studio{display:grid;gap:12px;padding:16px;min-width:0}
+.sketch-source{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.sketch-drop{min-width:0;display:grid;justify-items:start;align-content:start;gap:8px;padding:14px;border:1px dashed var(--line,#999);border-radius:12px}
+.sketch-drop img{max-width:100%;max-height:320px;object-fit:contain}
+.sketch-studio .handwritten-notebook svg,.visit-guided .handwritten-notebook svg{touch-action:none;width:100%;height:auto}
+html body .workspace .app-dialog:has(.sketch-studio){width:min(1320px,calc(100vw - 24px));max-width:calc(100vw - 24px)}
+@media(max-width:720px){.sketch-source{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:540px){.field-dashboard-actions{grid-template-columns:minmax(0,1fr)}.field-dashboard-actions .btn{min-height:72px}.visit-guided .form-actions{flex-wrap:wrap}.visit-guided .form-actions .button-row{flex:1 1 190px;justify-content:flex-end}}
+.field-room>summary{cursor:pointer;min-height:44px;padding-block:9px;font-weight:650}.field-room>summary span{float:right;font-size:.85rem;font-weight:400}.field-room[open]>summary{margin-bottom:12px;border-bottom:1px solid var(--line,#79797966)}
