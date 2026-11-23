@@ -51,11 +51,17 @@ async function videoFrames(file:File,count=VIDEO_FRAMES){
   video.src=url;video.load();
   await meta;
   // iOS: start decoding with a short muted play, then pause.
-  try{await video.play()}catch{/* autoplay refused: seeking below still works on most browsers */}
+  if(video.readyState<2){
+   let timeout:ReturnType<typeof setTimeout>|undefined;
+   try{
+    await Promise.race([video.play(),new Promise<void>(resolve=>{timeout=setTimeout(resolve,1800)})]);
+   }catch{/* Some browsers decode on seek when autoplay is unavailable. */}
+   finally{clearTimeout(timeout)}
+  }
   video.pause();
   if(video.readyState<2)await once('loadeddata',10000,'La vidéo ne se lit pas sur cet appareil. Réessayez, ou utilisez des photos.').catch(()=>{});
   let duration=video.duration;
-  if(!Number.isFinite(duration)||duration<=0){video.currentTime=1e7;await once('seeked',5000,'Durée de la vidéo illisible.').catch(()=>{});duration=Number.isFinite(video.duration)?video.duration:0}
+  if(!Number.isFinite(duration)||duration<=0){const end=once('seeked',5000,'Durée de la vidéo illisible.');video.currentTime=1e7;await end.catch(()=>{});duration=Number.isFinite(video.duration)?video.duration:0}
   if(!duration||!video.videoWidth)throw new Error('Vidéo illisible. Utilisez des photos à la place.');
   const frames:string[]=[];
   for(let k=0;k<count;k++){
@@ -86,6 +92,8 @@ export function RoomMeasure({room,onApply,disabled=false,demo=false}:{room:Data;
  const [mode,setMode]=useState<'corners'|'video'|'photos'>('corners');
  const [busy,setBusy]=useState(''),[error,setError]=useState(''),[result,setResult]=useState<Measure|null>(null),[reference,setReference]=useState(''),[previews,setPreviews]=useState<string[]>([]);
  const [corners,setCorners]=useState<(string|null)[]>([null,null,null,null,null]);
+ const [selectedVideo,setSelectedVideo]=useState<File|null>(null);
+ const cameraInput=useRef<HTMLInputElement>(null);
  const photoInput=useRef<HTMLInputElement>(null),videoInput=useRef<HTMLInputElement>(null),cornerInput=useRef<HTMLInputElement>(null),cornerSlot=useRef(0);
  const unit=room.unit==='m'?'m':'pi';
  const cornerCount=corners.slice(0,4).filter(Boolean).length;
@@ -106,6 +114,12 @@ export function RoomMeasure({room,onApply,disabled=false,demo=false}:{room:Data;
    setPreviews(images);setBusy('');
    await send(images,source==='video'?images.map((_,i)=>`Image ${i+1} de la vidéo (ordre du tour)`):undefined,source);
   }catch(e){setError((e as Error).message);setBusy('')}
+ }
+ function selectVideo(event:React.ChangeEvent<HTMLInputElement>){
+  const file=event.currentTarget.files?.[0];
+  event.currentTarget.value='';
+  if(!file)return;
+  setSelectedVideo(file);setError('');setResult(null);setPreviews([]);
  }
  async function addCorner(file:File){
   setError('');try{const img=await photoToJpeg(file);setCorners(c=>c.map((x,i)=>i===cornerSlot.current?img:x))}catch(e){setError((e as Error).message)}
@@ -139,10 +153,20 @@ export function RoomMeasure({room,onApply,disabled=false,demo=false}:{room:Data;
    <input ref={cornerInput} hidden type="file" accept="image/*" capture="environment" onChange={e=>{const f=e.target.files?.[0];e.target.value='';if(f)void addCorner(f)}}/>
    <div className="button-row"><button type="button" className="btn primary" disabled={!!busy||disabled||cornerCount<3} onClick={measureCorners}><Ruler size={16}/>Mesurer la pièce ({cornerCount}/4 coins)</button>{corners.some(Boolean)&&<button type="button" className="btn ghost" disabled={!!busy} onClick={()=>setCorners([null,null,null,null,null])}><RotateCcw size={15}/>Recommencer</button>}</div>
   </>}
-  {mode==='video'&&<><p className="muted">Filmez lentement le tour complet de la pièce depuis l’entrée, en montrant chaque coin (10 à 30 s).</p><div className="button-row"><button type="button" className="btn secondary" disabled={!!busy||disabled} onClick={()=>videoInput.current?.click()}><Video size={16}/>Choisir ou filmer une vidéo</button></div></>}
+  {mode==='video'&&<>
+   <p className="muted">Filmez le tour de la pièce pendant 10 à 30 s, puis lancez l’analyse.</p>
+   <div className="button-row">
+    <button type="button" className="btn secondary" disabled={!!busy||disabled} onClick={()=>cameraInput.current?.click()}><Video size={16}/>Filmer la pièce</button>
+    <button type="button" className="btn secondary" disabled={!!busy||disabled} onClick={()=>videoInput.current?.click()}>Importer une vidéo</button>
+   </div>
+   {selectedVideo&&<><p role="status">Vidéo sélectionnée : {selectedVideo.name}</p>
+    <button type="button" className="btn primary" disabled={!!busy||disabled} onClick={()=>void run([selectedVideo],'video')}>Analyser la vidéo</button>
+   </>}
+  </>}
   {mode==='photos'&&<div className="button-row"><button type="button" className="btn secondary" disabled={!!busy||disabled} onClick={()=>photoInput.current?.click()}><Images size={16}/>Choisir des photos</button></div>}
   <input ref={photoInput} hidden type="file" accept="image/*" multiple onChange={e=>{const files=Array.from(e.target.files||[]);e.target.value='';if(files.length)void run(files,'photo')}}/>
-  <input ref={videoInput} hidden type="file" accept="video/*" onChange={e=>{const files=Array.from(e.target.files||[]);e.target.value='';if(files.length)void run(files,'video')}}/>
+  <input ref={cameraInput} hidden type="file" accept="video/*" capture="environment" onChange={selectVideo}/>
+  <input ref={videoInput} hidden type="file" accept="video/*,.mov,.mp4,.m4v" onChange={selectVideo}/>
   {busy&&<p className="room-ai-status" role="status"><Loader2 size={15} className="spin"/>{busy}</p>}
   {previews.length>0&&mode!=='corners'&&<div className="room-ai-previews">{previews.map((src,i)=><img key={i} src={src} alt={`Image ${i+1} analysée`}/>)}</div>}
   {error&&<p className="error" role="alert">{error}</p>}
