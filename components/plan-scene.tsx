@@ -6,6 +6,7 @@ import {finishTextures,clearTextureCache,type Finish} from '@/lib/scene-textures
 import {lookOf,describeFinishes,photoUrl,textureDetails,type Look,type FinishChoice,type Photo} from '@/lib/finishes';
 import {catalogueModel} from '@/lib/material-library';
 import FinishPanel from './finish-panel';
+import './plan-studio.css';
 
 type Edge='north'|'south'|'west'|'east';
 type Opening={from:number;to:number;kind:'door'|'window';bottom:number;top:number;shared:boolean};
@@ -20,13 +21,17 @@ export function describePlan(plan:Plan){
  return `Ambiance ${style[plan.style]||style.nature}. Pièces : ${rooms}.${items?` Équipements : ${items}.`:''}${fin?` Finitions choisies (à respecter) : ${fin}.`:''}`;
 }
 
-export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Plan;roof?:boolean;top?:boolean;onChange?:(plan:Plan)=>void}){
+export default function PlanScene({plan,roof=false,top=false,onChange,onViewOptions}:{plan:Plan;roof?:boolean;top?:boolean;onChange?:(plan:Plan)=>void;onViewOptions?:(options:{roof:boolean;top:boolean})=>void}){
+ const studio=useRef<HTMLElement>(null);
  const host=useRef<HTMLDivElement>(null);const [error,setError]=useState('');
  const [assetStatus,setAssetStatus]=useState('');
+ const [ready,setReady]=useState(false);
+ const [imageUnavailable,setImageUnavailable]=useState(false);
+ const fullButton=useRef<HTMLButtonElement>(null);
  const [render,setRender]=useState<{busy:boolean;image?:string;error?:string}>({busy:false});
  const [mode,setMode]=useState<'model'|'visit'>('model');const [full,setFull]=useState(false);const [roomId,setRoomId]=useState('');
  const view=useRef<any>(null);const [panel,setPanel]=useState(false);
- const realRef=useRef(true);const [real,setReal]=useState(true);const [quality,setQuality]=useState(-1);
+ const realRef=useRef(false);const [real,setReal]=useState(false);const [quality,setQuality]=useState(-1);
  const api=useRef<{real:(on:boolean)=>void;samples:()=>number;visit:(id?:string)=>void;model:()=>void;hold:(dir:string,on:boolean)=>void;zoom:(f:number)=>void}|null>(null);
  useEffect(()=>{let dispose=()=>{};let cancelled=false;(async()=>{try{
   const T=await import('three');
@@ -36,6 +41,7 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
   const {RoundedBoxGeometry}=await import('three/addons/geometries/RoundedBoxGeometry.js');
   const {RectAreaLightUniformsLib}=await import('three/addons/lights/RectAreaLightUniformsLib.js');
   if(cancelled||!host.current)return;const el=host.current;
+  setError('');
   const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true,powerPreference:'high-performance'});
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=.92;
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;el.appendChild(renderer.domElement);
@@ -224,7 +230,7 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
    dimensions:Partial<{width:number;height:number;depth:number}>={},lod=0){
    let pending=modelCache.get(name);
    if(!pending){
-    pending=modelLoader.loadAsync(`https://tevy.dev/models/${name}/v1/lod${lod}.glb`).then(({scene:source})=>{
+    pending=modelLoader.loadAsync(`/api/plan-model/${name}?lod=${lod}`).catch(()=>modelLoader.loadAsync(`https://tevy.dev/models/${name}/v1/lod${lod}.glb`)).then(({scene:source})=>{
      source.traverse(object=>{
       if(!(object instanceof T.Mesh))return;
       const materials=Array.isArray(object.material)?object.material:[object.material];
@@ -466,13 +472,13 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
   // Photoreal mode: progressive path tracing (real light bounces, soft shadows, reflections) whenever the view is still.
   let grad:any=null;let denoise:any=null;let ptBg:any=null;const rasterEnv=scene.environment;
   const ptStart=async()=>{if(pt||!realRef.current)return;try{const {WebGLPathTracer,GradientEquirectTexture,DenoiseMaterial}=await import('three-gpu-pathtracer');const {FullScreenQuad}=await import('three/addons/postprocessing/Pass.js');if(cancelled||pt||!walking||!realRef.current||!modelsReady)return;
-    pt=new WebGLPathTracer(renderer);pt.tiles.set(1,1);pt.bounces=6;pt.filterGlossyFactor=.5;pt.minSamples=3;pt.renderDelay=180;pt.fadeDuration=350;pt.dynamicLowRes=false;pt.renderScale=matchMedia('(pointer:coarse)').matches?.5:Math.min(1,1.25/Math.max(1,devicePixelRatio));
+    pt=new WebGLPathTracer(renderer);pt.tiles.set(1,1);pt.bounces=6;pt.filterGlossyFactor=.5;pt.minSamples=18;pt.renderDelay=240;pt.fadeDuration=350;pt.dynamicLowRes=false;pt.renderScale=matchMedia('(pointer:coarse)').matches?.5:Math.min(1,1.25/Math.max(1,devicePixelRatio));
     grad??=new GradientEquirectTexture();grad.topColor.set('#fbf6ee');grad.bottomColor.set('#8c8577');grad.update();scene.environment=grad;(scene as any).environmentIntensity=1.25;
     renderer.toneMappingExposure=.92;ptBg=scene.background;scene.background=new T.Color('#f3efe8');
     // Edge-preserving denoise while samples accumulate, fading out as the image converges.
     denoise=new FullScreenQuad(new DenoiseMaterial({transparent:true,premultipliedAlpha:renderer.getContextAttributes().premultipliedAlpha}));
     pt.renderToCanvasCallback=(target:any,r:any,quad:any)=>{const m=denoise.material;m.map=target.texture;m.opacity=quad.material.opacity;m.sigma=Math.max(.8,3-pt.samples*.065);m.threshold=Math.max(.035,.18-pt.samples*.004);m.kSigma=1;const ac=r.autoClear;r.autoClear=false;denoise.render(r);r.autoClear=ac};
-    pt.setScene(scene,camera);ptReady=true}catch(e){console.error(e);ptStop()}};
+    pt.setScene(scene,camera);scene.environment=rasterEnv;scene.background=ptBg;scene.environmentIntensity=.38;ptReady=true}catch(e){console.error(e);ptStop();realRef.current=false;setReal(false)}};
   const ptStop=()=>{ptReady=false;if(ptBg){scene.background=ptBg;ptBg=null}try{pt?.dispose();denoise?.dispose()}catch{}pt=null;denoise=null;scene.environment=rasterEnv;(scene as any).environmentIntensity=.38;renderer.toneMappingExposure=.92;ceilings.forEach(c=>c.visible=walking);scene.traverse((o:any)=>{if(o.isPointLight&&o.userData.base!=null)o.intensity=o.userData.base})};
   let modelsReady=modelJobs.length===0;
   setAssetStatus(modelsReady?'':'Chargement des modèles 3D…');
@@ -489,7 +495,7 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
   api.current={real:(on:boolean)=>{realRef.current=on;if(on&&walking)void ptStart();else ptStop()},samples:()=>ptReady&&pt?Math.floor(pt.samples):-1,visit:id=>setWalking(true,id),model:()=>setWalking(false),hold:(dir,on)=>{if(on)held.add(dir);else held.delete(dir)},zoom:f=>{camera.fov=Math.min(80,Math.max(28,camera.fov*f));camera.updateProjectionMatrix()}};
   // Touch, mouse and keyboard in walk mode.
   const pointers=new Map<number,{x:number;y:number}>();let startDist=0,startFov=62,downAt=0,moved=0;const ray=new T.Raycaster();
-  const onDown=(e:PointerEvent)=>{if(!walking)return;renderer.domElement.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});downAt=performance.now();moved=0;if(pointers.size===2){const [p,q]=[...pointers.values()];startDist=Math.hypot(p.x-q.x,p.y-q.y);startFov=camera.fov}};
+  const onDown=(e:PointerEvent)=>{if(!walking)return;el.focus({preventScroll:true});renderer.domElement.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});downAt=performance.now();moved=0;if(pointers.size===2){const [p,q]=[...pointers.values()];startDist=Math.hypot(p.x-q.x,p.y-q.y);startFov=camera.fov}};
   const onMove=(e:PointerEvent)=>{if(!walking||!pointers.has(e.pointerId))return;const prev=pointers.get(e.pointerId)!;const dx=e.clientX-prev.x,dy=e.clientY-prev.y;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});moved+=Math.abs(dx)+Math.abs(dy);
    if(pointers.size===1){yaw-=dx*.005;pitch=Math.max(-1.2,Math.min(1.2,pitch-dy*.004));look()}
    else if(pointers.size===2){const [p,q]=[...pointers.values()];const dist=Math.hypot(p.x-q.x,p.y-q.y);if(startDist>0){camera.fov=Math.min(80,Math.max(28,startFov*startDist/dist));camera.updateProjectionMatrix()}}};
@@ -498,10 +504,11 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
   const onWheel=(e:WheelEvent)=>{if(!walking)return;e.preventDefault();camera.fov=Math.min(80,Math.max(28,camera.fov*(e.deltaY>0?1.06:.94)));camera.updateProjectionMatrix()};
   const keys:Record<string,string>={ArrowUp:'f',KeyW:'f',ArrowDown:'b',KeyS:'b',ArrowLeft:'l',KeyA:'l',ArrowRight:'r',KeyD:'r'};
   const onKey=(e:KeyboardEvent)=>{if(!walking||!keys[e.code])return;e.preventDefault();if(e.type==='keydown')held.add(keys[e.code]);else held.delete(keys[e.code])};
-  const cv=renderer.domElement;cv.addEventListener('pointerdown',onDown);cv.addEventListener('pointermove',onMove);cv.addEventListener('pointerup',onUp);cv.addEventListener('pointercancel',onUp);cv.addEventListener('wheel',onWheel,{passive:false});window.addEventListener('keydown',onKey);window.addEventListener('keyup',onKey);
+  const clearHeld=()=>held.clear();
+  const cv=renderer.domElement;cv.addEventListener('pointerdown',onDown);cv.addEventListener('pointermove',onMove);cv.addEventListener('pointerup',onUp);cv.addEventListener('pointercancel',onUp);cv.addEventListener('wheel',onWheel,{passive:false});el.addEventListener('keydown',onKey);el.addEventListener('keyup',onKey);el.addEventListener('blur',clearHeld);window.addEventListener('blur',clearHeld);
   let first=!saved;const resize=()=>{const a=el.clientWidth,b=el.clientHeight;renderer.setSize(a,b);camera.aspect=a/Math.max(1,b);camera.updateProjectionMatrix();if(pt)pt.updateCamera();if(!walking&&first)modelView();first=true};
   const observer=new ResizeObserver(resize);observer.observe(el);resize();
-  let raf=0;const v=new T.Vector3();let last=performance.now();
+  let raf=0;const v=new T.Vector3();let last=performance.now(),lastMotion=last;
   const draw=()=>{const now=performance.now(),dt=Math.min(.05,(now-last)/1000);last=now;
    if(walking){
     if(held.has('in'))api.current?.zoom(.985);if(held.has('out'))api.current?.zoom(1.015);
@@ -510,10 +517,17 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
     if(goal){camera.position.lerp(goal,Math.min(1,dt*3));if(camera.position.distanceTo(goal)<.03)goal=null;look()}
    }else{controls.update();
     if(!top&&!roof)for(const f of wallFades){v.copy(camera.position).sub(f.center).setY(0);const facing=v.normalize().dot(f.normal);const o=facing>.25?.12:1;for(const m of f.mat)if(Math.abs(m.opacity-o)>.01){m.opacity+=(o-m.opacity)*.25;m.depthWrite=m.opacity>.9}}}
-   if(walking&&ptReady&&pt){camera.updateMatrixWorld();if(!lastCam.equals(camera.matrixWorld)||lastFov!==camera.fov){lastCam.copy(camera.matrixWorld);lastFov=camera.fov;pt.updateCamera()}pt.renderSample()}
-   else renderer.render(scene,camera);raf=requestAnimationFrame(draw)};draw();
-  dispose=()=>{ptStop();clearTimeout(ptMaterialsTimer);grad?.dispose?.();view.current={walking,pos:camera.position.clone(),target:controls.target.clone(),yaw,pitch,fov:camera.fov};cancelAnimationFrame(raf);cv.removeEventListener('pointerdown',onDown);cv.removeEventListener('pointermove',onMove);cv.removeEventListener('pointerup',onUp);cv.removeEventListener('pointercancel',onUp);cv.removeEventListener('wheel',onWheel);window.removeEventListener('keydown',onKey);window.removeEventListener('keyup',onKey);api.current=null;observer.disconnect();controls.dispose();scene.traverse((o:any)=>{if(o.isMesh&&!modelGeometry.has(o.geometry))o.geometry.dispose()});modelGeometry.forEach(geometry=>geometry.dispose());mats.forEach(m=>m.dispose());sceneTextures.forEach(texture=>texture.dispose());envTex.dispose();pmrem.dispose();clearTextureCache();renderer.dispose();renderer.domElement.remove()};
- }catch(e){console.error(e);setError('La 3D nécessite WebGL sur cet appareil. Le plan 2D reste disponible.')}})();return()=>{cancelled=true;dispose()}},[plan,roof,top]);
+   if(walking&&ptReady&&pt){
+    camera.updateMatrixWorld();
+    if(!lastCam.equals(camera.matrixWorld)||lastFov!==camera.fov){
+     lastCam.copy(camera.matrixWorld);lastFov=camera.fov;lastMotion=now;pt.updateCamera();
+    }
+    if(pointers.size||now-lastMotion<350)renderer.render(scene,camera);
+    else if(pt.samples<60)pt.renderSample();
+   }
+   else renderer.render(scene,camera);raf=requestAnimationFrame(draw)};draw();setReady(true);
+  dispose=()=>{ptStop();clearTimeout(ptMaterialsTimer);grad?.dispose?.();view.current={walking,pos:camera.position.clone(),target:controls.target.clone(),yaw,pitch,fov:camera.fov};cancelAnimationFrame(raf);cv.removeEventListener('pointerdown',onDown);cv.removeEventListener('pointermove',onMove);cv.removeEventListener('pointerup',onUp);cv.removeEventListener('pointercancel',onUp);cv.removeEventListener('wheel',onWheel);el.removeEventListener('keydown',onKey);el.removeEventListener('keyup',onKey);el.removeEventListener('blur',clearHeld);window.removeEventListener('blur',clearHeld);api.current=null;observer.disconnect();controls.dispose();scene.traverse((o:any)=>{if(o.isMesh&&!modelGeometry.has(o.geometry))o.geometry.dispose()});modelGeometry.forEach(geometry=>geometry.dispose());mats.forEach(m=>m.dispose());sceneTextures.forEach(texture=>texture.dispose());envTex.dispose();pmrem.dispose();clearTextureCache();renderer.dispose();renderer.domElement.remove()};
+ }catch(e){console.error(e);setReady(false);setError('La 3D nécessite WebGL sur cet appareil. Le plan 2D reste disponible.')}})();return()=>{cancelled=true;dispose()}},[plan,roof,top]);
 
  useEffect(()=>{if(mode!=='visit'){setQuality(-1);return}const t=setInterval(()=>setQuality(api.current?.samples()??-1),400);return()=>clearInterval(t)},[mode]);
  async function photoreal(){
@@ -522,38 +536,128 @@ export default function PlanScene({plan,roof=false,top=false,onChange}:{plan:Pla
   try{
    const scale=Math.min(1,1536/Math.max(canvas.width,canvas.height));const c=document.createElement('canvas');c.width=Math.round(canvas.width*scale);c.height=Math.round(canvas.height*scale);c.getContext('2d')!.drawImage(canvas,0,0,c.width,c.height);
    const res=await fetch('/api/visit-ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'render',image:c.toDataURL('image/jpeg',.9),description:describePlan(plan)})});
-   const out=await res.json().catch(()=>({error:'Réponse invalide du serveur.'}));if(!res.ok)throw new Error(out.error||`Erreur ${res.status}`);
+   const out=await res.json().catch(()=>({error:'Réponse invalide du serveur.'}));if(!res.ok){
+    if(res.status===402||/crédits|credits|free tier/i.test(out.error||'')){
+     setImageUnavailable(true);
+     throw new Error('La photo IA est indisponible sur ce compte. Vous pouvez télécharger la vue 3D.');
+    }
+    throw new Error(res.status===401||res.status===403?'Connectez-vous à un compte autorisé pour créer une photo IA.':'La photo IA n’a pas pu être créée. Réessayez ou téléchargez la vue 3D.');
+   }
    setRender({busy:false,image:out.image});
   }catch(e){setRender({busy:false,error:(e as Error).message})}
  }
 
-  const rooms=plan.rooms.filter(r=>r.phase!=='remove');
- const toggleFull=async()=>{const el=host.current;if(!el)return;if(!full){setFull(true);try{await el.requestFullscreen?.()}catch{}}else{setFull(false);try{if(document.fullscreenElement)await document.exitFullscreen()}catch{}}};
- const hold=(dir:string)=>({onPointerDown:(e:any)=>{e.preventDefault();api.current?.hold(dir,true)},onPointerUp:()=>api.current?.hold(dir,false),onPointerLeave:()=>api.current?.hold(dir,false),onPointerCancel:()=>api.current?.hold(dir,false),onContextMenu:(e:any)=>e.preventDefault()});
- return <div className={`plan-scene ${mode==='visit'?'is-visit':''} ${full?'is-full':''}`} ref={host} aria-label="Maquette 3D interactive">{error&&<p role="alert">{error}</p>}{assetStatus&&<p role="status" style={{position:'absolute',bottom:24,left:12,zIndex:2,background:'#fff',padding:'4px 8px',borderRadius:6}}>{assetStatus}</p>}
-  <div className="plan-scene-top">
-   {mode==='model'?<button type="button" className="btn primary" onClick={()=>{setMode('visit');api.current?.visit(roomId||undefined)}}>👁 Visite réaliste</button>:<>
-    <button type="button" className="btn secondary" onClick={()=>{setMode('model');api.current?.model()}}>← Maquette</button>
-    <div className="plan-scene-rooms">{rooms.map(r=><button type="button" key={r.id} className={roomId===r.id?'active':''} onClick={()=>{setRoomId(r.id);api.current?.visit(r.id)}}>{r.name}</button>)}</div>
-   </>}
-   {onChange&&<button type="button" className="btn secondary" onClick={()=>setPanel(p=>!p)}>🎨 Finitions</button>}
-   <button type="button" className="btn secondary plan-scene-full" aria-label={full?'Quitter le plein écran':'Plein écran'} onClick={()=>void toggleFull()}>{full?'✕':'⤢'}</button>
-  </div>
-  {mode==='visit'&&<>
-   <p className="plan-scene-hint">Glissez pour regarder · pincez ou molette pour zoomer · touchez le sol pour avancer{typeof window!=='undefined'&&matchMedia('(pointer:fine)').matches?' · flèches du clavier pour marcher':''}</p>
-   <div className="plan-scene-pad" aria-label="Déplacement">
-    <button type="button" aria-label="Avancer" className="up" {...hold('f')}>▲</button><button type="button" aria-label="Gauche" className="left" {...hold('l')}>◀</button><button type="button" aria-label="Reculer" className="down" {...hold('b')}>▼</button><button type="button" aria-label="Droite" className="right" {...hold('r')}>▶</button>
-   </div>
-   <div className="plan-scene-real"><button type="button" aria-pressed={real} onClick={()=>{const on=!real;setReal(on);api.current?.real(on)}}>{real?'✨ Rendu réaliste : activé':'✨ Rendu réaliste : désactivé'}</button>{real&&quality>=0&&<span>{quality<60?`Arrêtez-vous : la lumière réelle se calcule… ${Math.min(99,Math.round(quality/60*100))} %`:'Rendu réaliste ✓'}</span>}</div>
-   <div className="plan-scene-zoom"><button type="button" aria-label="Zoomer" {...hold('in')}>＋</button><button type="button" aria-label="Dézoomer" {...hold('out')}>－</button></div>
-  </>}
+ const rooms=plan.rooms.filter(room=>room.phase!=='remove');
+ const selectedRoom=rooms.find(room=>room.id===roomId)||rooms.find(room=>room.furniture!=='none')||rooms[0];
+ useEffect(()=>{
+  const onFullscreenChange=()=>{if(!document.fullscreenElement)setFull(false)};
+  document.addEventListener('fullscreenchange',onFullscreenChange);
+  return()=>document.removeEventListener('fullscreenchange',onFullscreenChange);
+ },[]);
+ useEffect(()=>{
+  if(!full)return;
+  const onEscape=(event:KeyboardEvent)=>{
+   if(event.key!=='Escape'||document.fullscreenElement)return;
+   event.preventDefault();event.stopPropagation();setFull(false);fullButton.current?.focus();
+  };
+  document.addEventListener('keydown',onEscape,true);
+  return()=>document.removeEventListener('keydown',onEscape,true);
+ },[full]);
+ async function toggleFull(){
+  const el=studio.current;
+  if(!el)return;
+  if(full){
+   if(document.fullscreenElement===el)await document.exitFullscreen().catch(()=>{});
+   setFull(false);return;
+  }
+  setFull(true);
+  try{await el.requestFullscreen?.()}catch{ /* The expanded layout also works without native fullscreen. */ }
+ }
+ function chooseRoom(id:string){
+  setRoomId(id);
+  if(mode==='visit')api.current?.visit(id);
+ }
+ function chooseMode(next:'model'|'visit'){
+  if(mode===next||!ready)return;
+  setMode(next);
+  if(next==='visit'){
+   api.current?.visit(selectedRoom?.id);
+   host.current?.focus({preventScroll:true});
+  }else api.current?.model();
+ }
+ function downloadView(){
+  const canvas=host.current?.querySelector('canvas');
+  if(!canvas)return;
+  const link=document.createElement('a');
+  link.download='mgpro-maquette-3d.png';
+  link.href=canvas.toDataURL('image/png');
+  link.click();
+ }
+ const hold=(dir:string)=>({
+  onPointerDown:(event:React.PointerEvent<HTMLButtonElement>)=>{
+   event.preventDefault();event.currentTarget.setPointerCapture(event.pointerId);api.current?.hold(dir,true);
+  },
+  onPointerUp:()=>api.current?.hold(dir,false),
+  onPointerCancel:()=>api.current?.hold(dir,false),
+  onLostPointerCapture:()=>api.current?.hold(dir,false),
+  onKeyDown:(event:React.KeyboardEvent)=>{if(event.key===' '||event.key==='Enter'){event.preventDefault();api.current?.hold(dir,true)}},
+  onKeyUp:(event:React.KeyboardEvent)=>{if(event.key===' '||event.key==='Enter')api.current?.hold(dir,false)},
+  onBlur:()=>api.current?.hold(dir,false),
+ });
 
-  <div className="plan-scene-actions">
-   <button type="button" className="btn primary" disabled={render.busy} onClick={()=>void photoreal()}>{render.busy?'Photo réaliste en cours… (20 à 60 s)':mode==='visit'?'✦ Photo réaliste IA de cette vue':'✦ Rendu photoréaliste IA'}</button>
-   <button type="button" className="btn secondary" onClick={()=>{const canvas=host.current?.querySelector('canvas');if(!canvas)return;const a=document.createElement('a');a.download='mgpro-maquette-3d.png';a.href=canvas.toDataURL('image/png');a.click()}}>Télécharger la vue</button>
+ return <section ref={studio} className={`plan-studio${full?' plan-studio-expanded':''}`} aria-label="Maquette 3D interactive">
+  <div className="plan-studio-toolbar">
+   <div className="plan-studio-modes" role="group" aria-label="Point de vue">
+    <button type="button" className={`btn ${mode==='model'?'primary':'secondary'}`} aria-pressed={mode==='model'} disabled={!ready} onClick={()=>chooseMode('model')}>Vue d’ensemble</button>
+    <button type="button" className={`btn ${mode==='visit'?'primary':'secondary'}`} aria-pressed={mode==='visit'} disabled={!ready||!rooms.length} onClick={()=>chooseMode('visit')}>Entrer dans une pièce</button>
+   </div>
+   <div className="plan-studio-tools">
+    {mode==='visit'&&selectedRoom&&<label className="plan-studio-room">Pièce<select aria-label="Pièce visitée" value={selectedRoom.id} onChange={event=>chooseRoom(event.target.value)}>{rooms.map(room=><option key={room.id} value={room.id}>{room.name}</option>)}</select></label>}
+    {onChange&&<button type="button" className="btn secondary" aria-expanded={panel} onClick={()=>setPanel(open=>!open)}>Finitions</button>}
+    <button type="button" ref={fullButton} className="btn secondary" onClick={()=>void toggleFull()}>{full?'Quitter le plein écran':'Plein écran'}</button>
+   </div>
   </div>
-  {panel&&onChange&&<FinishPanel plan={plan} roomId={roomId} onRoom={setRoomId} onChange={onChange} onClose={()=>setPanel(false)}/>}
-  {render.error&&<p className="plan-scene-error" role="alert">{render.error}</p>}
-  {render.image&&<div className="plan-scene-render" role="dialog" aria-label="Rendu photoréaliste"><img src={render.image} alt="Rendu photoréaliste de la vue 3D"/><div className="button-row"><a className="btn primary" href={render.image} download="mgpro-rendu-photorealiste.png">Télécharger le rendu</a><button type="button" className="btn secondary" onClick={()=>setRender({busy:false})}>Revenir à la 3D</button></div></div>}
- </div>;
+
+  <div className={`plan-studio-content${panel&&onChange?' with-finishes':''}`}>
+   <div className="plan-studio-main">
+    <div ref={host} tabIndex={0} aria-label="Scène 3D" className={`plan-studio-canvas${mode==='visit'?' walking':''}`}>
+     {!ready&&<p role={error?'alert':'status'}>{error||'Préparation de la vue 3D…'}</p>}
+    </div>
+    <div className="plan-studio-navigation">
+     <p >{mode==='visit'?'Glissez pour regarder, puis cliquez ou touchez le sol pour avancer. Sur ordinateur, utilisez aussi les flèches après avoir cliqué dans la vue.':'Glissez pour tourner. Utilisez la molette ou pincez pour zoomer.'}</p>
+     {mode==='visit'&&ready&&<div className="plan-studio-arrows" role="group" aria-label="Se déplacer dans la pièce">
+      <button type="button" aria-label="À gauche" {...hold('l')}>←</button>
+      <button type="button" aria-label="Avancer" {...hold('f')}>↑</button>
+      <button type="button" aria-label="Reculer" {...hold('b')}>↓</button>
+      <button type="button" aria-label="À droite" {...hold('r')}>→</button>
+      <button type="button" aria-label="Zoomer" {...hold('in')}>+</button>
+      <button type="button" aria-label="Dézoomer" {...hold('out')}>−</button>
+     </div>}
+    </div>
+   </div>
+   {panel&&onChange&&<div className="plan-studio-finish-slot"><FinishPanel plan={plan} roomId={selectedRoom?.id||''} onRoom={chooseRoom} onChange={onChange} onClose={()=>setPanel(false)}/></div>}
+  </div>
+
+  <div className="plan-studio-footer">
+   <button type="button" className="btn secondary" disabled={!ready} onClick={downloadView}>Télécharger la vue 3D</button>
+   <details className="plan-studio-options">
+    <summary>Options de rendu</summary>
+    <div className="plan-studio-option-body">
+     {mode==='model'&&onViewOptions&&<>
+      <label><input type="checkbox" checked={roof} onChange={event=>onViewOptions({roof:event.target.checked,top})}/> Afficher le toit</label>
+      <label><input type="checkbox" checked={top} onChange={event=>onViewOptions({roof,top:event.target.checked})}/> Vue du dessus</label>
+     </>}
+     {mode==='visit'&&<label><input type="checkbox" checked={real} disabled={!ready} onChange={event=>{setReal(event.target.checked);api.current?.real(event.target.checked)}}/> Éclairage détaillé</label>}
+     {mode==='visit'&&real&&<p>{quality>=18?'Éclairage détaillé affiché.':'L’éclairage détaillé s’affiche après une courte pause.'}</p>}
+     <button type="button" className="btn secondary" disabled={!ready||render.busy||imageUnavailable} onClick={()=>void photoreal()}>{render.busy?'Création de la photo…':'Créer une photo IA'}</button>
+     {imageUnavailable&&<p>Photo IA indisponible sur ce compte. Le téléchargement de la vue 3D reste disponible.</p>}
+    </div>
+   </details>
+  </div>
+  {assetStatus&&(assetStatus.startsWith('Chargement')
+   ?<p className="plan-studio-status" role="status">{assetStatus}</p>
+   :<details className="plan-studio-status"><summary>Certains équipements sont indisponibles</summary><p>{assetStatus}</p></details>)}
+  {render.error&&<div className="plan-studio-message" role="alert"><p>{render.error}</p><button type="button" className="btn secondary" onClick={()=>setRender({busy:false})}>Fermer le message</button></div>}
+  {render.image&&<section className="plan-studio-result" aria-label="Photo IA"><img src={render.image} alt="Photo IA produite à partir de la vue 3D"/><div className="button-row"><a className="btn primary" href={render.image} download="mgpro-rendu-photorealiste.jpg">Télécharger la photo</a><button type="button" className="btn secondary" onClick={()=>setRender({busy:false})}>Fermer la photo</button></div></section>}
+ </section>;
 }

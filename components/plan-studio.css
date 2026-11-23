@@ -1,0 +1,131 @@
+.plan-studio {
+  --studio-border: var(--line, #91919355);
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  color: inherit;
+}
+.plan-studio-toolbar, .plan-studio-modes, .plan-studio-tools,
+.plan-studio-navigation, .plan-studio-footer, .plan-studio-arrows {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.plan-studio-toolbar, .plan-studio-navigation { justify-content: space-between; }
+.plan-studio-toolbar .btn, .plan-studio-footer .btn { min-height: 44px; }
+.plan-studio-room {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  min-width: 0;
+}
+.plan-studio-room select { min-width: 0; max-width: min(40vw, 250px); font-size: 16px; }
+.plan-studio-content { display: grid; gap: 12px; min-width: 0; }
+.plan-studio-main { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 8px; min-width: 0; }
+.plan-studio-canvas {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  height: clamp(360px, 54vh, 680px);
+  border-radius: 14px;
+  background: #24231f;
+}
+.plan-studio-canvas p { color: #faf5e9; text-align: center; padding: 16px; }
+.plan-studio-canvas canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; }
+.plan-studio-canvas.walking canvas { cursor: grab; }
+.plan-studio-canvas.walking canvas:active { cursor: grabbing; }
+.plan-studio-canvas:focus-visible { outline: 2px solid #caa45c; outline-offset: 3px; }
+.plan-studio-navigation p, .plan-studio-status, .plan-studio-options p, .plan-studio-message p {
+  margin: 0;
+  font-size: .875rem;
+  line-height: 1.5;
+}
+.plan-studio-navigation p { flex: 1 1 230px; }
+.plan-studio-arrows button {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--studio-border);
+  border-radius: 9px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 1.2rem;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.plan-studio-arrows button:active { background: #b9965940; }
+.plan-studio-footer {
+  align-items: flex-start;
+  border-top: 1px solid var(--studio-border);
+  padding-top: 10px;
+}
+.plan-studio-options { flex: 1 1 230px; }
+.plan-studio-options summary, .plan-studio-status summary { cursor: pointer; padding: 10px 0; }
+.plan-studio-option-body { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding-block: 4px 10px; }
+.plan-studio-option-body label { display: inline-flex; align-items: center; flex-direction: row; gap: 6px; margin: 0; }
+.plan-studio-option-body input[type=checkbox] { width: auto; }
+.plan-studio-message { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px; border: 1px solid #bd8050; border-radius: 10px; }
+.plan-studio-message p { flex: 1 1 230px; }
+.plan-studio-result img { display: block; max-width: 100%; max-height: 65vh; margin: 0 auto 12px; object-fit: contain; }
+.plan-studio-finish-slot { min-width: 0; }
+.plan-studio-finish-slot .finish-panel {
+  position: static;
+  width: auto;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--studio-border);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.plan-studio-finish-slot .finish-rooms button { color: inherit; background: transparent; border-color: var(--studio-border); min-height: 36px; }
+.plan-studio-finish-slot .finish-rooms button.active { color: #211c13; background: #dfbd78; }
+.plan-studio-finish-slot .finish-panel :is(select, .finish-search) { font-size: 16px; }
+.plan-studio-expanded {
+  position: fixed;
+  z-index: 2500;
+  inset: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  align-content: start;
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  background: #191919;
+  color: #f4efe4;
+}
+.plan-studio-expanded .plan-studio-canvas { height: clamp(280px, 69dvh, 1050px); }
+.plan-workflow[data-step=design] .plan-layout { grid-template-columns: minmax(0, 1fr); }
+.plan-workflow[data-step=design] .plan-viewport { padding: 10px; }
+.plan-workflow[data-step=design] .plan-controls { display: block; }
+.plan-appearance-toggle > summary { cursor: pointer; }
+.plan-appearance-toggle > .plan-appearance-fields { display: grid; gap: 8px; margin-top: 10px; }
+html body .workspace .app-dialog:has(.plan-workflow[data-step=design]) {
+  width: min(1460px, calc(100vw - 28px));
+  max-width: calc(100vw - 28px);
+}
+@media (min-width: 1050px) {
+  .plan-studio-content.with-finishes { grid-template-columns: minmax(0, 1fr) minmax(240px, 28%); }
+  .plan-studio-finish-slot .finish-panel { max-height: clamp(360px, 54vh, 680px); overflow: auto; }
+}
+@media (max-width: 800px) {
+  .plan-studio-canvas { height: clamp(290px, 48dvh, 470px); }
+  .plan-studio-expanded .plan-studio-canvas { height: clamp(250px, 62dvh, 700px); }
+  .plan-studio-toolbar { align-items: stretch; }
+}
+@media (max-width: 480px) {
+  .plan-studio-toolbar .btn, .plan-studio-footer .btn { white-space: normal; padding-inline: 9px; }
+  .plan-studio-modes, .plan-studio-tools { width: 100%; }
+  .plan-studio-modes .btn { flex: 1 1 118px; }
+  .plan-studio-room { flex: 1 1 100%; }
+  .plan-studio-room select { flex: 1; max-width: none; }
+  .plan-studio-arrows { gap: 4px; }
+  .plan-studio-arrows button { width: clamp(34px, 10vw, 44px); min-height: 44px; }
+  .plan-workflow[data-step=design] .plan-viewport { padding: 5px; }
+  html body .workspace .app-dialog:has(.plan-workflow[data-step=design]) {
+    width: calc(100vw - 12px);
+    max-width: calc(100vw - 12px);
+  }
+}
