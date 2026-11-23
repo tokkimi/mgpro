@@ -21,9 +21,9 @@ const MODELS = {
 };
 const withOverride=(list:readonly string[])=>{const o=process.env.AI_MODEL?.trim();return o?[o,...list.filter(m=>m!==o)]:[...list]};
 
-export function aiProvider(req?:Request):AiProvider|null{
+export function aiProvider(req?:Request,gatewayOnly=false):AiProvider|null{
  const key=process.env.ANTHROPIC_API_KEY?.trim();
- if(key)return {kind:'anthropic',url:'https://api.anthropic.com/v1/messages',headers:{'x-api-key':key,'anthropic-version':'2023-06-01','content-type':'application/json'},models:t=>withOverride(MODELS.anthropic[t])};
+ if(key&&!gatewayOnly)return {kind:'anthropic',url:'https://api.anthropic.com/v1/messages',headers:{'x-api-key':key,'anthropic-version':'2023-06-01','content-type':'application/json'},models:t=>withOverride(MODELS.anthropic[t])};
  const token=process.env.AI_GATEWAY_API_KEY?.trim()||process.env.VERCEL_OIDC_TOKEN?.trim()||req?.headers.get('x-vercel-oidc-token')?.trim();
  if(token)return {kind:'gateway',url:'https://ai-gateway.vercel.sh/v1/messages',headers:{authorization:`Bearer ${token}`,'anthropic-version':'2023-06-01','content-type':'application/json'},models:t=>withOverride(MODELS.gateway[t])};
  return null;
@@ -37,8 +37,8 @@ const unavailable=new Map<string,number>();
 export class AiError extends Error{constructor(message:string,public status=502){super(message)}}
 
 /** Calls Claude and returns the concatenated text answer. Throws AiError with a French message. */
-export async function aiText({req,system,messages,maxTokens=2000,tier='smart',timeoutMs=55000}:{req?:Request;system:string;messages:AiMessage[];maxTokens?:number;tier?:'best'|'smart'|'fast';timeoutMs?:number}):Promise<string>{
- const provider=aiProvider(req);
+export async function aiText({req,system,messages,maxTokens=2000,tier='smart',timeoutMs=55000,gatewayOnly=false}:{req?:Request;system:string;messages:AiMessage[];maxTokens?:number;tier?:'best'|'smart'|'fast';timeoutMs?:number;gatewayOnly?:boolean}):Promise<string>{
+ const provider=aiProvider(req,gatewayOnly);
  if(!provider)throw new AiError('IA non configurée sur ce déploiement.',503);
  let res:Response|null=null,lastBody='';
  const deadline=Date.now()+timeoutMs;
@@ -52,11 +52,14 @@ export async function aiText({req,system,messages,maxTokens=2000,tier='smart',ti
   finally{clearTimeout(timer)}
   if(res.ok){lastModel=model;break}
   lastBody=await res.text().catch(()=>'');
-  console.error('ai error',provider.kind,model,res.status,lastBody.slice(0,300));
+  console.error('ai error',provider.kind,model,res.status);
   // Model not available on this account / plan: try the next candidate.
   const restricted=/RestrictedModels|not_found|model_not_found|no_providers_available|does not have access|invalid model/i.test(lastBody)||res.status===404;
   if(!restricted)break;
   unavailable.set(model,Date.now()+15*60_000);
+ }
+ if(provider.kind==='anthropic'&&!res?.ok&&aiProvider(req,true)&&deadline-Date.now()>=3000){
+  return aiText({req,system,messages,maxTokens,tier,timeoutMs:deadline-Date.now(),gatewayOnly:true});
  }
  if(!res)throw new AiError('Service IA indisponible.',502);
  if(!res.ok){
