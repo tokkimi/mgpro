@@ -84,7 +84,8 @@ export function extractJson<T=any>(text:string):T|null{
 }
 
 // ───────────────────────── Image generation (photorealistic renders) ─────────────────────────
-const IMAGE_MODELS=['google/gemini-3.1-flash-image-preview','google/gemini-3-pro-image-preview','google/gemini-2.5-flash-image'];
+// Only ids that exist on Vercel AI Gateway (a missing id answers 404 and wastes the time budget).
+const IMAGE_MODELS=['google/gemini-2.5-flash-image','google/gemini-3-pro-image-preview'];
 
 /** Edits an image with an image model; returns a data URL. Uses GOOGLE_GENERATIVE_AI_API_KEY when set, else Vercel AI Gateway. */
 export async function aiImage({req,prompt,image,timeoutMs=110000}:{req?:Request;prompt:string;image:string;timeoutMs?:number}):Promise<string>{
@@ -109,7 +110,10 @@ export async function aiImage({req,prompt,image,timeoutMs=110000}:{req?:Request;
   const res=await fetch('https://ai-gateway.vercel.sh/v1/chat/completions',{method:'POST',signal:AbortSignal.timeout(Math.max(3000,deadline-Date.now())),headers:{authorization:`Bearer ${token}`,'content-type':'application/json'},body:JSON.stringify({model,modalities:['text','image'],stream:false,messages:[{role:'user',content:[{type:'image_url',image_url:{url:image}},{type:'text',text:prompt}]}]})}).catch(e=>{last=(e as Error).message;return null});
   if(!res)continue;
   const body=await res.text();
-  if(!res.ok){last=body;console.error('image gateway',model,res.status,body.slice(0,300));continue}
+  if(!res.ok){last=body;
+   // Free tier: no image model is available on the account, trying the others only adds latency and noise.
+   if(/Free tier|top-up|credits/i.test(body)){console.warn('image gateway',model,res.status,'AI Gateway credits required');break}
+   console.error('image gateway',model,res.status,body.slice(0,300));continue}
   try{const out=JSON.parse(body);const img=out?.choices?.[0]?.message?.images?.[0]?.image_url?.url;if(img)return img;last='Aucune image renvoyée.'}catch{last='Réponse illisible.'}
  }
  if(/Free tier|top-up|credits/i.test(last))throw new AiError('Le rendu photoréaliste demande des crédits Vercel AI Gateway (l’offre gratuite ne donne pas accès aux modèles d’image).',402);

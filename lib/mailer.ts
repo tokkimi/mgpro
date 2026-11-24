@@ -11,4 +11,4 @@ export async function sendMail(input:{to:string;settings?:Data;cc?:string[];subj
   return response.ok?{status:'envoyé',id:body.id}:{status:'échec',error:String(body.message||response.status)};
  }catch(e){return {status:'échec',error:(e as Error).message}}
 }
-export const siteUrl=(req?:Request)=>process.env.NEXT_PUBLIC_SITE_URL||(req?new URL(req.url).origin:'https://mgpro-ten.vercel.app');
+export const siteUrl=(req?:Request)=>process.env.NEXT_PUBLIC_SITE_URL||(req?new URL(req.url).origin:'https://mgpro-noir.vercel.app');
