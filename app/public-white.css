@@ -106,7 +106,7 @@ body:has(.atelier-site){background:#fff;color:#20262b;color-scheme:light}
 .atelier-site :is(main,footer) :is(h1,h2){font-family:Georgia,'Times New Roman',serif;font-weight:400;letter-spacing:.015em;color:#20262b!important;text-shadow:none;padding-inline:0}
 .atelier-site :is(main,footer) :is(h1,h2)>span:not(.gold-dot){color:#20262b!important}
 .atelier-site .section-kicker{display:flex;align-items:center;justify-content:flex-start;gap:12px;width:fit-content;max-width:100%;font-family:Georgia,'Times New Roman',serif;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:#75640e!important}
-.atelier-site .section-kicker::before,.atelier-site .section-kicker::after{content:'';display:block;flex:0 0 32px;width:32px;height:2px;background:linear-gradient(90deg,transparent,#9a842c 25%,#fff1b2 50%,#9a842c 75%,transparent);box-shadow:0 1px 2px #a56c1530}
+.atelier-site .section-kicker::before,.atelier-site .section-kicker::after{content:'';display:block;flex:0 0 32px;width:32px;height:2px;background:#a18a38;box-shadow:none}
 .atelier-site .immersive-banner-copy .section-kicker{justify-content:center}
 .atelier-site .immersive-banner-copy h2{font-family:Georgia,'Times New Roman',serif;font-size:clamp(28px,3.5vw,54px);font-weight:400;color:#fff!important;text-shadow:0 2px 18px #0009}
 .atelier-site .hero-scroll-sequence h1,.atelier-site .hero-scroll-sequence h1>span:not(.gold-dot){color:#fff!important;text-shadow:0 2px 18px #0008}
