@@ -127,7 +127,7 @@ export default function RenovationHero({locale='fr',finance,onQuote}:Props){
 
  return <div className={`hero-scroll-sequence${staticMode?' is-static':''}`} ref={root} data-animating={staticMode?'false':'true'} data-ready={ready?'true':'false'}>
   <div className="hero-scroll-pin" ref={pin}><section className="atelier-hero">
-   <img className="atelier-hero-photo hero-final-photo" src="/images/renovation-inspiration.png" alt={en?'Renovation inspiration: natural oak kitchen — generated image':'Inspiration : cuisine rénovée en bois naturel — visuel généré'} fetchPriority="high"/>
+   <img className="atelier-hero-photo hero-final-photo" src="/images/renovation-inspiration-1536.webp" srcSet="/images/renovation-inspiration-768.webp 768w, /images/renovation-inspiration-1536.webp 1536w" sizes="(max-width:800px) 100vw, 60vw" width="1536" height="1024" alt={en?'Renovation inspiration: natural oak kitchen — generated image':'Inspiration : cuisine rénovée en bois naturel — visuel généré'} fetchPriority="high"/>
    <picture className="hero-first-frame"><source media="(max-width:800px)" srcSet={`${sequence.directory}/${sequence.frames[sequence.frames.length-1]}-mobile.webp`}/><img className="atelier-hero-photo" src={`${sequence.directory}/${sequence.frames[sequence.frames.length-1]}-desktop.webp`} alt="" fetchPriority="high"/></picture>
    <canvas ref={canvas} className="hero-frame-canvas" aria-hidden="true"/>
    <div className="atelier-hero-shade"/>
