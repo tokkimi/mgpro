@@ -302,6 +302,24 @@ body:has(.atelier-site) .cookie-settings-footer{display:none}
 .mg-brand-intro .mg-intro-flare{mix-blend-mode:multiply;filter:invert(1) sepia(1) saturate(1.4) hue-rotate(355deg) brightness(1.45);opacity:.18}
 .mg-brand-intro .mg-intro-aura::before,.mg-brand-intro .mg-intro-aura::after{background:radial-gradient(ellipse,rgba(214,173,81,.25),rgba(242,220,166,.12) 38%,transparent 70%)}
 
+/* Actual left and right ornaments from the current MG Pro logo, including their highlights. */
+.atelier-site :is(.section-kicker,.home-expertise-heading h2)::before,
+.atelier-site :is(.section-kicker,.home-expertise-heading h2)::after,
+.atelier-site .dock-topline>span::before,
+.atelier-site .dock-topline>span::after{
+ content:'';display:block;flex:0 0 46px;width:46px;height:7px;
+ background:transparent url('/images/logo-ornement-gauche.png') center/contain no-repeat;
+ box-shadow:none;filter:none;
+}
+.atelier-site :is(.section-kicker,.home-expertise-heading h2)::after,
+.atelier-site .dock-topline>span::after{background-image:url('/images/logo-ornement-droite.png')}
+@media(max-width:800px){
+ .atelier-site :is(.section-kicker,.home-expertise-heading h2)::before,
+ .atelier-site :is(.section-kicker,.home-expertise-heading h2)::after,
+ .atelier-site .dock-topline>span::before,
+ .atelier-site .dock-topline>span::after{flex-basis:28px;width:28px;height:5px}
+}
+
 /* Finance: raised, soft white surface and a quiet Financeit watermark. */
 .atelier-site .atelier-finance{background:#f7f9f8!important;border-radius:36px;box-shadow:inset 2px 2px 8px rgba(255,255,255,.95),inset -5px -5px 16px rgba(212,220,216,.22),0 20px 46px rgba(32,49,40,.10);border:1px solid rgba(223,231,226,.8);margin:clamp(20px,3vw,48px);isolation:isolate}
 .atelier-site .finance-orb{left:-8%;bottom:-10%;width:min(70vw,780px);height:auto;aspect-ratio:560/292;background:none;box-shadow:none;border-radius:0;opacity:.09;transform:rotate(-13deg);pointer-events:none}
