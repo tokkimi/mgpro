@@ -2,8 +2,10 @@ import {NextResponse,NextRequest} from 'next/server';
 import {createServerClient} from '@supabase/ssr';
 export async function proxy(request:NextRequest){
  const locale=request.nextUrl.pathname==='/en'||request.nextUrl.pathname.startsWith('/en/')?'en-CA':'fr-CA';
- const headers=new Headers(request.headers);headers.set('x-site-locale',locale);
+ const headers=new Headers(request.headers);headers.set('x-site-locale',locale);headers.set('x-site-path',request.nextUrl.pathname);
  const response=NextResponse.next({request:{headers}});
+ // Keep this preview out of search results while the existing public domain remains live.
+ if(request.nextUrl.hostname.endsWith('.vercel.app'))response.headers.set('X-Robots-Tag','noindex, nofollow');
  if(process.env.NEXT_PUBLIC_SUPABASE_URL&&process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY&&request.cookies.getAll().some(c=>c.name.startsWith('sb-'))){
  const auth=createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL,process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,{cookies:{getAll:()=>request.cookies.getAll(),setAll(items){items.forEach(({name,value})=>request.cookies.set(name,value));items.forEach(({name,value,options})=>response.cookies.set(name,value,options));}}});
  // Refresh expiring session cookies while verifying signed claims. Route handlers

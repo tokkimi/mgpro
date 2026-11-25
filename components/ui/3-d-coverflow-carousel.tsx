@@ -2,6 +2,7 @@
 
 import {useCallback,useEffect,useRef,useState} from 'react';
 import type {CSSProperties,TouchEvent} from 'react';
+import Image from 'next/image';
 import {ArrowLeft,ArrowRight,Maximize2,Pause,Play} from 'lucide-react';
 
 export interface CarouselItem {
@@ -83,7 +84,7 @@ export function CoverFlowCarousel({items,locale='fr',autoplay=true,autoplayDelay
     const style={transform,opacity:depth>1?0:center?1:.65,visibility:depth>1?'hidden':'visible',pointerEvents:depth>1?'none':undefined,zIndex:30-depth*10} as CSSProperties;
     return <article key={item.id} className={`mg-coverflow-card${center?' is-center':''}`} style={style} inert={depth>1} aria-roledescription={en?'slide':'diapositive'} aria-label={`${index+1} / ${total} — ${item.title}`} aria-hidden={depth>1||undefined}>
      <button className="mg-coverflow-photo" type="button" disabled={!center} tabIndex={center?0:-1} aria-label={`${en?'Enlarge':'Agrandir'} ${item.title}, photo ${photoIndex+1}`} onClick={()=>{setRunning(false);onPhoto(item.photos[photoIndex])}}>
-      <img src={item.photos[photoIndex]} alt={`${item.title} — MG Pro, ${en?'photo':'photo'} ${photoIndex+1}`} loading="lazy" draggable={false}/>
+      <Image src={item.photos[photoIndex]} alt={`${item.title} — MG Pro, photo ${photoIndex+1}`} fill sizes="(max-width: 800px) 85vw, 600px" draggable={false}/>
       {center&&<span className="mg-coverflow-expand"><Maximize2 size={17}/></span>}
      </button>
      <div className="mg-coverflow-body" inert={!center} aria-hidden={!center}>
