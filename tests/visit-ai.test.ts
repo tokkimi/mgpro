@@ -52,13 +52,20 @@ test('the model cannot move a fixed room nor change measured sizes',()=>{
  assert.ok(checkPlan(wrong,rooms).some(c=>c.level==='error'));
 });
 
-test('quote lines without price are dropped and geometry is computed',()=>{
+test('quote lines without price remain visible for completion and geometry is computed',()=>{
  const q=normalizeQuote({lines:[{description:'Peinture',quantity:300,unit:'pi²',price:3.5},{description:'Rien',quantity:1,price:0}],exclusions:['Permis']})!;
- assert.equal(q.lines.length,1);assert.equal(q.exclusions[0],'Permis');
+ assert.equal(q.lines.length,2);assert.equal(q.lines[1].price,0);assert.equal(q.exclusions[0],'Permis');
  const g=geometry([{name:'Cuisine',length:12,width:10,height:8,unit:'pi'}]);
  assert.equal(g[0].floor_sqft,120);assert.equal(g[0].perimeter_ft,44);
  assert.ok(g[0].wall_sqft_net<352&&g[0].wall_sqft_net>300);
  assert.equal(layoutFromPositions([]).placed.size,0);
+});
+
+test('a guessed room dimension is flagged instead of reported as measured',()=>{
+ const rooms=[{id:'k',name:'Cuisine',length:4,width:0,unit:'m'}];
+ const checks=checkPlan(autoPlan(rooms),rooms);
+ assert.ok(checks.some(c=>c.level==='warn'&&c.text.includes('Cuisine')&&c.text.includes('manquante')));
+ assert.ok(!checks.some(c=>c.level==='ok'&&c.text.startsWith('Cotes conformes')));
 });
 
 import {quoteUserText} from '../lib/visit-ai';

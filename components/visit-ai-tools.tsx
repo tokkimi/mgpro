@@ -5,7 +5,7 @@ import {Camera,Loader2,Ruler,Sparkles,Video,Check,X,Images,ShieldCheck,AlertTria
 import type {Plan} from '@/lib/plan';
 import {autoPlan,checkPlan,SIDE_LABEL,type Check as PlanCheckItem,type MeasureResult,type QuoteDraft,type Review} from '@/lib/visit-ai';
 import './visit-ai-tools.css';
-import {loadMaterials,pricedForQuote,type MaterialPrices} from '@/lib/material-library';
+import {loadMaterials,pricedForQuote,isPriced,type MaterialPrices} from '@/lib/material-library';
 import {surfacesFor} from '@/lib/finishes';
 import {describeFinishes} from '@/lib/finishes';
 
@@ -273,6 +273,7 @@ export function QuoteBuilder({request,plan,catalogue,prices,draft,onDraft,demo=f
  const [busy,setBusy]=useState(false),[error,setError]=useState('');
  const lines=draft.lines||[];const total=lines.reduce((s,l)=>s+(Number(l.quantity)||0)*(Number(l.price)||0),0);
  const priced=lines.length>0&&lines.every(l=>Number(l.price)>0);
+ const missingFinishPrices=chosenFinishes(plan).filter(finish=>!isPriced(prices?.[finish.id]));
  async function build(){
   setError('');if(lines.length&&!window.confirm('Remplacer les lignes actuelles par un nouveau chiffrage de l’IA ?'))return;
   if(demo){setError('Démonstration : le chiffrage IA est disponible dans l’espace réel.');return}
@@ -286,13 +287,14 @@ export function QuoteBuilder({request,plan,catalogue,prices,draft,onDraft,demo=f
  return <div className="quote-builder">
   <p className="eyebrow">DEVIS</p>
   <h3>Soumission chiffrée</h3>
-  <p className="muted">L’IA calcule les quantités à partir des cotes et du plan (surfaces, murs, ouvertures) et applique d’abord vos prix (finitions choisies sur le plan 3D, bibliothèque des matériaux, catalogue), sinon les prix du marché du Grand Montréal.</p>{prices&&<p className="muted">{Object.keys(prices).length} matériau(x) avec prix dans la bibliothèque{chosenFinishes(plan).length?` · ${chosenFinishes(plan).length} finition(s) choisie(s) sur le plan`:''}.</p>}
+  <p className="muted">L’IA propose des quantités à partir des cotes et du plan et utilise en priorité vos prix du catalogue. Les autres prix sont des estimations générées par l’IA, non des tarifs vérifiés. Vérifiez toutes les dimensions, quantités et tous les prix avant d’envoyer la soumission.</p>{prices&&<p className="muted">{Object.keys(prices).length} matériau(x) avec prix dans la bibliothèque{chosenFinishes(plan).length?` · ${chosenFinishes(plan).length} finition(s) choisie(s) sur le plan`:''}.</p>}
+  {missingFinishPrices.length>0&&<p className="notice">Prix à renseigner pour les finitions choisies : {missingFinishPrices.map(f=>`${f.where} (${f.id})`).join(', ')}. Sans prix enregistré, le montant proposé par l’IA doit être vérifié.</p>}
   <button type="button" className="btn primary" disabled={busy||disabled} onClick={()=>void build()}>{busy?<Loader2 size={16} className="spin"/>:<Calculator size={16}/>}{busy?'L’IA chiffre le devis… (30 à 90 s)':lines.length?'Rechiffrer avec l’IA':'Chiffrer le devis avec l’IA'}</button>
   {error&&<p className="error" role="alert">{error}</p>}
   {lines.length>0&&<>
-   {Object.entries(groups).map(([cat,items])=><div className="quote-group" key={cat}><h4>{cat}</h4>{items.map((l,i)=><div className="quote-row" key={i}><span>{l.description}{l.basis==='catalogue'&&<em className="tag">catalogue</em>}</span><small>{l.quantity} {l.unit} × {money(Number(l.price)||0)}</small><b>{money((Number(l.quantity)||0)*(Number(l.price)||0))}</b></div>)}</div>)}
+   {Object.entries(groups).map(([cat,items])=><div className="quote-group" key={cat}><h4>{cat}</h4>{items.map((l,i)=><div className="quote-row" key={i}><span>{l.description}{l.basis==='catalogue'&&<em className="tag">catalogue</em>}</span><small>{l.quantity} {l.unit} × {Number(l.price)>0?money(Number(l.price)):'Prix à compléter'}</small><b>{Number(l.price)>0?money((Number(l.quantity)||0)*Number(l.price)):'À chiffrer'}</b></div>)}</div>)}
    <p className="quote-total">Total avant taxes : <b>{money(total)}</b></p>
-   {!priced&&<p className="notice">Certaines lignes n’ont pas de prix : complétez-les dans la soumission.</p>}
+   {!priced&&<p className="notice">Certaines lignes n’ont pas de prix. Le total est incomplet : complétez-les dans la soumission avant de l’envoyer.</p>}
    {draft.assumptions&&draft.assumptions.length>0&&<details><summary>Hypothèses ({draft.assumptions.length})</summary><ul>{draft.assumptions.map((a,i)=><li key={i}>{a}</li>)}</ul></details>}
    {draft.exclusions&&draft.exclusions.length>0&&<details><summary>Exclusions ({draft.exclusions.length})</summary><ul>{draft.exclusions.map((a,i)=><li key={i}>{a}</li>)}</ul></details>}
   </>}

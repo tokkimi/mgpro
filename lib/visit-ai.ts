@@ -218,11 +218,13 @@ export type Check={level:'ok'|'warn'|'error';text:string};
 export function checkPlan(plan:Plan,input:InRoom[]):Check[]{
  const out:Check[]=[];const metric=metricRooms(input);const live=plan.rooms.filter(r=>r.phase!=='remove');
  const find=(m:MetricRoom)=>plan.rooms.find(r=>r.id===m.id.replace(/[^\w-]/g,'-').slice(0,60))||plan.rooms.find(r=>r.name.trim().toLowerCase()===m.name.toLowerCase());
+ const incomplete=input.map((room,i)=>({room,name:metric[i].name})).filter(({room})=>![room.length,room.width].every(value=>Number.isFinite(Number(value))&&Number(value)>0));
+ for(const {name} of incomplete)out.push({level:'warn',text:`« ${name} » : longueur ou largeur manquante. Les dimensions du plan sont provisoires et doivent être mesurées avant le devis.`});
  let dimsOk=0;
  for(const m of input.length?metric:[]){const r=find(m);if(!r){out.push({level:'error',text:`« ${m.name} » relevée sur place est absente du plan.`});continue}
   const same=(Math.abs(r.length-m.length)<.05&&Math.abs(r.width-m.width)<.05)||(!m.position&&Math.abs(r.length-m.width)<.05&&Math.abs(r.width-m.length)<.05);
   if(same)dimsOk++;else out.push({level:'error',text:`« ${m.name} » : ${r.length} × ${r.width} m sur le plan au lieu de ${m.length} × ${m.width} m mesurés.`});}
- if(input.length&&dimsOk===metric.length)out.push({level:'ok',text:`Cotes conformes au relevé pour les ${dimsOk} pièce(s).`});
+ if(input.length&&!incomplete.length&&dimsOk===metric.length)out.push({level:'ok',text:`Cotes conformes au relevé pour les ${dimsOk} pièce(s).`});
  let overlapsFound=0;for(let i=0;i<live.length;i++)for(let j=i+1;j<live.length;j++)if(overlapArea(live[i],live[j])>.05){overlapsFound++;out.push({level:'error',text:`« ${live[i].name} » et « ${live[j].name} » se chevauchent.`})}
  if(live.length>1&&!overlapsFound)out.push({level:'ok',text:'Aucune pièce ne se chevauche.'});
  let rel=0,relOk=0;
@@ -289,7 +291,7 @@ export function quoteUserText(input:{rooms:InRoom[];plan?:Plan|null;scope?:strin
 
 export function normalizeQuote(raw:any):QuoteDraft|null{
  if(!raw||!Array.isArray(raw.lines))return null;
- const lines:QuoteLine[]=raw.lines.filter((l:any)=>l&&l.description).slice(0,120).map((l:any)=>({category:String(l.category||'').slice(0,80),description:String(l.description).slice(0,300),quantity:r2(clamp(l.quantity,.01,100000,1)),unit:String(l.unit||'forfait').slice(0,20),price:r2(clamp(l.price,0,1000000,0)),basis:pick(l.basis,['catalogue','estimation'] as const,'estimation')})).filter((l:QuoteLine)=>l.price>0);
+ const lines:QuoteLine[]=raw.lines.filter((l:any)=>l&&l.description).slice(0,120).map((l:any)=>({category:String(l.category||'').slice(0,80),description:String(l.description).slice(0,300),quantity:r2(clamp(l.quantity,.01,100000,1)),unit:String(l.unit||'forfait').slice(0,20),price:r2(clamp(l.price,0,1000000,0)),basis:pick(l.basis,['catalogue','estimation'] as const,'estimation')}));
  if(!lines.length)return null;
  return {lines,assumptions:list(raw.assumptions,12,240),exclusions:list(raw.exclusions,12,240),summary:String(raw.summary||'').slice(0,600)};
 }
