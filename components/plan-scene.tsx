@@ -25,6 +25,7 @@ export default function PlanScene({plan,roof=false,top=false,onChange,onViewOpti
  const studio=useRef<HTMLElement>(null);
  const host=useRef<HTMLDivElement>(null);const [error,setError]=useState('');
  const [assetStatus,setAssetStatus]=useState('');
+ const [textureStatus,setTextureStatus]=useState(false);
  const [ready,setReady]=useState(false);
  const [imageUnavailable,setImageUnavailable]=useState(false);
  const fullButton=useRef<HTMLButtonElement>(null);
@@ -41,7 +42,7 @@ export default function PlanScene({plan,roof=false,top=false,onChange,onViewOpti
   const {RoundedBoxGeometry}=await import('three/addons/geometries/RoundedBoxGeometry.js');
   const {RectAreaLightUniformsLib}=await import('three/addons/lights/RectAreaLightUniformsLib.js');
   if(cancelled||!host.current)return;const el=host.current;
-  setError('');
+  setError('');setTextureStatus(false);
   const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true,powerPreference:'high-performance'});
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=.92;
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;el.appendChild(renderer.domElement);
@@ -59,6 +60,7 @@ export default function PlanScene({plan,roof=false,top=false,onChange,onViewOpti
   let ptMaterialsTimer:any=0;let pt:any=null;const texturesChanged=()=>{if(!pt)return;clearTimeout(ptMaterialsTimer);ptMaterialsTimer=setTimeout(()=>{try{pt?.updateMaterials()}catch{}},250)};
   const loader=new T.TextureLoader();
   const photoTex=new Map<string,{base:import('three').Texture; ready:Promise<void>}>();
+  const failedTextures=new Set<string>();
   const sceneTextures=new Set<import('three').Texture>();
   const anisotropy=Math.min(16,renderer.capabilities.getMaxAnisotropy());
 
@@ -94,13 +96,25 @@ export default function PlanScene({plan,roof=false,top=false,onChange,onViewOpti
      texture.needsUpdate=true;
      sceneTextures.add(texture);
      mat[maps[map]]=texture;
-     if(map==='Color')mat.color.set('#ffffff');
-     if(map==='Roughness')mat.roughness=Math.min(1,.48+mat.roughness);
+     if(map==='Color'){
+      mat.color.set('#ffffff');
+      // A procedural relief does not correspond to the scanned colour image.
+      // Keep the surface smooth until its matching normal map is available.
+      mat.normalMap=null;
+     }
+     // The scan already describes the surface roughness; a multiplier of one
+     // preserves its measured range instead of changing it for each material.
+     if(map==='Roughness')mat.roughness=1;
      if(map==='NormalGL')mat.normalScale.setScalar(finish==='paint'?.24:.65);
      mat.needsUpdate=true;
      texturesChanged();
-    }).catch(()=>{ /* Retain the procedural map if a scan cannot be loaded. */ });
+    }).catch(()=>{
+     if(cancelled)return;
+     failedTextures.add(urlFor(map));
+     setTextureStatus(failedTextures.size>0);
+    });
    }
+   function urlFor(map:keyof typeof maps){return photoUrl(photo,size,map)}
   }
   const textured=(finish:Finish,color:string,uw:number,uh:number,opts:any={})=>{
    const {seed,photo,...rest}=opts;
@@ -657,6 +671,7 @@ export default function PlanScene({plan,roof=false,top=false,onChange,onViewOpti
   {assetStatus&&(assetStatus.startsWith('Chargement')
    ?<p className="plan-studio-status" role="status">{assetStatus}</p>
    :<details className="plan-studio-status"><summary>Certains équipements sont indisponibles</summary><p>{assetStatus}</p></details>)}
+  {textureStatus&&<p className="plan-studio-status" role="status">Certaines textures ou cartes de relief sont indisponibles : l’aperçu utilise une finition de remplacement.</p>}
   {render.error&&<div className="plan-studio-message" role="alert"><p>{render.error}</p><button type="button" className="btn secondary" onClick={()=>setRender({busy:false})}>Fermer le message</button></div>}
   {render.image&&<section className="plan-studio-result" aria-label="Photo IA"><img src={render.image} alt="Photo IA produite à partir de la vue 3D"/><div className="button-row"><a className="btn primary" href={render.image} download="mgpro-rendu-photorealiste.jpg">Télécharger la photo</a><button type="button" className="btn secondary" onClick={()=>setRender({busy:false})}>Fermer la photo</button></div></section>}
  </section>;
